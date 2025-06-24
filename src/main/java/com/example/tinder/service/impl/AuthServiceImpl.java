@@ -14,6 +14,7 @@ import com.example.tinder.service.DeviceService;
 import com.example.tinder.utils.JwtUtil;
 import com.example.tinder.utils.Utils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,11 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -47,7 +46,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ApiResponse registerByEmail(RegisterDto dto) {
-
         User user = this.userRepository.findByEmail(dto.getEmail()).orElse(null);
         if (utils.existUsername(dto.getUsername())) {
             return ApiResponse.builder()
@@ -109,6 +107,7 @@ public class AuthServiceImpl implements AuthService {
                         .build();
 
             } catch (Exception e) {
+                log.error("Register error: ", e);
                 return ApiResponse.builder()
                         .status(HttpStatus.BAD_REQUEST)
                         .message(e.getMessage())
@@ -124,64 +123,121 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public ApiResponse verify(VerifyDto dto) {
-        User user = this.userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Device dev = this.deviceRepository.findByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
-        Map<String, Object> map = new HashMap<>();
-        Code code = this.codeRepository.findByUserIdAndDeviceId(user.getId(), dev.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Code not found"));
+        try {
+            User user = this.userRepository.findByEmail(dto.getEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            List<Device> allDevices = this.deviceRepository.findAllByUserIdAndDeviceName(user.getId(), dto.getDeviceId());
 
-        String email = dto.getEmail();
-        if (email == null ) {
+            if (allDevices.isEmpty()) {
+                throw new ResourceNotFoundException("Device not found");
+            }
+            Device dev = null;
+            Code code = null;
+
+            for (Device device : allDevices) {
+                Optional<Code> codeOpt = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId());
+
+                if (codeOpt.isPresent()) {
+                    dev = device;
+                    code = codeOpt.get();
+                    break;
+                }
+            }
+
+            if (code == null) {
+
+                List<Code> allCodes = this.codeRepository.findAll().stream()
+                        .filter(c -> c.getUser() != null && c.getUser().getId().equals(user.getId()))
+                        .toList();
+
+                if (!allCodes.isEmpty()) {
+                    code = allCodes.stream()
+                            .max((c1, c2) -> c1.getCreatedAt().compareTo(c2.getCreatedAt()))
+                            .orElse(null);
+
+                    if (code != null && code.getDevice() != null) {
+                        dev = code.getDevice();
+                    }
+                }
+            }
+
+            if (code == null) {
+                throw new ResourceNotFoundException("Code not found");
+            }
+
+            String email = dto.getEmail();
+            if (email == null) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.BAD_REQUEST)
+                        .message("User email invalid")
+                        .build();
+            }
+
+            if (!code.getCode().equals(dto.getCode())) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.BAD_REQUEST)
+                        .message("Code error")
+                        .build();
+            }
+
+
+            code.setApprovedAt(LocalDateTime.now());
+            code.setDevice(dev);
+            this.codeRepository.save(code);
+
+            Token token = this.tokenRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Token not found"));
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setStatus(UserStatus.ACTIVE);
+
+            if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
+                user.setUsername(dto.getUsername());
+            } else {
+                user.setUsername(dto.getEmail());
+            }
+
+            if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
+                user.setEmail(dto.getEmail());
+            }
+
+            User saveUser = this.userRepository.save(user);
+
+            String username = saveUser.getUsername();
+            if (username == null || username.trim().isEmpty()) {
+                username = saveUser.getEmail();
+            }
+
+            String generateToken = jwtUtil.generateToken(username);
+
+            if (generateToken == null || generateToken.trim().isEmpty()) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .message("Token generation failed")
+                        .build();
+            }
+
+            token.setToken(generateToken);
+            token.setExpiredAt(LocalDateTime.now().plusDays(10));
+            Token savedToken = this.tokenRepository.save(token);
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("token", savedToken.getToken());
+            map.put("userId", saveUser.getId());
+            map.put("user", this.userMapper.toDto(saveUser));
+
             return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("User email invalid")
+                    .status(HttpStatus.OK)
+                    .message("SUCCESS")
+                    .data(map)
+                    .build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.builder()
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .message("Internal server error: " + e.getMessage())
                     .build();
         }
-
-
-        if (!code.getCode().equals(dto.getCode())) {
-
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Code error")
-                    .build();
-        }
-
-        code.setApprovedAt(LocalDateTime.now());
-        code.setDevice(dev);
-        this.codeRepository.save(code);
-
-        Token token = this.tokenRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Token not found"));
-
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        user.setStatus(UserStatus.ACTIVE);
-        user.setUsername(dto.getUsername());
-        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
-            user.setEmail(dto.getEmail());
-        }
-        // Remove this invalid line
-        // user.setRole(user.getRole().add(dto.ge));
-        User saveUser = this.userRepository.save(user);
-        
-        String generateToken = jwtUtil.generateToken(saveUser.getUsername());
-
-        token.setToken(generateToken);
-        token.setExpiredAt(LocalDateTime.now().plusDays(10));
-        Token savedToken = this.tokenRepository.save(token);
-
-        map.put("token", savedToken.getToken());
-        map.put("userId", saveUser.getId());
-        map.put("user", this.userMapper.toDto(saveUser));
-
-
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("SUCCESS")
-                .data(map)
-                .build();
     }
 
     @Override
@@ -194,14 +250,11 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-
-
         User user;
         try {
             user = this.userRepository.findByEmail(dto.getEmail())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         } catch (ResourceNotFoundException e) {
-
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .message("Invalid authentication characters")
@@ -218,10 +271,7 @@ public class AuthServiceImpl implements AuthService {
         try {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
             authenticationManager.authenticate(authentication);
-
-
         } catch (Exception e) {
-
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .message("Invalid credentials")
@@ -232,7 +282,7 @@ public class AuthServiceImpl implements AuthService {
         String userToken = null;
         if (token != null) {
             userToken = token.getToken();
-            if (token.getExpiredAt().isBefore(LocalDateTime.now())) {
+            if (token.getExpiredAt() != null && token.getExpiredAt().isBefore(LocalDateTime.now())) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
                 userToken = jwtUtil.generateToken(userDetails.getUsername());
                 token.setToken(userToken);
@@ -241,13 +291,13 @@ public class AuthServiceImpl implements AuthService {
                 this.tokenRepository.save(token);
             }
         }
-        Device trustedDevice = this.deviceRepository.findByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
+
+        Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
                 .orElse(null);
 
         String code = utils.getCode();
         if (trustedDevice == null) {
             if (utils.sendCodeToMail(dto.getEmail(), code)) {
-
                 Device device = new Device();
                 device.setUser(user);
                 device.setDeviceName(dto.getDeviceId());
@@ -270,7 +320,6 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-
         return ApiResponse.builder()
                 .code(1)
                 .status(HttpStatus.OK)
@@ -290,12 +339,10 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Device device = this.deviceRepository.findByUserIdAndDeviceName(user.getId(), deviceId)
+        Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
-
 
         String code = utils.getCode();
         if (utils.sendCodeToMail(email, code)) {
@@ -325,11 +372,9 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-
-
         User user = this.userRepository.findByEmail(email).orElse(null);
         if (user != null) {
-            Device device = this.deviceRepository.findByUserIdAndDeviceName(user.getId(), deviceId)
+            Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                     .orElse(null);
             if (device != null) {
                 Code c = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
@@ -343,7 +388,6 @@ public class AuthServiceImpl implements AuthService {
                 }
 
                 if (!this.utils.checkCode(email, code, device.getId())) {
-
                     return ApiResponse.builder()
                             .status(HttpStatus.BAD_REQUEST)
                             .message("Error")
@@ -367,20 +411,17 @@ public class AuthServiceImpl implements AuthService {
                 map.put("token", token != null ? token.getToken() : "");
                 map.put("user", this.userMapper.toDto(user));
 
-
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
-                        .message("Authentication failed")
+                        .message("SUCCESS")
                         .data(map)
                         .build();
             }
         }
-
 
         return ApiResponse.builder()
                 .status(HttpStatus.BAD_REQUEST)
                 .message("User not found")
                 .build();
     }
-
 }

@@ -41,6 +41,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
+
     //                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
     @Bean
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
@@ -58,7 +59,18 @@ public class SecurityConfig {
                                     "/application/**",
                                     "/company/**",
                                     "/messages/**",
-                                    "/s3Aws/**")
+                                    "/s3Aws/**",
+                                    "/auths/verify",
+                                    "/swipe/swipeUser/**",
+                                    "/swipe/getSwipesByUser/**",
+                                    "/api/notification/**",
+                            "/api/location/nearby",
+                            "/api/location/update/**",
+                            "/users/getUserById/**",
+                            "/ws/**",
+                            "/conversation/**",
+                            "/chat/**"
+                                    )
                             .permitAll()
                             .anyRequest().authenticated();
                 })

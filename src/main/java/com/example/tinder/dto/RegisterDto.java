@@ -1,5 +1,6 @@
 package com.example.tinder.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class RegisterDto {
     @NotBlank(message = "email cannot be null or empty")
+    @Email
     private String email;
     private String username;
     @NotBlank(message = "password cannot be null or empty")
