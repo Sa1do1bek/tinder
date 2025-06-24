@@ -27,12 +27,14 @@ public class UserMapper {
         List<UserRole> list = this.roleRepository.findByUserId(user.getId());
 
         return UserDto.builder()
+                .id(user.getId())
                 .email(user.getEmail())
                 .fullname(user.getFullname())
                 .status(String.valueOf(user.getStatus()))
                 .role(list != null && !list.isEmpty() ?
                         list.stream().map(UserRole::getName).toList() : new ArrayList<>())
                 .username(user.getUsername())
+                .profilePic(user.getProfilePic())
                 .build();
     }
 

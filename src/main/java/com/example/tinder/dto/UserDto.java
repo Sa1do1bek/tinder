@@ -13,9 +13,12 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class UserDto {
+    private Long id;
     private String username;
     private String email;
     private String fullname;
     private String status;
     private List<String> role = new ArrayList<>();
+    private String profilePic;
+
 }

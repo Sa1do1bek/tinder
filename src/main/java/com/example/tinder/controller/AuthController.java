@@ -1,6 +1,5 @@
 package com.example.tinder.controller;
 
-
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.LoginDto;
 import com.example.tinder.dto.RegisterDto;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
 
-
     @PostMapping("/loginByEmail")
     public ApiResponse loginByEmail(@Valid @RequestBody LoginDto dto) {
         return this.authService.loginByEmail(dto);
@@ -29,7 +27,8 @@ public class AuthController {
 
     @PostMapping("/verify")
     public ApiResponse verify(@RequestBody VerifyDto dto) {
-        return this.authService.verify(dto);
+        ApiResponse response = this.authService.verify(dto);
+        return response;
     }
 
     @PostMapping("/resendCodeToEmail")

@@ -28,4 +28,11 @@ public class Message extends BaseEntity {
     @JsonManagedReference
     private User recipient;
 
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id")
+    private Conversation conversation;
+
+    @Column(name = "is_read", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isRead = false;
+
 }

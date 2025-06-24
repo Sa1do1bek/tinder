@@ -32,7 +32,7 @@ public class User extends BaseEntity implements UserDetails {
     private Date birthDate;
     @OneToMany(fetch = FetchType.EAGER)
     private List<UserInterest> userInterests;
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfilePicture> profilePictures;
     private String profilePic;
     @ToString.Exclude
