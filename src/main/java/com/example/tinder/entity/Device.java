@@ -16,6 +16,8 @@ public class Device extends BaseEntity {
 
     private String deviceName;
     private String macAddress;
+
+
     private LocalDateTime addedAt;
     private LocalDateTime expiredAt;
 
