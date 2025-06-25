@@ -20,6 +20,8 @@ public class UserMapper {
                 .email(dto.getEmail())
                 .fullname(dto.getFullName())
                 .username(dto.getUsername())
+                .birthDate(dto.getBirthDate())
+                .gender(dto.getGender())
                 .build();
     }
 
