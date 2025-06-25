@@ -1,13 +1,16 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.*;
+import com.example.tinder.enums.Gender;
 import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.UserService;
 import com.example.tinder.utils.JwtUtil;
 import com.example.tinder.utils.Utils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +33,8 @@ public class UserServiceImpl implements UserService {
     private final CodeRepository codeRepository;
     private final JwtUtil jwtUtil;
     private final Utils utils;
+    private final UserInterestRepository userInterestRepository;
+
     @Override
     public ApiResponse updateUserNameAndFullName(Long userId, String username, String fullname) {
         User user = this.userRepository.findById(userId).
@@ -294,6 +300,71 @@ public class UserServiceImpl implements UserService {
                 .message("User email is invalid")
                 .build();
     }
+
+    @Override
+    public ApiResponse search(String username, Gender gender) {
+        List<User> users = userRepository.searchUsers(username, gender);
+
+        List<Map<String, Object>> result = users.stream().map(user -> {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("username", user.getUsername());
+            userInfo.put("gender", user.getGender());
+            userInfo.put("fullname", user.getFullname());
+            userInfo.put("profilePic", user.getProfilePic());
+            return userInfo;
+        }).toList();
+
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .data(result)
+                .message("Search results")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse updateUserGBI(Long userId, UpdateUserGBIDto dto) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.NOT_FOUND)
+                    .message("User not found")
+                    .build();
+        }
+
+        User user = optionalUser.get();
+
+        if (dto.getBirthDate() != null)
+            user.setBirthDate(dto.getBirthDate());
+
+        if (dto.getGender() != null)
+            user.setGender(dto.getGender());
+
+        if (dto.getInterests() != null) {
+            user.getUserInterests().clear();
+
+            List<UserInterest> newInterests = dto.getInterests().stream()
+                    .map(interest -> UserInterest.builder()
+                            .user(user)
+                            .name(interest)
+                            .build())
+                    .collect(Collectors.toList());
+
+            user.getUserInterests().addAll(newInterests);
+        }
+
+        userRepository.save(user);
+
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .message("User updated successfully")
+                .build();
+    }
+
+
+
+
 
 //    @Override
 //    public ApiResponse updateProfilePhoto(Long attachmentId,Long userId) {

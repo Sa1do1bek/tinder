@@ -1,6 +1,8 @@
 package com.example.tinder.service;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.enums.Gender;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -27,4 +29,8 @@ public interface UserService {
     ApiResponse updateProfilePhoto(Long attachmentId,Long userId);
 
     ApiResponse googleAuth(String email, String fullName, String picPath);
+
+    ApiResponse search(String username, Gender gender);
+
+    ApiResponse updateUserGBI(Long userId, UpdateUserGBIDto dto);
 }

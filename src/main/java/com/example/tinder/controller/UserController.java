@@ -1,6 +1,8 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.enums.Gender;
 import com.example.tinder.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -42,11 +44,11 @@ public class UserController {
     }
 
 
-    @PutMapping("/updateProfilePhoto")
-    public ApiResponse updateProfilePhoto(@RequestParam Long attachmentId,
-                                          @RequestParam Long userId) {
-        return this.userService.updateProfilePhoto(attachmentId,userId);
-    }
+//    @PutMapping("/updateProfilePhoto")
+//    public ApiResponse updateProfilePhoto(@RequestParam Long attachmentId,
+//                                          @RequestParam Long userId) {
+//        return this.userService.updateProfilePhoto(attachmentId,userId);
+//    }
 
     @PostMapping("/checkUpdatedEmail")
     public ApiResponse checkUpdatedEmail(@RequestParam("oldEmail") String oldEmail,
@@ -89,4 +91,15 @@ public class UserController {
                                   @RequestParam("picPath") String picPath) {
         return userService.googleAuth(email, fullName, picPath);
     }
+
+    @GetMapping("/search")
+    public ApiResponse search(@RequestParam(required = false)String username, @RequestParam(required = false) Gender gender){
+        return userService.search(username,gender);
+    }
+
+    @PutMapping("/updateGenderOrBrithDateOrInterest")
+    public ApiResponse updateUserGenderOrBrithdateOrInterest(@RequestParam("userId") Long userId, @RequestBody UpdateUserGBIDto dto) {
+        return userService.updateUserGBI(userId, dto);
+    }
+
 }

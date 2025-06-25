@@ -1,11 +1,14 @@
 package com.example.tinder.dto;
 
+import com.example.tinder.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -19,6 +22,8 @@ public class RegisterDto {
     @NotBlank(message = "password cannot be null or empty")
     private String password;
     private String fullName;
+    private Gender gender;
+    private Date birthDate;
     private String deviceId;
     @NotBlank(message = "role cannot be null or empty")
     private String role;
