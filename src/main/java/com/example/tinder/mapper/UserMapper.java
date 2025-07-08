@@ -3,13 +3,16 @@ package com.example.tinder.mapper;
 import com.example.tinder.dto.RegisterDto;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
+import com.example.tinder.entity.UserInterest;
 import com.example.tinder.entity.UserRole;
+import com.example.tinder.enums.Interest;
 import com.example.tinder.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +30,11 @@ public class UserMapper {
 
     public UserDto toDto(User user) {
         List<UserRole> list = this.roleRepository.findByUserId(user.getId());
+        List<Interest> interests = user.getUserInterests() != null
+                ? user.getUserInterests().stream()
+                .map(UserInterest::getName)
+                .collect(Collectors.toList())
+                : new ArrayList<>();
 
         return UserDto.builder()
                 .id(user.getId())
@@ -37,6 +45,10 @@ public class UserMapper {
                         list.stream().map(UserRole::getName).toList() : new ArrayList<>())
                 .username(user.getUsername())
                 .profilePic(user.getProfilePic())
+                .birthDate(user.getBirthDate())
+                .gender(user.getGender())
+                .interests(interests)
+                .bio(user.getBio())
                 .build();
     }
 
