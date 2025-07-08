@@ -1,7 +1,7 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.UserLocDto;
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.UserLocationDto;
 import com.example.tinder.service.UserLocationService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class UserLocationController {
     }
 
     @GetMapping("/nearby")
-    public List<UserLocDto> nearby(@RequestParam("userId") Long userId, @RequestParam(defaultValue="50")double radiusKm){
+    public List<UserDto> nearby(@RequestParam("userId") Long userId, @RequestParam(defaultValue="50")double radiusKm){
         return userLocationService.getNearbyUsers(userId,radiusKm);
 
     }
