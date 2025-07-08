@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,5 +18,6 @@ public class UpdateUserGBIDto {
     private Date birthDate;
     private Gender gender;
     @Schema(description = "List of interests", implementation = Interest.class)
-    private List<Interest> interests;
+    private List<Interest> interests=new ArrayList<>();
+    private String bio;
 }

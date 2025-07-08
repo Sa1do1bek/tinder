@@ -366,17 +366,5 @@ public class UserServiceImpl implements UserService {
 
 
 
-//    @Override
-//    public ApiResponse updateProfilePhoto(Long attachmentId,Long userId) {
-//        Attachment attachment = this.attachmentRepository.findById(attachmentId)
-//                .orElseThrow(()->new ResourceNotFoundException("Attachment not found"));
-//        User user = this.userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-//        user.setProfilePhoto(attachment);
-//        this.userRepository.save(user);
-//        return ApiResponse.builder()
-//                .status(HttpStatus.OK)
-//                .message("success")
-//                .build();
-//    }
+
 }

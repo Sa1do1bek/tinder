@@ -44,11 +44,6 @@ public class UserController {
     }
 
 
-//    @PutMapping("/updateProfilePhoto")
-//    public ApiResponse updateProfilePhoto(@RequestParam Long attachmentId,
-//                                          @RequestParam Long userId) {
-//        return this.userService.updateProfilePhoto(attachmentId,userId);
-//    }
 
     @PostMapping("/checkUpdatedEmail")
     public ApiResponse checkUpdatedEmail(@RequestParam("oldEmail") String oldEmail,
