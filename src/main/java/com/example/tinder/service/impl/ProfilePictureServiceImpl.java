@@ -24,8 +24,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
     private final ProfilePictureRepository profilePictureRepository;
 
     @Override
-    public ApiResponse uploadPicture(Long userId, MultipartFile file) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public ApiResponse uploadPicture(User user, MultipartFile file) {
         try {
             String cloudPath = s3Service.uploadFile(file);
 
@@ -42,8 +41,8 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         } catch (Exception e) {
             throw new RuntimeException("Rasm yuklashda xatolik: " + e.getMessage());
         }
-
     }
+
 
     @Override
     public ApiResponse getUserPictures(Long userId) {
