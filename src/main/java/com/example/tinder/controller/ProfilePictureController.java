@@ -1,9 +1,12 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.entity.User;
 import com.example.tinder.service.ProfilePictureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,11 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfilePictureController {
    private final ProfilePictureService profilePictureService;
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse upload(@RequestParam Long userId,
-                              @RequestParam MultipartFile file) {
-        return profilePictureService.uploadPicture(userId, file);
+    @PutMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()") // faqat token bilan ruxsat beriladi
+    public ApiResponse upload(@RequestParam MultipartFile file,
+                              @AuthenticationPrincipal User user) {
+        return profilePictureService.uploadPicture(user, file);
     }
+
 
 
     @GetMapping("/user")
