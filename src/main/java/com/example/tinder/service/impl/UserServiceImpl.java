@@ -56,16 +56,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse addRoleToUser(Long userId, Long roleId) {
-        User user = this.userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        UserRole role = this.roleRepository.findById(roleId)
+        UserRole role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
-        if (user.getRole() != null && !user.getRole().isEmpty()) {
+
+        if (user.getRole() != null) {
             user.getRole().add(role);
         } else {
             user.setRole(new HashSet<>(Set.of(role)));
         }
-        this.userRepository.save(user);
+
+        userRepository.save(user);
+
         return ApiResponse.builder()
                 .status(HttpStatus.OK)
                 .message("Role added to user successfully")
