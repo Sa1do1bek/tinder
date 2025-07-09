@@ -69,8 +69,7 @@ public class SecurityConfig {
                             "/users/getUserById/**",
                             "/ws/**",
                             "/conversation/**",
-                            "/chat/**",
-                            "/api/picture/**"
+                            "/chat/**"
                                     )
                             .permitAll()
                             .anyRequest().authenticated();

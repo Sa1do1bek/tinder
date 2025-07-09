@@ -34,7 +34,7 @@ public class User extends BaseEntity implements UserDetails {
     private String profilePic;
     private String bio;
     @ToString.Exclude
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),

@@ -16,8 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfilePictureController {
    private final ProfilePictureService profilePictureService;
 
-    @PutMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()") // faqat token bilan ruxsat beriladi
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()") // Token kerak
     public ApiResponse upload(@RequestParam MultipartFile file,
                               @AuthenticationPrincipal User user) {
         return profilePictureService.uploadPicture(user, file);
