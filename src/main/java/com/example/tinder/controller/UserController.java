@@ -2,10 +2,12 @@ package com.example.tinder.controller;
 
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -53,10 +55,12 @@ public class UserController {
     }
 
     @PutMapping("/updatePassword")
-    public ApiResponse updatePassword(@RequestParam("email") String email,
-                                      @RequestParam("newPassword") String newPassword) {
-        return this.userService.updatePassword(email, newPassword);
+    public ApiResponse updatePassword(@RequestParam String oldPassword,
+                                      @RequestParam String newPassword,
+                                      @AuthenticationPrincipal User user) {
+        return userService.updatePassword(user, oldPassword, newPassword);
     }
+
     @PostMapping("/checkUpdatedPassword")
     public ApiResponse checkUpdatedPassword(@RequestParam("email") String email,
                                             @RequestParam("password") String password,
