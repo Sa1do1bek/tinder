@@ -2,6 +2,7 @@ package com.example.tinder.service;
 
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,7 @@ public interface UserService {
 
     ApiResponse checkUpdatedEmail(String oldEmail, String newEmail, String code);
 
-    ApiResponse updatePassword(String email, String newPassword);
+    ApiResponse updatePassword(User user, String email, String newPassword);
 
     ApiResponse checkUpdatedPassword(String email, String password, String code);
 

@@ -184,30 +184,24 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    @Override
-    public ApiResponse updatePassword(String email, String newPassword) {
-        User user = this.userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        String code = utils.getCode();
-        if (utils.sendCodeToMail(email, code)) {
-            Optional<Code> optional = this.codeRepository.findByUserId(user.getId());
-            if (optional.isPresent()) {
-                Code c = optional.get();
-                c.setCode(code);
-                c.setCreatedAt(LocalDateTime.now());
-                this.codeRepository.save(c);
-                this.userRepository.save(user);
-                return ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .message("User updated")
-                        .build();
-            }
+    public ApiResponse updatePassword(User user, String oldPassword, String newPassword) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Old password is incorrect")
+                    .build();
         }
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedPassword);
+        userRepository.save(user);
+
         return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Auth code error")
+                .status(HttpStatus.OK)
+                .message("Password successfully updated")
                 .build();
     }
+
 
     @Override
     public ApiResponse checkUpdatedPassword(String email, String password, String code) {
