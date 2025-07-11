@@ -1,9 +1,11 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.entity.User;
 import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.service.SwipeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,16 +16,16 @@ public class SwipeController {
     private final SwipeService swipeService;
 
     @PostMapping("/swipeUser")
-    public ApiResponse swipeUser(@RequestParam("swiperId") Long swiperId,
+    public ApiResponse swipeUser(@AuthenticationPrincipal User user,
                                  @RequestParam("swipedId")Long swipedId,
                                  @RequestParam("status")SwipeStatus status
                                  ){
-        return swipeService.swipe(swiperId,swipedId,status);
+        return swipeService.swipe(user.getId(), swipedId,status);
     }
 
     @GetMapping("/getSwipesByUser")
-    public ApiResponse getSwipesByUser(@RequestParam("userId") Long userId){
-        return swipeService.getSwipesByUser(userId);
+    public ApiResponse getSwipesByUser(@AuthenticationPrincipal User user){
+        return swipeService.getSwipesByUser(user.getId());
     }
 
 }

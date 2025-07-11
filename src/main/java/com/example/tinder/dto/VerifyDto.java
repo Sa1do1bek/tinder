@@ -19,11 +19,14 @@ public class VerifyDto {
 
     @NotBlank
     private String email;
-
     @NotBlank
-    private String username;
+    private String password;
+
 
     @NotBlank
     private String deviceId;
+
+    @NotBlank
+    private String username;
 }
 

@@ -3,12 +3,14 @@ package com.example.tinder.controller;
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.ChatMessageDto;
 import com.example.tinder.dto.MessageDto;
+import com.example.tinder.entity.User;
 import com.example.tinder.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,8 +26,8 @@ public class MessageController {
 
     @MessageMapping("/chat/send")
     @SendToUser("/queue/messages")
-    public ApiResponse sendMessage(@Payload ChatMessageDto chatMessageDto) {
-        return messageService.sendMessage(chatMessageDto);
+    public ApiResponse sendMessage(@Payload ChatMessageDto chatMessageDto,@AuthenticationPrincipal User user) {
+        return messageService.sendMessage(user.getId(),chatMessageDto);
     }
 
     @GetMapping("/messages")
