@@ -17,7 +17,7 @@ public class ProfilePictureController {
    private final ProfilePictureService profilePictureService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()") // Token kerak
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse upload(@RequestParam MultipartFile file,
                               @AuthenticationPrincipal User user) {
         return profilePictureService.uploadPicture(user, file);
@@ -26,17 +26,17 @@ public class ProfilePictureController {
 
 
     @GetMapping("/user")
-    public ApiResponse getAllPictures(@RequestParam Long userId) {
-        return profilePictureService.getUserPictures(userId);
+    public ApiResponse getAllPictures(@AuthenticationPrincipal User user) {
+        return profilePictureService.getUserPictures(user.getId());
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse delete(@PathVariable Long id) {
-        return profilePictureService.deletePicture(id);
+    public ApiResponse delete(@PathVariable Long id,@AuthenticationPrincipal User user) {
+        return profilePictureService.deletePicture(id,user.getId());
     }
 
     @PutMapping("/set-main")
-    public ApiResponse setMain(@RequestParam Long userId, @RequestParam Long pictureId) {
-        return profilePictureService.setAsMainPicture(userId, pictureId);
+    public ApiResponse setMain(@AuthenticationPrincipal User user, @RequestParam Long pictureId) {
+        return profilePictureService.setAsMainPicture(user.getId(), pictureId);
     }
 }
