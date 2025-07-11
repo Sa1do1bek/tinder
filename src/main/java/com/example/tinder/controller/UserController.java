@@ -34,10 +34,10 @@ public class UserController {
 
 
     @PutMapping("/updateUserNameAndFullName")
-    public ApiResponse updateUserNameAndFullName(@RequestParam("userId") Long userId,
+    public ApiResponse updateUserNameAndFullName(@AuthenticationPrincipal User user,
                                                  @RequestParam("username") String username,
                                                  @RequestParam("fullname") String fullname) {
-        return this.userService.updateUserNameAndFullName(userId, username, fullname);
+        return this.userService.updateUserNameAndFullName(user.getId(), username, fullname);
     }
     @PutMapping("/updateEmail")
     public ApiResponse updateEmail(@RequestParam("email") String email,
@@ -97,8 +97,10 @@ public class UserController {
     }
 
     @PutMapping("/updateGenderOrBrithDateOrInterest")
-    public ApiResponse updateUserGenderOrBrithdateOrInterest(@RequestParam("userId") Long userId, @RequestBody UpdateUserGBIDto dto) {
-        return userService.updateUserGBI(userId, dto);
+    public ApiResponse updateUserGenderOrBrithdateOrInterest(@AuthenticationPrincipal User user,
+                                                             @RequestBody UpdateUserGBIDto dto) {
+        return userService.updateUserGBI(user.getId(), dto);
     }
+
 
 }
