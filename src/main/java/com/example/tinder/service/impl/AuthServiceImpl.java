@@ -5,6 +5,7 @@ import com.example.tinder.dto.LoginDto;
 import com.example.tinder.dto.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
 import com.example.tinder.entity.*;
+import com.example.tinder.enums.Role;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.mapper.UserMapper;
@@ -43,202 +44,116 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final Utils utils;
+    private final PendingUserRepository pendingUserRepository;
 
     @Override
     public ApiResponse registerByEmail(RegisterDto dto) {
-        User user = this.userRepository.findByEmail(dto.getEmail()).orElse(null);
-        if (utils.existUsername(dto.getUsername())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Username already exists")
-                    .build();
-        }
-        if (user != null) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Email already exists")
-                    .build();
-        }
         if (!utils.checkEmail(dto.getEmail())) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
-                    .message("Username email is invalid")
+                    .message("Invalid email format")
+                    .build();
+        }
+
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Email already registered")
+                    .build();
+        }
+
+        if (userRepository.existsByUsername(dto.getUsername())) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Username already taken")
                     .build();
         }
 
         String code = utils.getCode();
-        if (utils.sendCodeToMail(dto.getEmail(), code)) {
-            try {
-                UserRole role = this.roleRepository.findByName(dto.getRole()).orElse(null);
-                User entity = this.userMapper.toEntityByEmail(dto);
-                entity.setCreatedAt(LocalDateTime.now());
-                entity.setStatus(UserStatus.PENDING);
-                if (role != null) {
-                    if (entity.getRole() != null && !entity.getRole().isEmpty()) {
-                        entity.getRole().add(role);
-                    } else {
-                        Set<UserRole> set = new HashSet<>();
-                        set.add(role);
-                        entity.setRole(set);
-                    }
-                }
-                User save = this.userRepository.save(entity);
-                Device device = this.deviceService.addTrustedDevice(save.getId(), dto.getDeviceId());
 
-                Code c = Code.builder()
-                        .user(save)
-                        .code(code)
-                        .createdAt(LocalDateTime.now())
-                        .device(device)
-                        .build();
-                this.codeRepository.save(c);
-
-                Token jwt = Token.builder()
-                        .user(save)
-                        .type("Bearer")
-                        .createdAt(LocalDateTime.now())
-                        .build();
-                this.tokenRepository.save(jwt);
-
-                return ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .message("Auth code sent")
-                        .meta(Map.of("userId", save.getId()))
-                        .build();
-
-            } catch (Exception e) {
-                log.error("Register error: ", e);
-                return ApiResponse.builder()
-                        .status(HttpStatus.BAD_REQUEST)
-                        .message(e.getMessage())
-                        .build();
-            }
+        if (!utils.sendCodeToMail(dto.getEmail(), code)) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Error sending verification code")
+                    .build();
         }
+
+        PendingUser pendingUser = PendingUser.builder()
+                .email(dto.getEmail())
+                .username(dto.getUsername())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .fullName(dto.getFullName())
+                .gender(dto.getGender())
+                .birthDate(dto.getBirthDate())
+                .deviceId(dto.getDeviceId())
+                .role(dto.getRole())
+                .code(code)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        pendingUserRepository.save(pendingUser);
+
         return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Error sending auth code")
+                .status(HttpStatus.OK)
+                .message("Verification code sent to email")
                 .build();
     }
+
 
     @Override
     @Transactional
     public ApiResponse verify(VerifyDto dto) {
-        try {
-            User user = this.userRepository.findByEmail(dto.getEmail())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            List<Device> allDevices = this.deviceRepository.findAllByUserIdAndDeviceName(user.getId(), dto.getDeviceId());
+        PendingUser pending = pendingUserRepository.findByEmail(dto.getEmail())
+                .orElse(null);
 
-            if (allDevices.isEmpty()) {
-                throw new ResourceNotFoundException("Device not found");
-            }
-            Device dev = null;
-            Code code = null;
-
-            for (Device device : allDevices) {
-                Optional<Code> codeOpt = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId());
-
-                if (codeOpt.isPresent()) {
-                    dev = device;
-                    code = codeOpt.get();
-                    break;
-                }
-            }
-
-            if (code == null) {
-
-                List<Code> allCodes = this.codeRepository.findAll().stream()
-                        .filter(c -> c.getUser() != null && c.getUser().getId().equals(user.getId()))
-                        .toList();
-
-                if (!allCodes.isEmpty()) {
-                    code = allCodes.stream()
-                            .max((c1, c2) -> c1.getCreatedAt().compareTo(c2.getCreatedAt()))
-                            .orElse(null);
-
-                    if (code != null && code.getDevice() != null) {
-                        dev = code.getDevice();
-                    }
-                }
-            }
-
-            if (code == null) {
-                throw new ResourceNotFoundException("Code not found");
-            }
-
-            String email = dto.getEmail();
-            if (email == null) {
-                return ApiResponse.builder()
-                        .status(HttpStatus.BAD_REQUEST)
-                        .message("User email invalid")
-                        .build();
-            }
-
-            if (!code.getCode().equals(dto.getCode())) {
-                return ApiResponse.builder()
-                        .status(HttpStatus.BAD_REQUEST)
-                        .message("Code error")
-                        .build();
-            }
-
-
-            code.setApprovedAt(LocalDateTime.now());
-            code.setDevice(dev);
-            this.codeRepository.save(code);
-
-            Token token = this.tokenRepository.findByUserId(user.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Token not found"));
-            user.setPassword(passwordEncoder.encode(dto.getPassword()));
-            user.setStatus(UserStatus.ACTIVE);
-
-            if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
-                user.setUsername(dto.getUsername());
-            } else {
-                user.setUsername(dto.getEmail());
-            }
-
-            if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
-                user.setEmail(dto.getEmail());
-            }
-
-            User saveUser = this.userRepository.save(user);
-
-            String username = saveUser.getUsername();
-            if (username == null || username.trim().isEmpty()) {
-                username = saveUser.getEmail();
-            }
-
-            String generateToken = jwtUtil.generateToken(username);
-
-            if (generateToken == null || generateToken.trim().isEmpty()) {
-                return ApiResponse.builder()
-                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .message("Token generation failed")
-                        .build();
-            }
-
-            token.setToken(generateToken);
-            token.setExpiredAt(LocalDateTime.now().plusDays(10));
-            Token savedToken = this.tokenRepository.save(token);
-
-            Map<String, Object> map = new HashMap<>();
-            map.put("token", savedToken.getToken());
-            map.put("userId", saveUser.getId());
-            map.put("user", this.userMapper.toDto(saveUser));
-
+        if (pending == null || !pending.getCode().equals(dto.getCode())) {
             return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("SUCCESS")
-                    .data(map)
-                    .build();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ApiResponse.builder()
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .message("Internal server error: " + e.getMessage())
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Invalid verification code or email")
                     .build();
         }
+
+        UserRole role = roleRepository.findByName(pending.getRole()).orElse(null);
+
+        User user = User.builder()
+                .email(pending.getEmail())
+                .username(pending.getUsername())
+                .password(pending.getPassword())
+                .status(UserStatus.ACTIVE)
+                .gender(pending.getGender())
+                .birthDate(pending.getBirthDate())
+                .fullname(pending.getFullName())
+                .role(role != null ? Set.of(role) : new HashSet<>())
+                .build();
+
+        User saved = userRepository.save(user);
+
+        Device device = deviceService.addTrustedDevice(saved.getId(), pending.getDeviceId());
+
+        String jwtToken = jwtUtil.generateToken(user.getUsername());
+
+        Token token = Token.builder()
+                .user(saved)
+                .token(jwtToken)
+                .type("Bearer")
+                .createdAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusDays(10))
+                .build();
+
+        tokenRepository.save(token);
+
+        pendingUserRepository.delete(pending);
+
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .message("User registered")
+                .data(Map.of(
+                        "token", jwtToken,
+                        "user", userMapper.toDto(saved)
+                ))
+                .build();
     }
+
 
     @Override
     @Transactional

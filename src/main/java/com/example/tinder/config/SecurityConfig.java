@@ -19,6 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
@@ -45,41 +46,24 @@ public class SecurityConfig {
     //                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
     @Bean
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
-        return http.csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(withDefaults -> {}) // ✅ CORSni yoqing (yoki umuman yozmasangiz ham bo'ladi)
                 .authorizeHttpRequests(a -> {
-                    a.requestMatchers("/swagger-ui/**",
+                    a.requestMatchers(
+                                    "/swagger-ui/**",
                                     "/v3/api-docs/**",
                                     "/swagger-ui.html",
-                                    "/auths/**",
-                                    "/role/**",
-                                    "/users/**",
-                                    "/resume/**",
-                                    "/job/**",
-                                    "/application/**",
-                                    "/company/**",
-                                    "/messages/**",
-                                    "/s3Aws/**",
-                                    "/auths/verify",
-                                    "/swipe/swipeUser/**",
-                                    "/swipe/getSwipesByUser/**",
-                                    "/api/notification/**",
-                            "/api/location/nearby",
-                            "/api/location/update/**",
-                            "/users/getUserById/**",
-                            "/ws/**",
-                            "/conversation/**",
-                            "/chat/**"
-                                    )
-                            .permitAll()
+                                    "/auths/**"
+                            ).permitAll()
                             .anyRequest().authenticated();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                //.formLogin(f -> f.successHandler(handler))
                 .build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -87,20 +71,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsFilter corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.addAllowedOriginPattern("*");
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setExposedHeaders(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:3001", "https://localhost:3000"));
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        return new CorsFilter(source);
+        return source;
     }
+
+
 
     @Bean
     public RestTemplate restTemplate() {

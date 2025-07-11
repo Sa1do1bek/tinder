@@ -31,8 +31,9 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             ProfilePicture picture = new ProfilePicture();
             picture.setCloudPath(cloudPath);
             picture.setUser(user);
-
+            user.setProfilePic(cloudPath);
             profilePictureRepository.save(picture);
+            userRepository.save(user);
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
                     .message("Profile picture uploaded successfully")
@@ -60,8 +61,8 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
     }
 
     @Override
-    public ApiResponse deletePicture(Long id) {
-        Optional<ProfilePicture> optionalPicture = profilePictureRepository.findById(id);
+    public ApiResponse deletePicture(Long pictureId, Long userId) {
+        Optional<ProfilePicture> optionalPicture = profilePictureRepository.findById(pictureId);
 
         if (optionalPicture.isEmpty()) {
             return ApiResponse.builder()
@@ -71,8 +72,15 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         }
 
         ProfilePicture picture = optionalPicture.get();
-        User user = picture.getUser();
 
+        if (!picture.getUser().getId().equals(userId)) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.FORBIDDEN)
+                    .message("You are not allowed to delete this picture")
+                    .build();
+        }
+
+        User user = picture.getUser();
         if (picture.getCloudPath().equals(user.getProfilePic())) {
             user.setProfilePic(null);
             userRepository.save(user);
@@ -85,6 +93,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
                 .message("Profile picture deleted successfully")
                 .build();
     }
+
 
 
     @Override

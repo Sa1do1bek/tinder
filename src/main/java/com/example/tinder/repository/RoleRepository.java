@@ -16,4 +16,6 @@ public interface RoleRepository extends JpaRepository<UserRole, Long> {
             "inner join roles as r on r.id=ur.role_id\n" +
             "where ur.user_id=?1", nativeQuery = true)
     List<UserRole> findByUserId(Long id);
+
+    boolean existsByName(String roleName);
 }
