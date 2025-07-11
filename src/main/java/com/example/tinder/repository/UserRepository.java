@@ -42,4 +42,16 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
 
     boolean existsByEmail(String email);
+
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.status = 'ACTIVE'
+      AND u.id <> :userId
+      AND u.id NOT IN (
+          SELECT s.swiped.id FROM Swipe s
+          WHERE s.swiper.id = :userId
+      )
+""")
+    Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
+
 }

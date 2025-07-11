@@ -13,7 +13,7 @@ public interface UserService {
     ApiResponse addRoleToUser(Long userId, Long roleId);
     ApiResponse deleteRoleFromUser(Long userId, Long roleId);
     ApiResponse getUserById(Long id);
-    ApiResponse getAllActiveUser(Pageable pageable);
+    ApiResponse getAllActiveUser(Pageable pageable, Long userId);
     ApiResponse getUserByToken(String token);
 
 
