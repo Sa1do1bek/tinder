@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "HeadHunter APIs",
+                title = "Tinder APIs",
                 version = "2.0",
                 description = "API Documentation"
         ),
