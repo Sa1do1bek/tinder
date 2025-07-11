@@ -72,10 +72,12 @@ public class UserController {
         return this.userService.checkUsername(username);
     }
     @GetMapping("/getAllActiveUser")
-    public ApiResponse getAllActiveUser(@RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-                                        @RequestParam(value = "size", required = false, defaultValue = "20") Integer size) {
-        return this.userService.getAllActiveUser(PageRequest.of(page, size));
+    public ApiResponse getAllActiveUser(@AuthenticationPrincipal User user,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size) {
+        return this.userService.getAllActiveUser(PageRequest.of(page, size), user.getId());
     }
+
 
 
     @GetMapping("/getUserByToken")

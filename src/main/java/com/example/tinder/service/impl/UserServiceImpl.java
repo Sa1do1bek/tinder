@@ -102,8 +102,8 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public ApiResponse getAllActiveUser(Pageable pageable) {
-        Page<User> page = this.userRepository.getAllActiveUsers(pageable);
+    public ApiResponse getAllActiveUser(Pageable pageable, Long currentUserId) {
+        Page<User> page = this.userRepository.getAllUnswipedActiveUsers(currentUserId, pageable);
         if (page != null && !page.isEmpty()) {
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
@@ -117,6 +117,7 @@ public class UserServiceImpl implements UserService {
                 .data(new ArrayList<>())
                 .build();
     }
+
 
     @Override
     public ApiResponse getUserByToken(String token) {
