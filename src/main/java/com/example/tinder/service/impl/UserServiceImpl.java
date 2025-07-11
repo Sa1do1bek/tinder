@@ -13,6 +13,7 @@ import com.example.tinder.utils.Utils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final Utils utils;
     private final UserInterestRepository userInterestRepository;
+    private final SwipeRepository  swipeRepository;
 
     @Override
     public ApiResponse updateUserNameAndFullName(Long userId, String username, String fullname) {
@@ -360,8 +362,42 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @Override
+    public ApiResponse getAllRejectUsers(PageRequest pageRequest, Long userId) {
+        Page<User> rejectedUsers = swipeRepository.findAllRejectedUsers(userId, pageRequest);
 
+        if (!rejectedUsers.isEmpty()) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.OK)
+                    .data(userMapper.dtoList(rejectedUsers.getContent()))
+                    .elements(rejectedUsers.getTotalElements())
+                    .pages(rejectedUsers.getTotalPages())
+                    .build();
+        }
 
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .data(new ArrayList<>())
+                .build();
+    }
+    @Override
+    public ApiResponse getAllAcceptUsers(PageRequest pageRequest, Long userId) {
+        Page<User> rejectedUsers = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
+
+        if (!rejectedUsers.isEmpty()) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.OK)
+                    .data(userMapper.dtoList(rejectedUsers.getContent()))
+                    .elements(rejectedUsers.getTotalElements())
+                    .pages(rejectedUsers.getTotalPages())
+                    .build();
+        }
+
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .data(new ArrayList<>())
+                .build();
+    }
 
 
 

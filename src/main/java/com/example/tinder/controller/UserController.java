@@ -2,6 +2,7 @@ package com.example.tinder.controller;
 
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.service.UserService;
@@ -77,8 +78,18 @@ public class UserController {
                                         @RequestParam(defaultValue = "20") int size) {
         return this.userService.getAllActiveUser(PageRequest.of(page, size), user.getId());
     }
-
-
+    @GetMapping("/getRejectedUsers")
+    public ApiResponse getAllRejectedUsers(@AuthenticationPrincipal User user,
+                                           @RequestParam(defaultValue = "0")int page,
+                                           @RequestParam(defaultValue = "5") int size){
+        return userService.getAllRejectUsers(PageRequest.of(page,size),user.getId());
+    }
+    @GetMapping("/getAcceptedUsers")
+    public ApiResponse getAllAcceptedUsers(@AuthenticationPrincipal User user,
+                                           @RequestParam(defaultValue = "0")int page,
+                                           @RequestParam(defaultValue = "5") int size){
+        return userService.getAllAcceptUsers(PageRequest.of(page,size),user.getId());
+    }
 
     @GetMapping("/getUserByToken")
     public ApiResponse getUserByToken(@RequestParam("token") String token) {

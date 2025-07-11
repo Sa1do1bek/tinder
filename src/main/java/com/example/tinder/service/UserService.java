@@ -4,6 +4,7 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -34,4 +35,7 @@ public interface UserService {
     ApiResponse search(String username, Gender gender);
 
     ApiResponse updateUserGBI(Long userId, UpdateUserGBIDto dto);
+
+    ApiResponse getAllRejectUsers(PageRequest pageRequest, Long userId);
+    ApiResponse getAllAcceptUsers(PageRequest pageRequest, Long userId);
 }
