@@ -353,6 +353,9 @@ public class UserServiceImpl implements UserService {
 
             user.getUserInterests().addAll(newInterests);
         }
+        if (dto.getBio() != null){
+            user.setBio(dto.getBio());
+        }
 
         userRepository.save(user);
 
