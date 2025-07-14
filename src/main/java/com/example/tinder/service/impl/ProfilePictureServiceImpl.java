@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,18 +32,29 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             ProfilePicture picture = new ProfilePicture();
             picture.setCloudPath(cloudPath);
             picture.setUser(user);
-            user.setProfilePic(cloudPath);
+
+            if (user.getProfilePictures() == null) {
+                user.setProfilePictures(new ArrayList<>());
+            }
+            user.getProfilePictures().add(picture);
+
+            if (user.getProfilePic() == null) {
+                user.setProfilePic(cloudPath); // main picture sifatida
+            }
+
             profilePictureRepository.save(picture);
             userRepository.save(user);
+
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
-                    .message("Profile picture uploaded successfully")
+                    .message("Rasm muvaffaqiyatli yuklandi")
                     .build();
 
         } catch (Exception e) {
             throw new RuntimeException("Rasm yuklashda xatolik: " + e.getMessage());
         }
     }
+
 
 
     @Override

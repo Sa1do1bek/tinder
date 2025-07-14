@@ -27,6 +27,8 @@ public class UserDto {
     private Date birthDate;
     private List<Interest> interests = new ArrayList<>();
     private String bio;
+    private String latitude;
+    private String longitude;
 
 
 }
