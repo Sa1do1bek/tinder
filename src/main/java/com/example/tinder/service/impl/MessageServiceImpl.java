@@ -118,7 +118,7 @@ public class MessageServiceImpl implements MessageService {
 
     private void sendToWebSocket(Long conversationId, Long senderId, Long receiverId, Map<String, Object> messageData) {
         messagingTemplate.convertAndSend("/topic/chat/" + conversationId, messageData);
-//        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", messageData);
-//        messagingTemplate.convertAndSendToUser(receiverId.toString(), "/queue/messages", messageData);
+        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", messageData);
+        messagingTemplate.convertAndSendToUser(receiverId.toString(), "/queue/messages", messageData);
     }
 }
