@@ -36,7 +36,12 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
-            "/auths/**"
+            "/auths/**",
+            "/ws/**",
+            "/conversation/**",
+            "/chat/**",
+            "/app"
+
     };
 
     @Autowired
@@ -54,7 +59,6 @@ public class SecurityConfig {
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(a -> {
                     a.requestMatchers(
                                     WHITE_LIST

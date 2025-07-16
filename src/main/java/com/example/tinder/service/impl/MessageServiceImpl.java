@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,9 +33,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public ApiResponse sendMessage(Long senderId, ChatMessageDto chatMessageDto) {
+    public ApiResponse sendMessage(ChatMessageDto chatMessageDto) {
         try {
-            User sender = getUserOrThrow(senderId);
+            User sender = getUserOrThrow(chatMessageDto.getSenderId());
             User receiver = getUserOrThrow(chatMessageDto.getReceiverId());
 
             Conversation conversation = conversationService
