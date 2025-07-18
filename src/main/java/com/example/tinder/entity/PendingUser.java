@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Date;
 
-@Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Table(name = "pending_users")
+@Entity
 public class PendingUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,3 +36,7 @@ public class PendingUser {
     private String code;
     private LocalDateTime createdAt;
 }
+
+
+
+
