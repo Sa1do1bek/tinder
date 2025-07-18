@@ -4,6 +4,7 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.Gender;
+import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
@@ -253,47 +254,66 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional // Tranzaksiya qo'shildi
     public ApiResponse googleAuth(String email, String fullName, String picPath) {
         if (utils.checkEmail(email)) {
             User user = this.userRepository.findByEmail(email).orElse(null);
+            String token;
+
             if (user != null) {
-                String token = jwtUtil.generateToken(user.getUsername());
-                tokenRepository.findByUserId(user.getId())
-                        .ifPresent(t -> {
-                            t.setToken(token);
-                            tokenRepository.save(t);
-                        });
+                // Foydalanuvchi mavjud bo'lsa:
+                // 1. Mavjud barcha tokenlarni o'chirish
+                tokenRepository.deleteByUserId(user.getId());
+
+                // 2. Yangi token yaratish
+                token = jwtUtil.generateToken(user.getUsername());
+                Token newToken = Token.builder()
+                        .user(user)
+                        .token(token)
+                        .type("Bearer")
+                        .createdAt(LocalDateTime.now())
+                        .expiredAt(LocalDateTime.now().plusDays(10))
+                        .build();
+                tokenRepository.save(newToken);
 
                 return ApiResponse.builder()
                         .status(HttpStatus.OK)
                         .meta(Map.of("user", this.userMapper.toDto(user)))
                         .data(token)
                         .build();
+            } else {
+                // Foydalanuvchi mavjud bo'lmasa (yangi ro'yxatdan o'tish):
+                user = new User();
+                user.setEmail(email);
+                user.setFullname(fullName);
+                // Username'ni ham o'rnatish kerak, chunki JWT uni ishlatadi
+                user.setUsername(email); // Yoki boshqa noyob qiymat
+                user.setStatus(UserStatus.ACTIVE); // Google orqali ro'yxatdan o'tganlar faol bo'lishi kerak
+                user.setActive(true);
+
+                UserRole userRole = roleRepository.findByName("USER")
+                        .orElseThrow(() -> new ResourceNotFoundException("ROLE NOT FOUND"));
+                user.setRole(new HashSet<>(Set.of(userRole)));
+                user.setProfilePic(picPath);
+                User save = userRepository.save(user);
+
+                // Yangi foydalanuvchi uchun token yaratish
+                token = jwtUtil.generateToken(save.getUsername());
+                Token t = new Token();
+                t.setToken(token);
+                t.setUser(save);
+                t.setType("Bearer");
+                t.setCreatedAt(LocalDateTime.now());
+                t.setExpiredAt(LocalDateTime.now().plusDays(10));
+                tokenRepository.save(t);
+
+                return ApiResponse.builder()
+                        .status(HttpStatus.OK)
+                        .message("Google authorized")
+                        .data(token)
+                        .meta(Map.of("user", this.userMapper.toDto(user)))
+                        .build();
             }
-            user = new User();
-            user.setEmail(email);
-            user.setFullname(fullName);
-            UserRole userRole = roleRepository.findByName("USER")
-                    .orElseThrow(() -> new ResourceNotFoundException("ROLE NOT FOUND"));
-            user.setRole(new HashSet<>(Set.of(userRole)));
-            user.setProfilePic(picPath);
-            User save = userRepository.save(user);
-
-            String token = jwtUtil.generateToken(save.getUsername());
-            Token t = new Token();
-            t.setToken(token);
-            t.setUser(save);
-            t.setType("Bearer");
-            t.setCreatedAt(LocalDateTime.now());
-            t.setExpiredAt(LocalDateTime.now().plusDays(10));
-            tokenRepository.save(t);
-
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("Google authorized")
-                    .data(token)
-                    .meta(Map.of("user", this.userMapper.toDto(user)))
-                    .build();
         }
         return ApiResponse.builder()
                 .status(HttpStatus.BAD_REQUEST)
@@ -402,6 +422,18 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @Override
+    public ApiResponse deleteUser(User user) {
+        user.setActive(false);
+        tokenRepository.deleteByUserId(user.getId());
+        userRepository.save(user);
+        return ApiResponse.builder()
+                .status(HttpStatus.OK)
+                .message("User deleted successfully")
+                .build();
+
+
+    }
 
 
 }

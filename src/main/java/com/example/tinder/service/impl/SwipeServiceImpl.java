@@ -46,6 +46,23 @@ public class SwipeServiceImpl implements SwipeService {
                     .status(HttpStatus.NOT_FOUND)
                     .build();
         }
+        User swiper = swiperOpt.get();
+        User swiped = swipedOpt.get();
+
+        if (!swiper.isActive()) {
+            return ApiResponse.builder()
+                    .message("Your account is inactive. Please register again.")
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
+
+        if (!swiped.isActive()) {
+            return ApiResponse.builder()
+                    .message("This user is no longer available.")
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+
 
         Optional<Swipe> optionalSwipe = swipeRepository.findBySwiperIdAndSwipedId(swiperId, swipedId);
         Swipe swipe;

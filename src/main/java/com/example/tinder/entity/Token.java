@@ -2,7 +2,6 @@ package com.example.tinder.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -11,17 +10,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "token")
+@Table(name = "tokens")
 public class Token extends BaseEntity {
-    @Column(columnDefinition = "TEXT")
-    private String token;
-    private String type;
-
-    private LocalDateTime expiredAt;
-    private LocalDateTime createdAt;
-
-    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @ToString.Exclude
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true) // Foydalanuvchi uchun bitta token bo'lishini ta'minlaydi
     private User user;
+
+    @Column(nullable = false, unique = true, length = 512) // JWT tokenlari uzun bo'lishi mumkin
+    private String token;
+
+    private String type; // masalan, "Bearer"
+    private LocalDateTime createdAt;
+    private LocalDateTime expiredAt;
 }

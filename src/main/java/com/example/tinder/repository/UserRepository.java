@@ -3,6 +3,8 @@ package com.example.tinder.repository;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,4 +56,9 @@ public interface UserRepository extends JpaRepository<User,Long> {
 """)
     Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
 
+    Optional<User> findByUsernameAndActive(String username, boolean active);
+
+    boolean existsByEmailAndActiveTrue(@NotBlank(message = "email cannot be null or empty") @Email String email);
+
+    boolean existsByUsernameAndActiveTrue(String username);
 }

@@ -10,9 +10,9 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "users_location")
-public class UserLocation extends BaseEntity{
+public class UserLocation extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_location", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true) // 'user_location' o'rniga 'user_id' va 'unique = true' qo'shildi
     private User user;
     private String latitude;
     private String longitude;

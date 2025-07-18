@@ -63,9 +63,11 @@ public class UserLocationServiceImpl implements UserLocationService {
         return userLocationRepository.findAll()
                 .stream()
                 .filter(loc -> !loc.getUser().getId().equals(userId))
+                .filter(loc -> loc.getUser().isActive()) // 🔒 faqat active userlar
                 .filter(loc -> isValidLocation(loc, lat1, lon1, radiusKm))
                 .map(loc -> toUserDto(loc.getUser()))
                 .toList();
+
     }
 
     private boolean isValidLocation(UserLocation loc, double lat1, double lon1, double radiusKm) {

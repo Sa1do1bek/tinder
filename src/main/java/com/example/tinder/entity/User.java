@@ -33,6 +33,9 @@ public class User extends BaseEntity implements UserDetails {
     private List<ProfilePicture> profilePictures;
     private String profilePic;
     private String bio;
+    @Column(nullable = false)
+    private boolean active = true;
+
     @ToString.Exclude
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -77,6 +80,7 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.active;
     }
+
 }

@@ -4,24 +4,24 @@ import com.example.tinder.service.S3Service;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.SetBucketPolicyArgs;
+import io.minio.RemoveObjectArgs;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.*;
 import java.net.URLConnection;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
-
     private final String bucketName = "s3-tenzorsoft";
     private final String endpoint = "https://s3.tenzorsoft.uz";
     private final String accessKey = "REMOVED";
     private final String secretKey = "REMOVED";
-
     private MinioClient minioClient;
 
     @PostConstruct
@@ -30,8 +30,12 @@ public class S3ServiceImpl implements S3Service {
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
                 .build();
-
         try {
+            boolean found = minioClient.bucketExists(io.minio.BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!found) {
+                minioClient.makeBucket(io.minio.MakeBucketArgs.builder().bucket(bucketName).build());
+            }
+
             String policy = """
                     {
                       "Version": "2012-10-17",
@@ -45,7 +49,6 @@ public class S3ServiceImpl implements S3Service {
                       ]
                     }
                     """.formatted(bucketName);
-
             minioClient.setBucketPolicy(
                     SetBucketPolicyArgs.builder()
                             .bucket(bucketName)
@@ -54,34 +57,23 @@ public class S3ServiceImpl implements S3Service {
             );
             System.out.println("MinIO bucket made public.");
         } catch (Exception e) {
-            System.err.println("MinIO policy error: " + e.getMessage());
+            System.err.println("MinIO policy error or bucket creation error: " + e.getMessage());
         }
     }
 
     @Override
     public String uploadFile(MultipartFile file) {
-
         try {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            File tempFile = File.createTempFile("upload-", ".tmp");
-
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                fos.write(file.getBytes());
-            }
-
-            try (InputStream is = new FileInputStream(tempFile)) {
-                minioClient.putObject(
-                        PutObjectArgs.builder()
-                                .bucket(bucketName)
-                                .object(fileName)
-                                .stream(is, tempFile.length(), -1)
-                                .contentType(file.getContentType())
-                                .build()
-                );
-            }
-
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build()
+            );
             return endpoint + "/" + bucketName + "/" + fileName;
-
         } catch (Exception e) {
             throw new RuntimeException("MinIO upload failed: " + e.getMessage());
         }
@@ -93,32 +85,43 @@ public class S3ServiceImpl implements S3Service {
             String fileName = UUID.randomUUID() + ".jpg";
             String mimeType = detectMimeType(bytes);
 
-            File tempFile = File.createTempFile("upload-", ".tmp");
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                fos.write(bytes);
-            }
-
-            try (InputStream is = new FileInputStream(tempFile)) {
+            try (InputStream is = new ByteArrayInputStream(bytes)) {
                 minioClient.putObject(
                         PutObjectArgs.builder()
                                 .bucket(bucketName)
                                 .object(fileName)
-                                .stream(is, tempFile.length(), -1)
+                                .stream(is, bytes.length, -1)
                                 .contentType(mimeType)
                                 .build()
                 );
             }
-
             return endpoint + "/" + bucketName + "/" + fileName;
-
         } catch (Exception e) {
             throw new RuntimeException("MinIO upload failed: " + e.getMessage());
         }
     }
 
+    @Override
+    public void deleteFile(String fileUrl) {
+        try {
+            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+            log.info("File deleted from MinIO: {}", fileName);
+        } catch (Exception e) {
+            log.error("Error deleting file from MinIO: {}", e.getMessage());
+            throw new RuntimeException("Faylni o'chirishda xatolik yuz berdi: " + e.getMessage());
+        }
+    }
+
     private String detectMimeType(byte[] bytes) {
         try (InputStream is = new ByteArrayInputStream(bytes)) {
-            return URLConnection.guessContentTypeFromStream(is);
+            String mimeType = URLConnection.guessContentTypeFromStream(is);
+            return mimeType != null ? mimeType : "application/octet-stream";
         } catch (IOException e) {
             return "application/octet-stream";
         }

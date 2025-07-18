@@ -38,4 +38,7 @@ public interface UserService {
 
     ApiResponse getAllRejectUsers(PageRequest pageRequest, Long userId);
     ApiResponse getAllAcceptUsers(PageRequest pageRequest, Long userId);
+
+
+    ApiResponse deleteUser(User user);
 }

@@ -98,9 +98,16 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     public Optional<Conversation> getOrCreateConversationEntity(Long user1Id, Long user2Id) {
+        User user1 = userRepository.findById(user1Id)
+                .orElseThrow(() -> new IllegalArgumentException("User1 not found"));
+        User user2 = userRepository.findById(user2Id)
+                .orElseThrow(() -> new IllegalArgumentException("User2 not found"));
+
+
+        if (!user1.isActive() || !user2.isActive()) return Optional.empty();
+
+
         return findConversationBetween(user1Id, user2Id).or(() -> {
-            User user1 = userRepository.findById(user1Id).orElse(null);
-            User user2 = userRepository.findById(user2Id).orElse(null);
 
             if (user1 == null || user2 == null) return Optional.empty();
 

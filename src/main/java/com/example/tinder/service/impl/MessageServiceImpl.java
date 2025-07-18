@@ -37,7 +37,19 @@ public class MessageServiceImpl implements MessageService {
         try {
             User sender = getUserOrThrow(chatMessageDto.getSenderId());
             User receiver = getUserOrThrow(chatMessageDto.getReceiverId());
+            if (!sender.isActive()) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.FORBIDDEN)
+                        .message("Sender account is inactive")
+                        .build();
+            }
 
+            if (!receiver.isActive()) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.FORBIDDEN)
+                        .message("Receiver account is inactive")
+                        .build();
+            }
             Conversation conversation = conversationService
                     .getOrCreateConversationEntity(sender.getId(), receiver.getId())
                     .orElseThrow(() -> new RuntimeException("Conversation not found or could not be created"));
