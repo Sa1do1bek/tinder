@@ -139,7 +139,6 @@ public class AuthServiceImpl implements AuthService {
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
 
-            // Asosan mutable collectionlar ishlatish kerak
             user.setUsername(pending.getUsername());
             user.setPassword(pending.getPassword());
             user.setStatus(UserStatus.ACTIVE);
@@ -147,13 +146,11 @@ public class AuthServiceImpl implements AuthService {
             user.setBirthDate(pending.getBirthDate());
             user.setFullname(pending.getFullName());
 
-            // oldingi immutable to'plamlar o‘rniga yangi ArrayList() beriladi
             user.getProfilePictures().clear();
             user.getUserInterests().clear();
             user.setBio(null);
             user.setProfilePic(null);
 
-            // UserLocation'ni foydalanuvchi ID'si bo'yicha to'g'ri o'chirish
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
 
             user.setRole(roles);
@@ -170,22 +167,18 @@ public class AuthServiceImpl implements AuthService {
                     .fullname(pending.getFullName())
                     .role(roles)
                     .active(true)
-                    .profilePictures(new ArrayList<>()) // e'tibor bering
-                    .userInterests(new ArrayList<>())   // e'tibor bering
+                    .profilePictures(new ArrayList<>())
+                    .userInterests(new ArrayList<>())
                     .bio(null)
                     .build();
         }
 
-// Saqlash
         User savedUser = userRepository.save(user);
 
-// Yangi token yaratishdan oldin, ushbu foydalanuvchi uchun mavjud tokenlarni o'chirish
         tokenRepository.deleteByUserId(savedUser.getId());
 
-// Qurilmani qo‘shish
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
-// Token yaratish
         String jwtToken = jwtUtil.generateToken(savedUser.getUsername());
         Token token = Token.builder()
                 .user(savedUser)
@@ -196,10 +189,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         tokenRepository.save(token);
 
-// Pending foydalanuvchini o‘chirish
         pendingUserRepository.delete(pending);
 
-// Javobni qaytarish
         return ApiResponse.builder()
                 .status(HttpStatus.OK)
                 .message("User registered successfully")
@@ -243,15 +234,11 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        // --- NonUniqueResultException uchun tuzatish ---
-        // Yangi token uchun noyoblikni ta'minlash maqsadida ushbu foydalanuvchi uchun barcha mavjud tokenlarni o'chirish
         this.tokenRepository.deleteByUserId(user.getId());
 
-        // Yangi token yaratish
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String userToken = jwtUtil.generateToken(userDetails.getUsername());
 
-        // Yangi tokenni saqlash
         Token newToken = Token.builder()
                 .user(user)
                 .token(userToken)
@@ -260,7 +247,6 @@ public class AuthServiceImpl implements AuthService {
                 .expiredAt(LocalDateTime.now().plusDays(10))
                 .build();
         this.tokenRepository.save(newToken);
-        // --- NonUniqueResultException uchun tuzatish tugadi ---
 
         Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
                 .orElse(null);
@@ -284,7 +270,7 @@ public class AuthServiceImpl implements AuthService {
                         .code(0)
                         .status(HttpStatus.OK)
                         .message("Code sent")
-                        .data(userToken) // Yangi yaratilgan tokenni qaytarish
+                        .data(userToken)
                         .meta(Map.of("user", this.userMapper.toDto(user)))
                         .build();
             }
@@ -301,7 +287,7 @@ public class AuthServiceImpl implements AuthService {
                 .code(1)
                 .status(HttpStatus.OK)
                 .message("SUCCESS")
-                .data(userToken) // Yangi yaratilgan tokenni qaytarish
+                .data(userToken)
                 .meta(Map.of("user", this.userMapper.toDto(user)))
                 .build();
     }
@@ -396,10 +382,8 @@ public class AuthServiceImpl implements AuthService {
                     this.codeRepository.save(cc);
                 }
 
-                // Tokenni topish o'rniga, yangi token yaratilganini qaytaramiz
-                // Chunki loginByEmail metodida allaqachon yangi token yaratilgan
-                String currentToken = jwtUtil.generateToken(user.getUsername()); // Yoki loginByEmail'dan qaytarilgan tokenni saqlab ishlatish
-                map.put("token", currentToken); // Yangi yaratilgan tokenni qaytarish
+
+                String currentToken = jwtUtil.generateToken(user.getUsername());
                 map.put("user", this.userMapper.toDto(user));
 
                 return ApiResponse.builder()
