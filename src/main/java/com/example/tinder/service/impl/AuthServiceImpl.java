@@ -45,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final Utils utils;
     private final PendingUserRepository pendingUserRepository;
+    private final UserLocationRepository userLocationRepository;
 
     @Override
     public ApiResponse registerByEmail(RegisterDto dto) {
@@ -54,104 +55,160 @@ public class AuthServiceImpl implements AuthService {
                     .message("Invalid email format")
                     .build();
         }
-
-        if (userRepository.existsByEmail(dto.getEmail())) {
+        if (userRepository.existsByEmailAndActiveTrue(dto.getEmail())) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
-                    .message("Email already registered")
+                    .message("Email already taken")
                     .build();
         }
-
-        if (userRepository.existsByUsername(dto.getUsername())) {
+        if (userRepository.existsByUsernameAndActiveTrue(dto.getUsername())) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .message("Username already taken")
                     .build();
         }
-
         String code = utils.getCode();
-
         if (!utils.sendCodeToMail(dto.getEmail(), code)) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .message("Error sending verification code")
                     .build();
         }
-
-        PendingUser pendingUser = PendingUser.builder()
-                .email(dto.getEmail())
-                .username(dto.getUsername())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .fullName(dto.getFullName())
-                .gender(dto.getGender())
-                .birthDate(dto.getBirthDate())
-                .deviceId(dto.getDeviceId())
-                .role(dto.getRole())
-                .code(code)
-                .createdAt(LocalDateTime.now())
-                .build();
-
+        Optional<PendingUser> optionalPendingUser = pendingUserRepository.findByEmail(dto.getEmail());
+        PendingUser pendingUser = optionalPendingUser.orElse(new PendingUser());
+        pendingUser.setEmail(dto.getEmail());
+        pendingUser.setUsername(dto.getUsername());
+        pendingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
+        pendingUser.setFullName(dto.getFullName());
+        pendingUser.setGender(dto.getGender());
+        pendingUser.setBirthDate(dto.getBirthDate());
+        pendingUser.setDeviceId(dto.getDeviceId());
+        pendingUser.setRole(dto.getRole());
+        pendingUser.setCode(code);
+        pendingUser.setCreatedAt(LocalDateTime.now());
         pendingUserRepository.save(pendingUser);
-
         return ApiResponse.builder()
                 .status(HttpStatus.OK)
                 .message("Verification code sent to email")
                 .build();
     }
 
-
     @Override
     @Transactional
     public ApiResponse verify(VerifyDto dto) {
-        PendingUser pending = pendingUserRepository.findByEmail(dto.getEmail())
-                .orElse(null);
+        Optional<PendingUser> optionalPending = pendingUserRepository.findByEmail(dto.getEmail());
 
-        if (pending == null || !pending.getCode().equals(dto.getCode())) {
+        if (optionalPending.isEmpty()) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
                     .message("Invalid verification code or email")
                     .build();
         }
 
+        PendingUser pending = optionalPending.get();
+
+        System.out.println("Pending code: " + pending.getCode());
+        System.out.println("Dto code: " + dto.getCode());
+
+        if (!pending.getCode().equals(dto.getCode())) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Invalid verification code or email")
+                    .build();
+        }
+
+
+        long EXPIRATION_MINUTES = 5;
+        if (pending.getCreatedAt().plusMinutes(EXPIRATION_MINUTES).isBefore(LocalDateTime.now())) {
+            pendingUserRepository.delete(pending);
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Verification code has expired. Please register again.")
+                    .build();
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
         UserRole role = roleRepository.findByName(pending.getRole()).orElse(null);
 
-        User user = User.builder()
-                .email(pending.getEmail())
-                .username(pending.getUsername())
-                .password(pending.getPassword())
-                .status(UserStatus.ACTIVE)
-                .gender(pending.getGender())
-                .birthDate(pending.getBirthDate())
-                .fullname(pending.getFullName())
-                .role(role != null ? Set.of(role) : new HashSet<>())
-                .build();
+        User user;
+        Set<UserRole> roles = new HashSet<>();
+        if (role != null) {
+            roles.add(role);
+        }
 
-        User saved = userRepository.save(user);
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
 
-        Device device = deviceService.addTrustedDevice(saved.getId(), pending.getDeviceId());
+            // Asosan mutable collectionlar ishlatish kerak
+            user.setUsername(pending.getUsername());
+            user.setPassword(pending.getPassword());
+            user.setStatus(UserStatus.ACTIVE);
+            user.setGender(pending.getGender());
+            user.setBirthDate(pending.getBirthDate());
+            user.setFullname(pending.getFullName());
 
-        String jwtToken = jwtUtil.generateToken(user.getUsername());
+            // oldingi immutable to'plamlar o‘rniga yangi ArrayList() beriladi
+            user.getProfilePictures().clear();
+            user.getUserInterests().clear();
+            user.setBio(null);
+            user.setProfilePic(null);
 
+            // UserLocation'ni foydalanuvchi ID'si bo'yicha to'g'ri o'chirish
+            userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
+
+            user.setRole(roles);
+            user.setActive(true);
+            user.setUpdatedAt(LocalDateTime.now());
+        } else {
+            user = User.builder()
+                    .email(pending.getEmail())
+                    .username(pending.getUsername())
+                    .password(pending.getPassword())
+                    .status(UserStatus.ACTIVE)
+                    .gender(pending.getGender())
+                    .birthDate(pending.getBirthDate())
+                    .fullname(pending.getFullName())
+                    .role(roles)
+                    .active(true)
+                    .profilePictures(new ArrayList<>()) // e'tibor bering
+                    .userInterests(new ArrayList<>())   // e'tibor bering
+                    .bio(null)
+                    .build();
+        }
+
+// Saqlash
+        User savedUser = userRepository.save(user);
+
+// Yangi token yaratishdan oldin, ushbu foydalanuvchi uchun mavjud tokenlarni o'chirish
+        tokenRepository.deleteByUserId(savedUser.getId());
+
+// Qurilmani qo‘shish
+        deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
+
+// Token yaratish
+        String jwtToken = jwtUtil.generateToken(savedUser.getUsername());
         Token token = Token.builder()
-                .user(saved)
+                .user(savedUser)
                 .token(jwtToken)
                 .type("Bearer")
                 .createdAt(LocalDateTime.now())
                 .expiredAt(LocalDateTime.now().plusDays(10))
                 .build();
-
         tokenRepository.save(token);
 
+// Pending foydalanuvchini o‘chirish
         pendingUserRepository.delete(pending);
 
+// Javobni qaytarish
         return ApiResponse.builder()
                 .status(HttpStatus.OK)
-                .message("User registered")
+                .message("User registered successfully")
                 .data(Map.of(
                         "token", jwtToken,
-                        "user", userMapper.toDto(saved)
+                        "user", userMapper.toDto(savedUser)
                 ))
                 .build();
+
     }
 
 
@@ -176,13 +233,6 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        if (!utils.checkEmail(dto.getEmail())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid credentials")
-                    .build();
-        }
-
         try {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
             authenticationManager.authenticate(authentication);
@@ -193,19 +243,24 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        Token token = this.tokenRepository.findByUserId(user.getId()).orElse(null);
-        String userToken = null;
-        if (token != null) {
-            userToken = token.getToken();
-            if (token.getExpiredAt() != null && token.getExpiredAt().isBefore(LocalDateTime.now())) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-                userToken = jwtUtil.generateToken(userDetails.getUsername());
-                token.setToken(userToken);
-                token.setCreatedAt(LocalDateTime.now());
-                token.setExpiredAt(LocalDateTime.now().plusDays(10));
-                this.tokenRepository.save(token);
-            }
-        }
+        // --- NonUniqueResultException uchun tuzatish ---
+        // Yangi token uchun noyoblikni ta'minlash maqsadida ushbu foydalanuvchi uchun barcha mavjud tokenlarni o'chirish
+        this.tokenRepository.deleteByUserId(user.getId());
+
+        // Yangi token yaratish
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String userToken = jwtUtil.generateToken(userDetails.getUsername());
+
+        // Yangi tokenni saqlash
+        Token newToken = Token.builder()
+                .user(user)
+                .token(userToken)
+                .type("Bearer")
+                .createdAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusDays(10))
+                .build();
+        this.tokenRepository.save(newToken);
+        // --- NonUniqueResultException uchun tuzatish tugadi ---
 
         Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
                 .orElse(null);
@@ -229,17 +284,24 @@ public class AuthServiceImpl implements AuthService {
                         .code(0)
                         .status(HttpStatus.OK)
                         .message("Code sent")
-                        .data(userToken)
+                        .data(userToken) // Yangi yaratilgan tokenni qaytarish
                         .meta(Map.of("user", this.userMapper.toDto(user)))
                         .build();
             }
+        }
+
+        if (!user.isActive()) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.FORBIDDEN)
+                    .message("Account deleted. Please register again.")
+                    .build();
         }
 
         return ApiResponse.builder()
                 .code(1)
                 .status(HttpStatus.OK)
                 .message("SUCCESS")
-                .data(userToken)
+                .data(userToken) // Yangi yaratilgan tokenni qaytarish
                 .meta(Map.of("user", this.userMapper.toDto(user)))
                 .build();
     }
@@ -256,6 +318,12 @@ public class AuthServiceImpl implements AuthService {
 
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!user.isActive()) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.FORBIDDEN)
+                    .message("Account deleted. Please register again.")
+                    .build();
+        }
         Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
 
@@ -289,6 +357,12 @@ public class AuthServiceImpl implements AuthService {
 
         User user = this.userRepository.findByEmail(email).orElse(null);
         if (user != null) {
+            if (!user.isActive()) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.FORBIDDEN)
+                        .message("Account deleted. Please register again.")
+                        .build();
+            }
             Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                     .orElse(null);
             if (device != null) {
@@ -322,8 +396,10 @@ public class AuthServiceImpl implements AuthService {
                     this.codeRepository.save(cc);
                 }
 
-                Token token = this.tokenRepository.findByUserId(user.getId()).orElse(null);
-                map.put("token", token != null ? token.getToken() : "");
+                // Tokenni topish o'rniga, yangi token yaratilganini qaytaramiz
+                // Chunki loginByEmail metodida allaqachon yangi token yaratilgan
+                String currentToken = jwtUtil.generateToken(user.getUsername()); // Yoki loginByEmail'dan qaytarilgan tokenni saqlab ishlatish
+                map.put("token", currentToken); // Yangi yaratilgan tokenni qaytarish
                 map.put("user", this.userMapper.toDto(user));
 
                 return ApiResponse.builder()
@@ -339,4 +415,6 @@ public class AuthServiceImpl implements AuthService {
                 .message("User not found")
                 .build();
     }
+
+
 }

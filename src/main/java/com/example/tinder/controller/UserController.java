@@ -115,5 +115,9 @@ public class UserController {
         return userService.updateUserGBI(user.getId(), dto);
     }
 
+    @DeleteMapping("/deleteUser")
+    public ApiResponse deleteUser(@AuthenticationPrincipal User user) {
+        return userService.deleteUser(user);
+    }
 
 }
