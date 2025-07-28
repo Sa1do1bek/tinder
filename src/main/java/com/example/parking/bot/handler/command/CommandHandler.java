@@ -94,19 +94,16 @@ public class CommandHandler {
     }
 
     private void handleServiceCommands(UserBot user, String text, ParkingTelegramBot bot) {
-        // Debug ma'lumotlari
         System.out.println("=== SERVICE COMMAND DEBUG ===");
         System.out.println("Qabul qilingan matn: '" + text + "'");
         System.out.println("Matn uzunligi: " + text.length());
         System.out.println("User holati: " + user.getState());
 
-        // Har bir belgini tekshirish
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             System.out.println("Index " + i + ": '" + c + "' (Unicode: " + (int)c + ")");
         }
 
-        // KeyboardFactory'dan kelgan tugma matnini tekshirish
         System.out.println("Kutilayotgan matnlar:");
         System.out.println("1. '🛡 Sug'urta' uzunlik: " + "🛡 Sug'urta".length());
         System.out.println("2. '🔧 Texnik ko'rik' uzunlik: " + "🔧 Texnik ko'rik".length());
@@ -114,7 +111,6 @@ public class CommandHandler {
         System.out.println("4. '🔙 Orqaga' uzunlik: " + "🔙 Orqaga".length());
 
         try {
-            // Matnni trim qilish va solishtirish
             String cleanText = text.trim();
             System.out.println("Tozalangan matn: '" + cleanText + "'");
 
@@ -141,7 +137,6 @@ public class CommandHandler {
                     System.out.println("❌ Default case'ga tushdi");
                     System.out.println("Qabul qilingan: '" + cleanText + "'");
 
-                    // Har bir case bilan alohida solishtirish
                     System.out.println("Sug'urta bilan solishtirish: " + cleanText.equals("🛡 Sug'urta"));
                     System.out.println("Texnik ko'rik bilan solishtirish: " + cleanText.equals("🔧 Texnik ko'rik"));
                     System.out.println("Avtomobil moyi bilan solishtirish: " + cleanText.equals("🛢 Avtomobil moyi"));
@@ -301,12 +296,46 @@ public class CommandHandler {
             userService.updateUserState(chatId, UserState.WAITING_PHONE);
         } else {
             UserBot user = userOpt.get();
-            if (user.getState() == UserState.REGISTERED) {
+
+            if (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty() &&
+                    user.getState() == UserState.REGISTERED) {
                 sendMessage(bot, chatId, "🏠 Xush kelibsiz! Quyidagi menyudan kerakli bo'limni tanlang:",
                         keyboardFactory.getMainMenuKeyboard());
             } else {
-                handleNewUserState(user, "/start", bot);
+                if (user.getState() == UserState.WAITING_PHONE || user.getPhoneNumber() == null) {
+                    String welcomeText = "📱 Ro'yxatdan o'tishni yakunlash uchun telefon raqamingizni ulashing:";
+                    sendMessage(bot, chatId, welcomeText, keyboardFactory.getPhoneRequestKeyboard());
+                    userService.updateUserState(chatId, UserState.WAITING_PHONE);
+                } else {
+                    handleUserByState(user, bot);
+                }
             }
+        }
+    }
+
+    private void handleUserByState(UserBot user, ParkingTelegramBot bot) {
+        switch (user.getState()) {
+            case REGISTERED:
+                sendMessage(bot, user.getChatId(), "🏠 Asosiy menyu:",
+                        keyboardFactory.getMainMenuKeyboard());
+                break;
+            case WAITING_PHONE:
+                sendMessage(bot, user.getChatId(), "📱 Telefon raqamingizni ulash tugmasini bosing.",
+                        keyboardFactory.getPhoneRequestKeyboard());
+                break;
+            case SETTINGS_MENU:
+                sendMessage(bot, user.getChatId(), "⚙️ Sozlamalar menyusi:",
+                        keyboardFactory.getSettingsKeyboard());
+                break;
+            case SERVICE:
+                sendMessage(bot, user.getChatId(), "Quyidagi xizmatlardan birini tanlang:",
+                        keyboardFactory.getServiceKeyboard());
+                break;
+            default:
+                sendMessage(bot, user.getChatId(), "🏠 Asosiy menyu:",
+                        keyboardFactory.getMainMenuKeyboard());
+                userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+                break;
         }
     }
 
@@ -326,7 +355,8 @@ public class CommandHandler {
             case "🚗 Avtomobil Egasini Topish":
                 sendMessage(bot, user.getChatId(), "🔍 Qidirilayotgan avtomobilning davlat raqamini kiriting:\n\n" +
                         "📝 Format: 01 A 123 AA\n" +
-                        "💡 Masalan: 01 A 123 AA yoki 01A123AA");
+                        "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
+                        "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
                 userService.updateUserState(user.getChatId(), UserState.WAITING_LICENSE_PLATE);
                 break;
 
@@ -338,7 +368,8 @@ public class CommandHandler {
                 tempCarDataService.createOrUpdate(user.getChatId());
                 sendMessage(bot, user.getChatId(), "🚗 Avtomobilingizning davlat raqamini kiriting:\n\n" +
                         "📝 Format: 01 A 123 AA\n" +
-                        "💡 Masalan: 01 A 123 AA yoki 01A123AA");
+                        "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
+                        "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
                 userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_NUMBER);
                 break;
 
@@ -353,10 +384,12 @@ public class CommandHandler {
                 break;
 
             case "🔙 Asosiy Menyu":
+            case "/start":
                 sendMessage(bot, user.getChatId(), "🏠 Asosiy menyu:",
                         keyboardFactory.getMainMenuKeyboard());
                 userService.updateUserState(user.getChatId(), UserState.REGISTERED);
                 break;
+
             case "📊 Service":
                 sendMessage(bot, user.getChatId(), "Quyidagi xizmatlardan birini tanlang:",
                         keyboardFactory.getServiceKeyboard());
@@ -364,8 +397,9 @@ public class CommandHandler {
                 break;
 
             default:
-                sendMessage(bot, user.getChatId(), "❓ Noma'lum buyruq. Iltimos, menyudan tanlang.",
+                sendMessage(bot, user.getChatId(), "❓ Noma'lum buyruq. Iltimos, quyidagi tugmalardan birini tanlang:",
                         keyboardFactory.getMainMenuKeyboard());
+                break;
         }
     }
 
@@ -389,10 +423,31 @@ public class CommandHandler {
     }
 
     private void handleLicensePlateInput(UserBot user, String text, ParkingTelegramBot bot) {
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu")) {
+            sendMessage(bot, user.getChatId(), "🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            return;
+        }
+
+        if (text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            return;
+        }
+
         if (!carService.isValidLicensePlate(text)) {
-            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri format! Iltimos, to'g'ri formatda kiriting:\n\n" +
+            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri format! Iltimos, avtomobil raqamini to'g'ri formatda kiriting:\n\n" +
                     "📝 Format: 01 A 123 AA\n" +
-                    "💡 Masalan: 01 A 123 AA yoki 01A123AA");
+                    "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
+                    "🔙 Asosiy menyuga qaytish uchun /start buyrug'ini yuboring.");
             return;
         }
 
@@ -402,7 +457,8 @@ public class CommandHandler {
         if (carOpt.isEmpty()) {
             sendMessage(bot, user.getChatId(), "❌ Bu raqamli avtomobil topilmadi.\n\n" +
                     "🔍 Avtomobil egasi hali botdan ro'yxatdan o'tmagan bo'lishi mumkin.\n" +
-                    "💡 Ularni botdan foydalanishga taklif qiling!");
+                    "💡 Ularni botdan foydalanishga taklif qiling!\n\n" +
+                    "🔙 Asosiy menyuga qaytish uchun /start buyrug'ini yuboring.");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             return;
         }
@@ -411,7 +467,8 @@ public class CommandHandler {
         UserBot owner = car.getOwner();
 
         if (owner.getChatId().equals(user.getChatId())) {
-            sendMessage(bot, user.getChatId(), "ℹ️ Bu sizning avtomobilingiz!");
+            sendMessage(bot, user.getChatId(), "ℹ️ Bu sizning avtomobilingiz!\n\n" +
+                    "🔙 Asosiy menyuga qaytish uchun /start buyrug'ini yuboring.");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             return;
         }
@@ -426,52 +483,151 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.REGISTERED);
     }
 
+    private boolean isMainMenuButton(String text) {
+        return text.equals("🚗 Avtomobil Egasini Topish") ||
+                text.equals("🚙 Mening Avtomobillarim") ||
+                text.equals("➕ Avtomobil Qo'shish") ||
+                text.equals("📊 Tarix") ||
+                text.equals("⚙️ Sozlamalar") ||
+                text.equals("📊 Service");
+    }
+
     private void handleCarNumberInput(UserBot user, String text, ParkingTelegramBot bot) {
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            return;
+        }
+
         if (!carService.isValidLicensePlate(text)) {
-            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri format! Iltimos, to'g'ri formatda kiriting:\n\n" +
+            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri format! Iltimos, avtomobil raqamini to'g'ri formatda kiriting:\n\n" +
                     "📝 Format: 01 A 123 AA\n" +
-                    "💡 Masalan: 01 A 123 AA yoki 01A123AA");
+                    "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
             return;
         }
 
         String formattedPlate = carService.formatLicensePlate(text);
 
         if (carService.isLicensePlateExists(formattedPlate)) {
-            sendMessage(bot, user.getChatId(), "❌ Bu raqamli avtomobil allaqachon ro'yxatdan o'tgan!");
+            sendMessage(bot, user.getChatId(), "❌ Bu raqamli avtomobil allaqachon ro'yxatdan o'tgan!\n\n" +
+                    "🔙 Asosiy menyuga qaytish uchun /start buyrug'ini yuboring.");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             tempCarDataService.delete(user.getChatId());
             return;
         }
 
         tempCarDataService.updateLicensePlate(user.getChatId(), formattedPlate);
-        sendMessage(bot, user.getChatId(), "🏷️ Avtomobil markasini kiriting:\n\n💡 Masalan: Toyota, BMW, Chevrolet");
+        sendMessage(bot, user.getChatId(), "🏷️ Avtomobil markasini kiriting:\n\n💡 Masalan: Toyota, BMW, Chevrolet\n\n" +
+                "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
         userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_BRAND);
     }
 
     private void handleCarBrandInput(UserBot user, String text, ParkingTelegramBot bot) {
-        tempCarDataService.updateBrand(user.getChatId(), text);
-        sendMessage(bot, user.getChatId(), "🚗 Avtomobil modelini kiriting:\n\n💡 Masalan: Camry, X5, Malibu");
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            return;
+        }
+
+        if (text.trim().length() < 2) {
+            sendMessage(bot, user.getChatId(), "❌ Iltimos, avtomobil markasini to'liq kiriting.\n\n" +
+                    "💡 Masalan: Toyota, BMW, Chevrolet\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        tempCarDataService.updateBrand(user.getChatId(), text.trim());
+        sendMessage(bot, user.getChatId(), "🚗 Avtomobil modelini kiriting:\n\n💡 Masalan: Camry, X5, Malibu\n\n" +
+                "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
         userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_MODEL);
     }
 
     private void handleCarModelInput(UserBot user, String text, ParkingTelegramBot bot) {
-        tempCarDataService.updateModel(user.getChatId(), text);
-        sendMessage(bot, user.getChatId(), "🎨 Avtomobil rangini kiriting:\n\n💡 Masalan: Oq, Qora, Ko'k, Qizil");
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            return;
+        }
+
+        if (text.trim().length() < 1) {
+            sendMessage(bot, user.getChatId(), "❌ Iltimos, avtomobil modelini kiriting.\n\n" +
+                    "💡 Masalan: Camry, X5, Malibu\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        tempCarDataService.updateModel(user.getChatId(), text.trim());
+        sendMessage(bot, user.getChatId(), "🎨 Avtomobil rangini kiriting:\n\n💡 Masalan: Oq, Qora, Ko'k, Qizil\n\n" +
+                "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
         userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_COLOR);
     }
 
     private void handleCarColorInput(UserBot user, String text, ParkingTelegramBot bot) {
+        // Asosiy menyu tugmalarini tekshiramiz
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        // Bekor qilish tugmalari
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            tempCarDataService.delete(user.getChatId());
+            return;
+        }
+
+        // Bo'sh yoki juda qisqa matn tekshiruvi
+        if (text.trim().length() < 2) {
+            sendMessage(bot, user.getChatId(), "❌ Iltimos, avtomobil rangini kiriting.\n\n" +
+                    "💡 Masalan: Oq, Qora, Ko'k, Qizil\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
         Optional<TempCarData> tempDataOpt = tempCarDataService.findByChatId(user.getChatId());
         if (tempDataOpt.isEmpty()) {
-            sendMessage(bot, user.getChatId(), "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.");
+            sendMessage(bot, user.getChatId(), "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             return;
         }
 
         TempCarData tempData = tempDataOpt.get();
-        tempCarDataService.updateColor(user.getChatId(), text);
+        tempCarDataService.updateColor(user.getChatId(), text.trim());
 
-        Car savedCar = carService.addCar(user, tempData.getLicensePlate(), tempData.getBrand(), tempData.getModel(), text);
+        Car savedCar = carService.addCar(user, tempData.getLicensePlate(), tempData.getBrand(), tempData.getModel(), text.trim());
 
         String successMessage = String.format("✅ Avtomobil muvaffaqiyatli qo'shildi!\n\n" +
                         "🚗 Raqam: %s\n" +

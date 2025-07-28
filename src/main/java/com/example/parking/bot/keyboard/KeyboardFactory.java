@@ -226,12 +226,12 @@ public class KeyboardFactory {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         InlineKeyboardButton insonButton = new InlineKeyboardButton();
-        insonButton.setText("🛡 INSON sug'urta");
-        insonButton.setUrl("https://inson.uz");
+        insonButton.setText("🛡 Kafolat sug'urta");
+        insonButton.setUrl("https://online.kafolat.uz/online/r/ins/e-osgo/calc?session=9138287983306");
 
         InlineKeyboardButton grossButton = new InlineKeyboardButton();
-        grossButton.setText("🛡 GROSS sug'urta");
-        grossButton.setUrl("https://gross.uz");
+        grossButton.setText("🛡 Apex sug'urta");
+        grossButton.setUrl("https://epolis.aic.uz/apex/r/ins/a12020241007182522253120/home");
 
         InlineKeyboardButton alSKOMButton = new InlineKeyboardButton();
         alSKOMButton.setText("🛡 AlSKOM sug'urta");
