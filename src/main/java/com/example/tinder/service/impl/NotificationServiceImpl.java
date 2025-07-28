@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("tinderNotificationService")
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
     private final SimpMessagingTemplate simpMessagingTemplate;

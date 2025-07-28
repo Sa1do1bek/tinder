@@ -1,0 +1,19 @@
+package com.example.parking.entity;
+
+public enum UserState {
+    NEW,
+    WAITING_PHONE,
+    REGISTERED,
+    SEARCHING_CAR,
+    WAITING_LICENSE_PLATE,
+    SELECTING_REASON,
+    ADDING_CAR,
+    WAITING_CAR_NUMBER,
+    WAITING_CAR_BRAND,
+    WAITING_CAR_MODEL,
+    WAITING_CAR_COLOR,
+    VIEWING_HISTORY,
+    SETTINGS_MENU,
+    PRIVACY_SETTINGS,
+    SERVICE
+}
