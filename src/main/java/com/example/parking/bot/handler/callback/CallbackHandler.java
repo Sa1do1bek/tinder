@@ -190,7 +190,7 @@ public class CallbackHandler {
         String[] parts = data.split("_");
         if (parts.length < 3) return;
 
-        String setting = parts[1]; // username or phone
+        String setting = parts[1];
 
         if ("username".equals(setting)) {
             boolean newValue = !user.getShareUsername();
