@@ -10,6 +10,7 @@ import com.example.parking.service.CarService;
 import com.example.parking.service.ContactService;
 import com.example.parking.service.NotificationServices;
 import com.example.parking.service.UserService;
+import com.example.tinder.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,6 @@ import java.util.Optional;
 public class CallbackHandler {
 
     @Autowired
-    @Qualifier("parkingService")
     private UserService userService;
 
     @Autowired
@@ -190,7 +190,7 @@ public class CallbackHandler {
         String[] parts = data.split("_");
         if (parts.length < 3) return;
 
-        String setting = parts[1];
+        String setting = parts[1]; // username or phone
 
         if ("username".equals(setting)) {
             boolean newValue = !user.getShareUsername();
