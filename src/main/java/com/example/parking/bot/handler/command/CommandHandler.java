@@ -5,6 +5,7 @@ import com.example.parking.bot.keyboard.KeyboardFactory;
 import com.example.parking.entity.*;
 import com.example.parking.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -21,6 +22,7 @@ import java.util.List;
 public class CommandHandler {
 
     @Autowired
+    @Qualifier("parkingService")
     private UserService userService;
 
     @Autowired
@@ -194,7 +196,6 @@ public class CommandHandler {
     }
 
     private void handleOilWaitingLastDate(UserBot user, String text, ParkingTelegramBot bot) {
-        // Asosiy menyu tugmalarini tekshiramiz
         if (isMainMenuButton(text)) {
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             oilChangeService.deleteTempData(user.getChatId());
@@ -202,7 +203,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bekor qilish tugmalari
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
                     keyboardFactory.getMainMenuKeyboard());
@@ -238,7 +238,6 @@ public class CommandHandler {
     }
 
     private void handleOilWaitingLastMileage(UserBot user, String text, ParkingTelegramBot bot) {
-        // Asosiy menyu tugmalarini tekshiramiz
         if (isMainMenuButton(text)) {
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             oilChangeService.deleteTempData(user.getChatId());
@@ -246,7 +245,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bekor qilish tugmalari
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
                     keyboardFactory.getMainMenuKeyboard());
@@ -282,7 +280,6 @@ public class CommandHandler {
     }
 
     private void handleOilWaitingBrand(UserBot user, String text, ParkingTelegramBot bot) {
-        // Asosiy menyu tugmalarini tekshiramiz
         if (isMainMenuButton(text)) {
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             oilChangeService.deleteTempData(user.getChatId());
@@ -290,7 +287,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bekor qilish tugmalari
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
                     keyboardFactory.getMainMenuKeyboard());
@@ -324,7 +320,6 @@ public class CommandHandler {
     }
 
     private void handleOilWaitingRecommendedKm(UserBot user, String text, ParkingTelegramBot bot) {
-        // Asosiy menyu tugmalarini tekshiramiz
         if (isMainMenuButton(text)) {
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             oilChangeService.deleteTempData(user.getChatId());
@@ -332,7 +327,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bekor qilish tugmalari
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
                     keyboardFactory.getMainMenuKeyboard());
@@ -368,7 +362,6 @@ public class CommandHandler {
     }
 
     private void handleOilWaitingDailyDistance(UserBot user, String text, ParkingTelegramBot bot) {
-        // Asosiy menyu tugmalarini tekshiramiz
         if (isMainMenuButton(text)) {
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             oilChangeService.deleteTempData(user.getChatId());
@@ -376,7 +369,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bekor qilish tugmalari
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
                     keyboardFactory.getMainMenuKeyboard());
@@ -396,7 +388,6 @@ public class CommandHandler {
         int dailyDistance = oilChangeService.parseMileage(text);
         oilChangeService.updateTempDailyDistance(user.getChatId(), dailyDistance);
 
-        // Ma'lumotlarni saqlash va natijani ko'rsatish
         Optional<TempOilChangeData> tempDataOpt = oilChangeService.getTempData(user.getChatId());
         if (tempDataOpt.isEmpty()) {
             sendMessage(bot, user.getChatId(), "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.\n\n🏠 Asosiy menyu:",
@@ -838,7 +829,6 @@ public class CommandHandler {
     }
 
     private void handleCarColorInput(UserBot user, String text, ParkingTelegramBot bot) {
-        // Asosiy menyu tugmalarini tekshiramiz
         if (isMainMenuButton(text)) {
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
             tempCarDataService.delete(user.getChatId());
@@ -846,7 +836,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bekor qilish tugmalari
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             sendMessage(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🏠 Asosiy menyu:",
                     keyboardFactory.getMainMenuKeyboard());
@@ -855,7 +844,6 @@ public class CommandHandler {
             return;
         }
 
-        // Bo'sh yoki juda qisqa matn tekshiruvi
         if (text.trim().length() < 2) {
             sendMessage(bot, user.getChatId(), "❌ Iltimos, avtomobil rangini kiriting.\n\n" +
                     "💡 Masalan: Oq, Qora, Ko'k, Qizil\n\n" +

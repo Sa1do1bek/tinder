@@ -28,6 +28,7 @@ import java.util.Optional;
 public class CallbackHandler {
 
     @Autowired
+    @Qualifier("parkingService")
     private UserService userService;
 
     @Autowired
