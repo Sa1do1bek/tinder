@@ -3,28 +3,24 @@ package com.example.parking.bot.handler.command;
 import com.example.parking.bot.ParkingTelegramBot;
 import com.example.parking.bot.keyboard.KeyboardFactory;
 import com.example.parking.entity.*;
-import com.example.parking.service.CarService;
-import com.example.parking.service.ContactService;
-import com.example.parking.service.TempCarDataService;
-import com.example.parking.service.UserService;
+import com.example.parking.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 @Component
 public class CommandHandler {
 
     @Autowired
-    @Qualifier("parkingService")
     private UserService userService;
 
     @Autowired
@@ -38,6 +34,9 @@ public class CommandHandler {
 
     @Autowired
     private KeyboardFactory keyboardFactory;
+
+    @Autowired
+    private OilChangeService oilChangeService;
 
     public void handleTextMessage(Message message, ParkingTelegramBot bot) {
         Long chatId = message.getChatId();
@@ -88,6 +87,21 @@ public class CommandHandler {
             case SERVICE:
                 handleServiceCommands(user,text,bot);
                 break;
+            case OIL_WAITING_LAST_DATE:
+                handleOilWaitingLastDate(user, text, bot);
+                break;
+            case OIL_WAITING_LAST_MILEAGE:
+                handleOilWaitingLastMileage(user, text, bot);
+                break;
+            case OIL_WAITING_BRAND:
+                handleOilWaitingBrand(user, text, bot);
+                break;
+            case OIL_WAITING_RECOMMENDED_KM:
+                handleOilWaitingRecommendedKm(user, text, bot);
+                break;
+            case OIL_WAITING_DAILY_DISTANCE:
+                handleOilWaitingDailyDistance(user, text, bot);
+                break;
             default:
                 handleRegisteredUserCommands(user, text, bot);
         }
@@ -97,7 +111,7 @@ public class CommandHandler {
         System.out.println("=== SERVICE COMMAND DEBUG ===");
         System.out.println("Qabul qilingan matn: '" + text + "'");
         System.out.println("Matn uzunligi: " + text.length());
-        System.out.println("User holati: " + user.getState());
+        System.out.println("UserBot holati: " + user.getState());
 
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
@@ -125,7 +139,7 @@ public class CommandHandler {
                     break;
                 case "🛢 Avtomobil moyi":
                     System.out.println("✅ Avtomobil moyi case'i ishladi");
-                    showAvtomobilMoyi(user, bot);
+                    startOilChangeProcess(user, bot);
                     break;
                 case "🔙 Orqaga":
                     System.out.println("✅ Orqaga case'i ishladi");
@@ -155,35 +169,273 @@ public class CommandHandler {
         System.out.println("=== DEBUG TUGADI ===");
     }
 
-    private void showAvtomobilMoyi(UserBot user, ParkingTelegramBot bot) {
+    private void startOilChangeProcess(UserBot user, ParkingTelegramBot bot) {
         try {
-            String message = """
-                🛢 Avtomobil moyi haqida ma'lumot:
-                
-                🔹 Moy turlari:
-                   • Sintetik moy (5W-30, 5W-40)
-                   • Yarim sintetik moy (10W-40)
-                   • Mineral moy (15W-40)
-                
-                🔹 Moy almashtirish muddatlari:
-                   • Sintetik: 10,000-15,000 km
-                   • Yarim sintetik: 7,000-10,000 km
-                   • Mineral: 5,000-7,000 km
-                
-                🔹 Maslahatlar:
-                   • Avtomobil ishlab chiqaruvchisining tavsiyalarini kuzating
-                   • Sifatli moy ishlatishni unutmang
-                   • Moy filtrini ham almashtiring
-                
-                💡 Qo'shimcha ma'lumot uchun avtomobil xizmat markazlariga murojaat qiling.
-                """;
+            oilChangeService.createOrUpdateTempData(user.getChatId());
 
-            sendMessage(bot, user.getChatId(), message, keyboardFactory.getServiceKeyboard());
+            String message = """
+            🛢 Avtomobil moyi ma'lumotlari
+            
+            Iltimos, oxirgi marta moy almashtirilgan sanani kiriting:
+            
+            📅 Format: dd.MM.yyyy
+            💡 Masalan: 15.06.2025
+            
+            🔙 Bekor qilish uchun /start buyrug'ini yuboring.
+            """;
+
+            sendMessage(bot, user.getChatId(), message);
+            userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_LAST_DATE);
         } catch (Exception e) {
             e.printStackTrace();
-            sendMessage(bot, user.getChatId(), "❌ Ma'lumot yuklashda xatolik yuz berdi.",
+            sendMessage(bot, user.getChatId(), "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.",
                     keyboardFactory.getServiceKeyboard());
         }
+    }
+
+    private void handleOilWaitingLastDate(UserBot user, String text, ParkingTelegramBot bot) {
+        // Asosiy menyu tugmalarini tekshiramiz
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        // Bekor qilish tugmalari
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            return;
+        }
+
+        if (!oilChangeService.isValidDate(text)) {
+            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri sana formati! Iltimos, to'g'ri formatda kiriting:\n\n" +
+                    "📅 Format: dd.MM.yyyy\n" +
+                    "💡 Masalan: 15.06.2025\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        LocalDate lastDate = oilChangeService.parseDate(text);
+        oilChangeService.updateTempLastDate(user.getChatId(), lastDate);
+
+        String message = """
+        ✅ Sana saqlandi!
+        
+        Endi o'sha vaqtdagi avtomobil probegin kiriting:
+        
+        🚗 Probeg (km da)
+        💡 Masalan: 125000
+        
+        🔙 Bekor qilish uchun /start buyrug'ini yuboring.
+        """;
+
+        sendMessage(bot, user.getChatId(), message);
+        userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_LAST_MILEAGE);
+    }
+
+    private void handleOilWaitingLastMileage(UserBot user, String text, ParkingTelegramBot bot) {
+        // Asosiy menyu tugmalarini tekshiramiz
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        // Bekor qilish tugmalari
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            return;
+        }
+
+        if (!oilChangeService.isValidMileage(text)) {
+            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri probeg formati! Iltimos, to'g'ri formatda kiriting:\n\n" +
+                    "🚗 Faqat raqam kiriting\n" +
+                    "💡 Masalan: 125000\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        int mileage = oilChangeService.parseMileage(text);
+        oilChangeService.updateTempLastMileage(user.getChatId(), mileage);
+
+        String message = """
+        ✅ Probeg saqlandi!
+        
+        Moy markasini kiriting:
+        
+        🛢 Moy markasi
+        💡 Masalan: ZIC X9, Castrol GTX, Shell Helix
+        
+        🔙 Bekor qilish uchun /start buyrug'ini yuboring.
+        """;
+
+        sendMessage(bot, user.getChatId(), message);
+        userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_BRAND);
+    }
+
+    private void handleOilWaitingBrand(UserBot user, String text, ParkingTelegramBot bot) {
+        // Asosiy menyu tugmalarini tekshiramiz
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        // Bekor qilish tugmalari
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            return;
+        }
+
+        if (text.trim().length() < 2) {
+            sendMessage(bot, user.getChatId(), "❌ Iltimos, moy markasini to'liq kiriting.\n\n" +
+                    "💡 Masalan: ZIC X9, Castrol GTX, Shell Helix\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        oilChangeService.updateTempOilBrand(user.getChatId(), text.trim());
+
+        String message = """
+        ✅ Moy markasi saqlandi!
+        
+        Necha kilometrda moy almashtirish tavsiya etiladi?
+        
+        📏 Tavsiya etilgan interval (km)
+        💡 Masalan: 8000, 10000, 15000
+        
+        🔙 Bekor qilish uchun /start buyrug'ini yuboring.
+        """;
+
+        sendMessage(bot, user.getChatId(), message);
+        userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_RECOMMENDED_KM);
+    }
+
+    private void handleOilWaitingRecommendedKm(UserBot user, String text, ParkingTelegramBot bot) {
+        // Asosiy menyu tugmalarini tekshiramiz
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        // Bekor qilish tugmalari
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            return;
+        }
+
+        if (!oilChangeService.isValidRecommendedKm(text)) {
+            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri interval! Iltimos, to'g'ri formatda kiriting:\n\n" +
+                    "📏 1000 dan 50000 gacha\n" +
+                    "💡 Masalan: 8000, 10000, 15000\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        int recommendedKm = oilChangeService.parseMileage(text);
+        oilChangeService.updateTempRecommendedKm(user.getChatId(), recommendedKm);
+
+        String message = """
+        ✅ Interval saqlandi!
+        
+        Har kuni o'rtacha necha kilometr yurasiz?
+        
+        🚗 Kunlik o'rtacha masofa (km)
+        💡 Masalan: 40, 50, 100
+        
+        🔙 Bekor qilish uchun /start buyrug'ini yuboring.
+        """;
+
+        sendMessage(bot, user.getChatId(), message);
+        userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_DAILY_DISTANCE);
+    }
+
+    private void handleOilWaitingDailyDistance(UserBot user, String text, ParkingTelegramBot bot) {
+        // Asosiy menyu tugmalarini tekshiramiz
+        if (isMainMenuButton(text)) {
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            handleRegisteredUserCommands(user, text, bot);
+            return;
+        }
+
+        // Bekor qilish tugmalari
+        if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
+            sendMessage(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            oilChangeService.deleteTempData(user.getChatId());
+            return;
+        }
+
+        if (!oilChangeService.isValidDailyDistance(text)) {
+            sendMessage(bot, user.getChatId(), "❌ Noto'g'ri kunlik masofa! Iltimos, to'g'ri formatda kiriting:\n\n" +
+                    "🚗 1 dan 1000 gacha\n" +
+                    "💡 Masalan: 40, 50, 100\n\n" +
+                    "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+            return;
+        }
+
+        int dailyDistance = oilChangeService.parseMileage(text);
+        oilChangeService.updateTempDailyDistance(user.getChatId(), dailyDistance);
+
+        // Ma'lumotlarni saqlash va natijani ko'rsatish
+        Optional<TempOilChangeData> tempDataOpt = oilChangeService.getTempData(user.getChatId());
+        if (tempDataOpt.isEmpty()) {
+            sendMessage(bot, user.getChatId(), "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.\n\n🏠 Asosiy menyu:",
+                    keyboardFactory.getMainMenuKeyboard());
+            userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+            return;
+        }
+
+        TempOilChangeData tempData = tempDataOpt.get();
+        OilChangeInfo savedInfo = oilChangeService.saveOilChangeInfo(user, tempData);
+
+        String resultMessage = String.format("""
+        ✅ Ma'lumotlar saqlandi!
+        
+        📊 Kiritilgan ma'lumotlar:
+        📅 Oxirgi almashtirish: %s
+        🚗 O'sha vaqtdagi probeg: %s
+        🛢 Moy markasi: %s
+        📏 Tavsiya etilgan interval: %s
+        🚗 Kunlik o'rtacha: %d km
+        
+        🔮 Keyingi moy almashtirish:
+        📅 Sana: %s
+        🚗 Probeg: %s
+        
+        💡 Eslatma: Bu taxminiy hisob-kitob. Haydash sharoitlariga qarab o'zgarishi mumkin.
+        """,
+                oilChangeService.formatDate(savedInfo.getLastChangeDate()),
+                oilChangeService.formatMileage(savedInfo.getLastChangeMileage()),
+                savedInfo.getOilBrand(),
+                oilChangeService.formatMileage(savedInfo.getRecommendedKm()),
+                savedInfo.getDailyDistance(),
+                oilChangeService.formatDate(savedInfo.getNextChangeDate()),
+                oilChangeService.formatMileage(savedInfo.getNextChangeMileage())
+        );
+
+        sendMessage(bot, user.getChatId(), resultMessage, keyboardFactory.getMainMenuKeyboard());
+        userService.updateUserState(user.getChatId(), UserState.REGISTERED);
+        oilChangeService.deleteTempData(user.getChatId());
     }
 
     private void showTexnikKorik(UserBot user, ParkingTelegramBot bot) {
@@ -355,8 +607,7 @@ public class CommandHandler {
             case "🚗 Avtomobil Egasini Topish":
                 sendMessage(bot, user.getChatId(), "🔍 Qidirilayotgan avtomobilning davlat raqamini kiriting:\n\n" +
                         "📝 Format: 01 A 123 AA\n" +
-                        "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
-                        "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+                        "💡 Masalan: 01 A 123 AA yoki 01A123AA");
                 userService.updateUserState(user.getChatId(), UserState.WAITING_LICENSE_PLATE);
                 break;
 
@@ -368,8 +619,7 @@ public class CommandHandler {
                 tempCarDataService.createOrUpdate(user.getChatId());
                 sendMessage(bot, user.getChatId(), "🚗 Avtomobilingizning davlat raqamini kiriting:\n\n" +
                         "📝 Format: 01 A 123 AA\n" +
-                        "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
-                        "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+                        "💡 Masalan: 01 A 123 AA yoki 01A123AA");
                 userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_NUMBER);
                 break;
 
@@ -384,12 +634,10 @@ public class CommandHandler {
                 break;
 
             case "🔙 Asosiy Menyu":
-            case "/start":
                 sendMessage(bot, user.getChatId(), "🏠 Asosiy menyu:",
                         keyboardFactory.getMainMenuKeyboard());
                 userService.updateUserState(user.getChatId(), UserState.REGISTERED);
                 break;
-
             case "📊 Service":
                 sendMessage(bot, user.getChatId(), "Quyidagi xizmatlardan birini tanlang:",
                         keyboardFactory.getServiceKeyboard());
@@ -397,9 +645,8 @@ public class CommandHandler {
                 break;
 
             default:
-                sendMessage(bot, user.getChatId(), "❓ Noma'lum buyruq. Iltimos, quyidagi tugmalardan birini tanlang:",
+                sendMessage(bot, user.getChatId(), "❓ Noma'lum buyruq. Iltimos, menyudan tanlang.",
                         keyboardFactory.getMainMenuKeyboard());
-                break;
         }
     }
 
