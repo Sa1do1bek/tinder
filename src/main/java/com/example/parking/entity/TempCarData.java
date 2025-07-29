@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class TempCarData {
     @Id
     private Long chatId;
-    
+    private Long carId;
     private String licensePlate;
     private String brand;
     private String model;

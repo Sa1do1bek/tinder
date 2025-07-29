@@ -13,4 +13,7 @@ public interface TempCarDataService {
     TempCarData updateModel(Long chatId, String model);
     TempCarData updateColor(Long chatId, String color);
     void delete(Long chatId);
+    TempCarData createOrUpdateForEdit(Long chatId, Long carId);
+    void updateCarId(Long chatId, Long carId);
+    Long getCarId(Long chatId);
 }
