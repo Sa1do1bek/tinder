@@ -14,4 +14,8 @@ public interface CarService {
     boolean isLicensePlateExists(String licensePlate);
     String formatLicensePlate(String input);
     boolean isValidLicensePlate(String licensePlate);
+    Optional<Car> findById(Long carId);
+    Car updateCar(Long carId, String brand, String model, String color);
+    boolean deleteCar(Long carId, Long ownerId);
+    boolean isCarOwnedByUser(Long carId, Long userId);
 }

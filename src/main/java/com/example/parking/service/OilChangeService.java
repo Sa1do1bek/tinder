@@ -24,7 +24,6 @@ public class OilChangeService {
     @Autowired
     private TempOilChangeDataRepository tempOilChangeDataRepository;
 
-    // Vaqtinchalik ma'lumotlar bilan ishlash
     public TempOilChangeData createOrUpdateTempData(Long chatId) {
         Optional<TempOilChangeData> existing = tempOilChangeDataRepository.findById(chatId);
         if (existing.isPresent()) {
@@ -90,7 +89,6 @@ public class OilChangeService {
         tempOilChangeDataRepository.deleteById(chatId);
     }
 
-    // Sana formatini tekshirish
     public boolean isValidDate(String dateStr) {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -106,11 +104,10 @@ public class OilChangeService {
         return LocalDate.parse(dateStr, formatter);
     }
 
-    // Probeg formatini tekshirish
     public boolean isValidMileage(String mileageStr) {
         try {
             int mileage = Integer.parseInt(mileageStr.replaceAll("[^0-9]", ""));
-            return mileage > 0 && mileage < 1000000; // 0 dan 1,000,000 gacha
+            return mileage > 0 && mileage < 1000000;
         } catch (NumberFormatException e) {
             return false;
         }
@@ -120,27 +117,24 @@ public class OilChangeService {
         return Integer.parseInt(mileageStr.replaceAll("[^0-9]", ""));
     }
 
-    // Tavsiya etilgan km tekshirish
     public boolean isValidRecommendedKm(String kmStr) {
         try {
             int km = Integer.parseInt(kmStr.replaceAll("[^0-9]", ""));
-            return km >= 1000 && km <= 50000; // 1,000 dan 50,000 gacha
+            return km >= 1000 && km <= 50000;
         } catch (NumberFormatException e) {
             return false;
         }
     }
 
-    // Kunlik masofa tekshirish
     public boolean isValidDailyDistance(String distanceStr) {
         try {
             int distance = Integer.parseInt(distanceStr.replaceAll("[^0-9]", ""));
-            return distance >= 1 && distance <= 1000; // 1 dan 1000 gacha
+            return distance >= 1 && distance <= 1000;
         } catch (NumberFormatException e) {
             return false;
         }
     }
 
-    // Keyingi almashtirish sanasi va probegin hisoblash
     public LocalDate calculateNextChangeDate(LocalDate lastDate, int recommendedKm, int dailyDistance) {
         int daysToAdd = recommendedKm / dailyDistance;
         return lastDate.plusDays(daysToAdd);
@@ -150,7 +144,6 @@ public class OilChangeService {
         return lastMileage + recommendedKm;
     }
 
-    // Ma'lumotlarni saqlash
     public OilChangeInfo saveOilChangeInfo(UserBot user, TempOilChangeData tempData) {
         LocalDate nextDate = calculateNextChangeDate(
                 tempData.getLastChangeDate(),
@@ -177,7 +170,6 @@ public class OilChangeService {
         return oilChangeInfoRepository.save(oilInfo);
     }
 
-    // Foydalanuvchining moy ma'lumotlarini olish
     public List<OilChangeInfo> getUserOilChangeHistory(Long chatId) {
         return oilChangeInfoRepository.findByUserChatIdOrderByLastChangeDateDesc(chatId);
     }
@@ -186,18 +178,15 @@ public class OilChangeService {
         return oilChangeInfoRepository.findTopByUserChatIdOrderByLastChangeDateDesc(chatId);
     }
 
-    // Sana formatini chiroyli ko'rinishga o'tkazish
     public String formatDate(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         return date.format(formatter);
     }
 
-    // Probegni formatlash
     public String formatMileage(int mileage) {
         return String.format("%,d km", mileage).replace(',', ' ');
     }
 
-    // Eslatma kerak bo'lgan ma'lumotlarni olish
     public List<OilChangeInfo> getUpcomingOilChanges(LocalDate date) {
         return oilChangeInfoRepository.findByNextChangeDateLessThanEqual(date);
     }

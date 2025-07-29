@@ -1,34 +1,30 @@
 package com.example.parking.bot.handler.callback;
 
 import com.example.parking.bot.ParkingTelegramBot;
-import com.example.parking.bot.keyboard.KeyboardFactory;
-import com.example.parking.entity.Car;
-import com.example.parking.entity.ContactReason;
-import com.example.parking.entity.ContactRequest;
-import com.example.parking.entity.UserBot;
-import com.example.parking.service.CarService;
-import com.example.parking.service.ContactService;
-import com.example.parking.service.NotificationServices;
-import com.example.parking.service.UserService;
-import com.example.tinder.service.NotificationService;
+import com.example.parking.entity.*;
+import com.example.parking.service.*;
+import com.example.parking.bot.keyboard.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-
 import java.util.Optional;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 @Component
+
 public class CallbackHandler {
 
     @Autowired
-    @Qualifier("parkingService")
     private UserService userService;
 
     @Autowired
@@ -38,17 +34,50 @@ public class CallbackHandler {
     private ContactService contactService;
 
     @Autowired
-    @Qualifier("parkingNotificationService")
     private NotificationServices notificationService;
 
     @Autowired
     private KeyboardFactory keyboardFactory;
+
+    @Autowired
+    private TempCarDataService tempCarDataService;
+
+    private final Map<Long, List<Integer>> callbackMessageIds = new ConcurrentHashMap<>();
+
+    private void saveCallbackMessageId(Long chatId, Integer messageId) {
+        callbackMessageIds.computeIfAbsent(chatId, k -> new ArrayList<>()).add(messageId);
+    }
+
+    private void deleteCallbackMessages(ParkingTelegramBot bot, Long chatId) {
+        List<Integer> messageIds = callbackMessageIds.get(chatId);
+        if (messageIds != null && !messageIds.isEmpty()) {
+            for (int i = messageIds.size() - 1; i >= 0; i--) {
+                try {
+                    DeleteMessage deleteMessage = new DeleteMessage();
+                    deleteMessage.setChatId(chatId.toString());
+                    deleteMessage.setMessageId(messageIds.get(i));
+                    bot.execute(deleteMessage);
+
+                    Thread.sleep(50);
+                } catch (TelegramApiException e) {
+                    System.out.println("Callback xabar o'chirishda xatolik (ID: " + messageIds.get(i) + "): " + e.getMessage());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            messageIds.clear();
+        }
+    }
 
     @Transactional
     public void handleCallbackQuery(CallbackQuery callbackQuery, ParkingTelegramBot bot) {
         String data = callbackQuery.getData();
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
+
+        // Callback message ID'sini saqlaymiz
+        saveCallbackMessageId(chatId, messageId);
 
         Optional<UserBot> userOpt = userService.findByChatId(chatId);
         if (userOpt.isEmpty()) {
@@ -67,6 +96,121 @@ public class CallbackHandler {
             handlePhoneShare(user, data, chatId, messageId, bot);
         } else if (data.startsWith("privacy_")) {
             handlePrivacySettings(user, data, chatId, messageId, bot);
+        } else if (data.startsWith("car_manage_")) {
+            handleCarManagement(user, data, chatId, messageId, bot);
+        } else if (data.startsWith("car_edit_")) {
+            handleCarEdit(user, data, chatId, messageId, bot);
+        } else if (data.startsWith("car_delete_")) {
+            handleCarDelete(user, data, chatId, messageId, bot);
+        } else if (data.equals("cars_menu_back")) {
+            handleCarsMenuBack(user, chatId, messageId, bot);
+        } else if (data.startsWith("car_number_confirm_")) {
+            handleCarNumberConfirmation(user, data, chatId, messageId, bot);
+        }
+    }
+
+    private void handleCarNumberConfirmation(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+        try {
+            if (data.equals("car_number_confirm_no")) {
+                if (user.getState() == UserState.WAITING_FIRST_CAR_CONFIRMATION) {
+                    editMessage(bot, chatId, messageId,
+                            "🚗 Avtomobilingizning davlat raqamini qayta kiriting:\n\n" +
+                                    "📝 Format: 01 A 123 AA\n" +
+                                    "💡 Masalan: 01 A 123 AA yoki 01A123AA");
+                    userService.updateUserState(chatId, UserState.WAITING_FIRST_CAR_NUMBER);
+                } else if (user.getState() == UserState.WAITING_CAR_CONFIRMATION) {
+                    editMessage(bot, chatId, messageId,
+                            "🚗 Yangi avtomobilingizning davlat raqamini qayta kiriting:\n\n" +
+                                    "📝 Format: 01 A 123 AA\n" +
+                                    "💡 Masalan: 01 A 123 AA yoki 01A123AA\n\n" +
+                                    "🔙 Bekor qilish uchun 'Asosiy Menyu' tugmasini bosing.");
+                    userService.updateUserState(chatId, UserState.WAITING_CAR_NUMBER);
+                }
+                tempCarDataService.delete(chatId);
+                return;
+            }
+
+            if (data.startsWith("car_number_confirm_yes_")) {
+                String licensePlate = data.substring("car_number_confirm_yes_".length()).replace("_", " ");
+
+                Optional<TempCarData> tempDataOpt = tempCarDataService.findByChatId(chatId);
+                if (tempDataOpt.isEmpty()) {
+                    editMessage(bot, chatId, messageId, "❌ Xatolik yuz berdi. Qaytadan urinib ko'ring.");
+                    return;
+                }
+
+                Car savedCar = carService.addCar(user, licensePlate, "Noma'lum", "Noma'lum", "Noma'lum");
+
+                if (user.getState() == UserState.WAITING_FIRST_CAR_CONFIRMATION) {
+                    String successMessage = String.format(
+                            "✅ Avtomobilingiz muvaffaqiyatli ro'yxatga olindi!\n\n" +
+                                    "🚗 Raqam: %s\n\n" +
+                                    "🎉 Tabriklaymiz! Endi siz to'liq ro'yxatdan o'tdingiz.\n" +
+                                    "Boshqa ma'lumotlarni 'Mening Avtomobillarim' bo'limida to'ldirishingiz mumkin.",
+                            savedCar.getLicensePlate());
+
+                    editMessage(bot, chatId, messageId, successMessage);
+
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    showMainMenu(bot, chatId, "🏠 Asosiy menyu:");
+                    userService.updateUserState(chatId, UserState.REGISTERED);
+
+                } else if (user.getState() == UserState.WAITING_CAR_CONFIRMATION) {
+                    String successMessage = String.format(
+                            "✅ Avtomobil muvaffaqiyatli qo'shildi!\n\n" +
+                                    "🚗 Raqam: %s\n\n" +
+                                    "Endi boshqa foydalanuvchilar sizni topishi mumkin!",
+                            savedCar.getLicensePlate());
+
+                    editMessage(bot, chatId, messageId, successMessage);
+
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    showCarsMenu(bot, chatId, "🚙 Avtomobillar menyusi:");
+                    userService.updateUserState(chatId, UserState.CARS_MENU);
+                }
+
+                tempCarDataService.delete(chatId);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            editMessage(bot, chatId, messageId, "❌ Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+        }
+    }
+
+    private void showMainMenu(ParkingTelegramBot bot, Long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId.toString());
+        message.setText(text);
+        message.setReplyMarkup(keyboardFactory.getMainMenuKeyboard());
+
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showCarsMenu(ParkingTelegramBot bot, Long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId.toString());
+        message.setText(text);
+        message.setReplyMarkup(keyboardFactory.getCarsMenuKeyboard());
+
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 
@@ -105,7 +249,6 @@ public class CallbackHandler {
 
             ContactRequest request = contactService.createContactRequest(user, owner, licensePlate, reason, null);
 
-            // Send notification to car owner
             notificationService.sendContactRequestNotification(request, bot);
 
             String responseText = "✅ Murojaat yuborildi!\n\n" +
@@ -131,7 +274,6 @@ public class CallbackHandler {
 
         switch (action) {
             case "phone":
-                // Request phone number from owner
                 Optional<ContactRequest> requestOpt = contactService.findById(requestId);
                 if (requestOpt.isPresent()) {
                     ContactRequest request = requestOpt.get();
@@ -150,7 +292,7 @@ public class CallbackHandler {
         String[] parts = data.split("_");
         if (parts.length < 4) return;
 
-        String action = parts[1] + "_" + parts[2]; // allow_phone or resolve
+        String action = parts[1] + "_" + parts[2];
         Long requestId = Long.parseLong(parts[3]);
 
         switch (action) {
@@ -173,7 +315,7 @@ public class CallbackHandler {
         String[] parts = data.split("_");
         if (parts.length < 4) return;
 
-        String decision = parts[2]; // yes or no
+        String decision = parts[2];
         Long requesterChatId = Long.parseLong(parts[3]);
 
         if ("yes".equals(decision)) {
@@ -191,7 +333,7 @@ public class CallbackHandler {
         String[] parts = data.split("_");
         if (parts.length < 3) return;
 
-        String setting = parts[1]; // username or phone
+        String setting = parts[1];
 
         if ("username".equals(setting)) {
             boolean newValue = !user.getShareUsername();
@@ -212,6 +354,120 @@ public class CallbackHandler {
                 user.getDoNotDisturb() ? "✅ Yoqilgan" : "❌ O'chirilgan");
 
         editMessage(bot, chatId, messageId, message, keyboardFactory.getPrivacySettingsKeyboard(user));
+    }
+
+    private void handleCarManagement(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+        try {
+            Long carId = Long.parseLong(data.split("_")[2]);
+            Optional<Car> carOpt = carService.findById(carId);
+
+            if (carOpt.isEmpty() || !carOpt.get().getOwner().getChatId().equals(chatId)) {
+                editMessage(bot, chatId, messageId, "❌ Avtomobil topilmadi yoki sizga tegishli emas.");
+                return;
+            }
+
+            Car car = carOpt.get();
+            String message = String.format(
+                    "🚗 Avtomobil: %s\n" +
+                            "🏷️ Marka: %s\n" +
+                            "🚙 Model: %s\n" +
+                            "🎨 Rang: %s\n\n" +
+                            "Quyidagi amallardan birini tanlang:",
+                    car.getLicensePlate(),
+                    car.getBrand() != null ? car.getBrand() : "Noma'lum",
+                    car.getModel() != null ? car.getModel() : "Noma'lum",
+                    car.getColor() != null ? car.getColor() : "Noma'lum");
+
+            editMessage(bot, chatId, messageId, message,
+                    keyboardFactory.getCarManagementKeyboard(carId));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            editMessage(bot, chatId, messageId, "❌ Xatolik yuz berdi.");
+        }
+    }
+
+    private void handleCarEdit(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+        try {
+            Long carId = Long.parseLong(data.split("_")[2]);
+            tempCarDataService.createOrUpdateForEdit(chatId, carId);
+
+            editMessage(bot, chatId, messageId,
+                    "✏️ Avtomobil markasini kiriting:\n\n" +
+                            "💡 Masalan: Toyota, BMW, Chevrolet\n\n" +
+                            "🔙 Bekor qilish uchun /start buyrug'ini yuboring.");
+
+            userService.updateUserState(chatId, UserState.WAITING_EDIT_CAR_BRAND);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            editMessage(bot, chatId, messageId, "❌ Xatolik yuz berdi.");
+        }
+    }
+
+    private void handleCarDelete(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+        try {
+            String[] parts = data.split("_");
+            String action = parts[2];
+            Long carId = Long.parseLong(parts[3]);
+
+            if ("confirm".equals(action)) {
+                Optional<Car> carOpt = carService.findById(carId);
+                if (carOpt.isEmpty() || !carOpt.get().getOwner().getChatId().equals(chatId)) {
+                    editMessage(bot, chatId, messageId, "❌ Avtomobil topilmadi.");
+                    return;
+                }
+
+                Car car = carOpt.get();
+                String message = String.format(
+                        "⚠️ Diqqat!\n\n" +
+                                "🚗 %s raqamli avtomobilni o'chirishni xohlaysizmi?\n\n" +
+                                "Bu amal qaytarib bo'lmaydi!",
+                        car.getLicensePlate());
+
+                editMessage(bot, chatId, messageId, message,
+                        keyboardFactory.getCarDeleteConfirmKeyboard(carId));
+
+            } else if ("yes".equals(action)) {
+                carService.deleteCar(carId, chatId);
+                editMessage(bot, chatId, messageId, "✅ Avtomobil muvaffaqiyatli o'chirildi!");
+
+                try {
+                    Thread.sleep(2000);
+                    showUserCarsCallback(user, chatId, messageId, bot);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+            } else if ("no".equals(action)) {
+                handleCarManagement(user, "car_manage_" + carId, chatId, messageId, bot);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            editMessage(bot, chatId, messageId, "❌ Xatolik yuz berdi.");
+        }
+    }
+
+    private void handleCarsMenuBack(UserBot user, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+        showUserCarsCallback(user, chatId, messageId, bot);
+    }
+
+    private void showUserCarsCallback(UserBot user, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+        List<Car> cars = carService.findByOwner(chatId);
+
+        if (cars.isEmpty()) {
+            editMessage(bot, chatId, messageId,
+                    "🚗 Sizda hali avtomobil ro'yxatdan o'tmagan.\n\n" +
+                            "➕ Avtomobil qo'shish uchun asosiy menyuga o'ting.");
+            return;
+        }
+
+        String message = "🚙 Sizning avtomobillaringiz:\n\n" +
+                "Batafsil ma'lumot va boshqarish uchun avtomobilni tanlang:";
+
+        editMessage(bot, chatId, messageId, message,
+                keyboardFactory.getCarsListKeyboard(cars));
     }
 
     private void sendMessage(ParkingTelegramBot bot, Long chatId, String text,

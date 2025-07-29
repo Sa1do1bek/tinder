@@ -1,5 +1,6 @@
 package com.example.parking.bot.keyboard;
 
+import com.example.parking.entity.Car;
 import com.example.parking.entity.ContactReason;
 import com.example.parking.entity.UserBot;
 import org.springframework.stereotype.Component;
@@ -41,22 +42,44 @@ public class KeyboardFactory {
         List<KeyboardRow> rows = new ArrayList<>();
 
         KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("🚗 Avtomobil Egasini Topish"));
+        row1.add(new KeyboardButton("🚙 Mening Avtomobillarim"));
+        row1.add(new KeyboardButton("📊 Tarix"));
         rows.add(row1);
 
         KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("🚙 Mening Avtomobillarim"));
+        row2.add(new KeyboardButton("🛡 Sug'urta"));
+        row2.add(new KeyboardButton("🔧 Texnik ko'rik"));
+        rows.add(row2);
+
+        KeyboardRow row3 = new KeyboardRow();
+        row3.add(new KeyboardButton("🛢 Avtomobil moyi"));
+        rows.add(row3);
+
+        KeyboardRow row4 = new KeyboardRow();
+        row4.add(new KeyboardButton("⚙️ Sozlamalar"));
+        rows.add(row4);
+
+        keyboard.setKeyboard(rows);
+        return keyboard;
+    }
+
+    public ReplyKeyboardMarkup getCarsMenuKeyboard() {
+        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+        keyboard.setResizeKeyboard(true);
+
+        List<KeyboardRow> rows = new ArrayList<>();
+
+        KeyboardRow row1 = new KeyboardRow();
+        row1.add(new KeyboardButton("📋 Avtomobillarimni Ko'rish"));
+        rows.add(row1);
+
+        KeyboardRow row2 = new KeyboardRow();
         row2.add(new KeyboardButton("➕ Avtomobil Qo'shish"));
         rows.add(row2);
 
         KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("📊 Tarix"));
-        row3.add(new KeyboardButton("⚙️ Sozlamalar"));
+        row3.add(new KeyboardButton("🔙 Asosiy Menyu"));
         rows.add(row3);
-
-        KeyboardRow row4 = new KeyboardRow();
-        row4.add(new KeyboardButton("📊 Service"));
-        rows.add(row4);
 
         keyboard.setKeyboard(rows);
         return keyboard;
@@ -198,40 +221,16 @@ public class KeyboardFactory {
         return keyboard;
     }
 
-    public ReplyKeyboardMarkup getServiceKeyboard() {
-        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-        keyboard.setResizeKeyboard(true);
-        keyboard.setOneTimeKeyboard(true);
-
-        List<KeyboardRow> rows = new ArrayList<>();
-
-        KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("🛡 Sug'urta"));
-        row1.add(new KeyboardButton("🔧 Texnik ko'rik"));
-        rows.add(row1);
-
-        KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("🛢 Avtomobil moyi"));
-        rows.add(row2);
-
-        KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("🔙 Orqaga"));
-        rows.add(row3);
-
-        keyboard.setKeyboard(rows);
-        return keyboard;
-    }
-
     public InlineKeyboardMarkup getInsuranceLinksKeyboard() {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         InlineKeyboardButton insonButton = new InlineKeyboardButton();
-        insonButton.setText("🛡 Kafolat sug'urta");
-        insonButton.setUrl("https://online.kafolat.uz/online/r/ins/e-osgo/calc?session=9138287983306");
+        insonButton.setText("🛡 INSON sug'urta");
+        insonButton.setUrl("https://inson.uz");
 
         InlineKeyboardButton grossButton = new InlineKeyboardButton();
-        grossButton.setText("🛡 Apex sug'urta");
-        grossButton.setUrl("https://epolis.aic.uz/apex/r/ins/a12020241007182522253120/home");
+        grossButton.setText("🛡 GROSS sug'urta");
+        grossButton.setUrl("https://gross.uz");
 
         InlineKeyboardButton alSKOMButton = new InlineKeyboardButton();
         alSKOMButton.setText("🛡 AlSKOM sug'urta");
@@ -247,5 +246,96 @@ public class KeyboardFactory {
         return markup;
     }
 
+    public InlineKeyboardMarkup getCarsListKeyboard(List<Car> cars) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
+        for (Car car : cars) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(String.format("🚗 %s - %s %s",
+                    car.getLicensePlate(),
+                    car.getBrand() != null ? car.getBrand() : "Noma'lum",
+                    car.getModel() != null ? car.getModel() : ""));
+            button.setCallbackData("car_manage_" + car.getId());
+            row.add(button);
+            rows.add(row);
+        }
+
+        keyboard.setKeyboard(rows);
+        return keyboard;
+    }
+
+    public InlineKeyboardMarkup getCarManagementKeyboard(Long carId) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton editButton = new InlineKeyboardButton();
+        editButton.setText("✏️ Avtomobilni Tahrirlash");
+        editButton.setCallbackData("car_edit_" + carId);
+        row1.add(editButton);
+        rows.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton deleteButton = new InlineKeyboardButton();
+        deleteButton.setText("🗑️ Avtomobilni O'chirish");
+        deleteButton.setCallbackData("car_delete_confirm_" + carId);
+        row2.add(deleteButton);
+        rows.add(row2);
+
+        List<InlineKeyboardButton> row3 = new ArrayList<>();
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText("🔙 Orqaga");
+        backButton.setCallbackData("cars_menu_back");
+        row3.add(backButton);
+        rows.add(row3);
+
+        keyboard.setKeyboard(rows);
+        return keyboard;
+    }
+
+    public InlineKeyboardMarkup getCarDeleteConfirmKeyboard(Long carId) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton confirmButton = new InlineKeyboardButton();
+        confirmButton.setText("✅ Ha, O'chirish");
+        confirmButton.setCallbackData("car_delete_yes_" + carId);
+        row1.add(confirmButton);
+        rows.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton cancelButton = new InlineKeyboardButton();
+        cancelButton.setText("❌ Bekor Qilish");
+        cancelButton.setCallbackData("car_delete_no_" + carId);
+        row2.add(cancelButton);
+        rows.add(row2);
+
+        keyboard.setKeyboard(rows);
+        return keyboard;
+    }
+
+    public InlineKeyboardMarkup getCarNumberConfirmationKeyboard(String licensePlate) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton correctButton = new InlineKeyboardButton();
+        correctButton.setText("✅ Ha, to'g'ri");
+        correctButton.setCallbackData("car_number_confirm_yes_" + licensePlate.replace(" ", "_"));
+        row1.add(correctButton);
+        rows.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton incorrectButton = new InlineKeyboardButton();
+        incorrectButton.setText("❌ Yo'q, qayta kiritaman");
+        incorrectButton.setCallbackData("car_number_confirm_no");
+        row2.add(incorrectButton);
+        rows.add(row2);
+
+        keyboard.setKeyboard(rows);
+        return keyboard;
+    }
 }
