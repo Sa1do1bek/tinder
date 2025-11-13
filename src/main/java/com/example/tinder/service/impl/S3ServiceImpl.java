@@ -18,11 +18,11 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
-    private final String bucketName = "s3-tenzorsoft";
-    private final String endpoint = "https://s3.tenzorsoft.uz";
-    private final String accessKey = "REMOVED";
-    private final String secretKey = "REMOVED";
-    private MinioClient minioClient;
+        private final String bucketName = "tinder";
+        private final String endpoint = "http://localhost:9000";
+        private final String accessKey = "minioadmin";
+        private final String secretKey = "minio_strong_password";
+        private MinioClient minioClient;
 
     @PostConstruct
     public void init() {

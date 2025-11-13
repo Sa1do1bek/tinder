@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -16,6 +17,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @ComponentScan({"com.example.tinder", "com.example.parking"})
 @EntityScan({"com.example.tinder.entity", "com.example.parking.entity"})
 @EnableJpaRepositories({"com.example.tinder.repository", "com.example.parking.repository"})
+@EnableJpaAuditing()
 public class TinderApplication implements CommandLineRunner {
 
     public static void main(String[] args) {

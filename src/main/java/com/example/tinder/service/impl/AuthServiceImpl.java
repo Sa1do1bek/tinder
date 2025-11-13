@@ -8,6 +8,7 @@ import com.example.tinder.entity.*;
 import com.example.tinder.enums.Role;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
+import com.example.tinder.mapper.PendingUserMapper;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.AuthService;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -46,6 +48,7 @@ public class AuthServiceImpl implements AuthService {
     private final Utils utils;
     private final PendingUserRepository pendingUserRepository;
     private final UserLocationRepository userLocationRepository;
+    private final PendingUserMapper pendingUserMapper;
 
     @Override
     public ApiResponse registerByEmail(RegisterDto dto) {
@@ -75,17 +78,9 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
         Optional<PendingUser> optionalPendingUser = pendingUserRepository.findByEmail(dto.getEmail());
-        PendingUser pendingUser = optionalPendingUser.orElse(new PendingUser());
-        pendingUser.setEmail(dto.getEmail());
-        pendingUser.setUsername(dto.getUsername());
-        pendingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
-        pendingUser.setFullName(dto.getFullName());
-        pendingUser.setGender(dto.getGender());
-        pendingUser.setBirthDate(dto.getBirthDate());
-        pendingUser.setDeviceId(dto.getDeviceId());
-        pendingUser.setRole(dto.getRole());
-        pendingUser.setCode(code);
-        pendingUser.setCreatedAt(LocalDateTime.now());
+        PendingUser pendingUser = pendingUserMapper
+                .toPendingUser(optionalPendingUser.orElse(new PendingUser()), dto, code);
+
         pendingUserRepository.save(pendingUser);
         return ApiResponse.builder()
                 .status(HttpStatus.OK)

@@ -1,7 +1,9 @@
 package com.example.tinder.controller;
 
+import com.example.tinder.annotation.LogUserAction;
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.entity.User;
+import com.example.tinder.enums.UserAction;
 import com.example.tinder.service.ProfilePictureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ public class ProfilePictureController {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
+    @LogUserAction(action = UserAction.UPDATE_PROFILE)
     public ApiResponse upload(@RequestParam MultipartFile file,
                               @AuthenticationPrincipal User user) {
         return profilePictureService.uploadPicture(user, file);

@@ -1,8 +1,12 @@
-package com.example.tinder.exception;
+package com.example.tinder.handler;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.exception.BadRequestException;
+import com.example.tinder.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -46,6 +50,36 @@ public class GlobalException {
         return ApiResponse.builder()
                 .message(e.getMessage())
                 .status(HttpStatus.BAD_REQUEST)
+                .build();
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ApiResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        String message = "Ma'lumotlar butunligi xatosi. Ehtimol, noyob (unique) qiymat takrorlanmoqda.";
+
+        if (e.getCause() != null && e.getCause().getMessage().contains("Duplicate entry")) {
+            message = "Kiritilgan ma'lumot (masalan, Email/Username) bazada allaqachon mavjud.";
+        }
+
+        return ApiResponse.builder()
+                .message(message)
+                .status(HttpStatus.CONFLICT)
+                .build();
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ApiResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        return ApiResponse.builder()
+                .message("So'rov tanasi (JSON) noto'g'ri formatlangan yoki o'qib bo'lmaydi. Iltimos, ma'lumot turlarini tekshiring.")
+                .status(HttpStatus.BAD_REQUEST)
+                .build();
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ApiResponse handleGeneralException(Exception e) {
+        return ApiResponse.builder()
+                .message("Kutilmagan server xatosi sodir bo'ldi. Iltimos, keyinroq urinib ko'ring.")
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .build();
     }
 }
