@@ -77,6 +77,7 @@ public class GlobalException {
 
     @ExceptionHandler(Exception.class)
     public ApiResponse handleGeneralException(Exception e) {
+        e.printStackTrace();
         return ApiResponse.builder()
                 .message("Kutilmagan server xatosi sodir bo'ldi. Iltimos, keyinroq urinib ko'ring.")
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

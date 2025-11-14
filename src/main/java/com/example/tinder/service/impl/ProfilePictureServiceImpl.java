@@ -4,7 +4,6 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.ProfilePictureDto;
 import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.entity.User;
-import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.repository.ProfilePictureRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ProfilePictureService;

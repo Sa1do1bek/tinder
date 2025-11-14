@@ -48,7 +48,8 @@ public class AuthController {
     @LogUserAction(action = UserAction.VERIFY_EMAIL)
     public ApiResponse checkCodeByEmail(@RequestParam("email") String email,
                                         @RequestParam("code") String code,
-                                        @RequestParam("deviceId") String deviceId) {
-        return this.authService.checkCodeByEmail(email, code, deviceId);
+                                        @RequestParam("deviceId") String deviceId,
+                                        @RequestParam("fcmToken") String fcmToken) {
+        return this.authService.checkCodeByEmail(email, code, deviceId, fcmToken);
     }
 }

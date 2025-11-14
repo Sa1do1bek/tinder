@@ -172,7 +172,7 @@ public class AuthServiceImpl implements AuthService {
 
         tokenRepository.deleteByUserId(savedUser.getId());
 
-        deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
+        deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId(), pending.getFcmToken());
 
         String jwtToken = jwtUtil.generateToken(savedUser.getUsername());
         Token token = Token.builder()
@@ -252,6 +252,7 @@ public class AuthServiceImpl implements AuthService {
                 Device device = new Device();
                 device.setUser(user);
                 device.setDeviceName(dto.getDeviceId());
+                device.setFcmToken(dto.getFcmToken());
                 Device save = this.deviceRepository.save(device);
 
                 Code c = new Code();
@@ -328,7 +329,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse checkCodeByEmail(String email, String code, String deviceId) {
+    public ApiResponse checkCodeByEmail(String email, String code, String deviceId, String fcmToken) {
         if (email == null || email.trim().isEmpty()) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
@@ -353,6 +354,7 @@ public class AuthServiceImpl implements AuthService {
                         && c.getDevice().getUser().getId().equals(user.getId())) {
                     c.getDevice().setAddedAt(LocalDateTime.now());
                     c.getDevice().setDeviceName(deviceId);
+                    c.getDevice().setFcmToken(fcmToken);
                     c.getDevice().setExpiredAt(LocalDateTime.now().plusDays(15));
                     this.deviceRepository.save(c.getDevice());
                 }

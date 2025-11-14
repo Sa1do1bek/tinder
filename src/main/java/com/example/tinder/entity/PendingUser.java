@@ -28,6 +28,7 @@ public class PendingUser extends BaseEntity{
 
     private Date birthDate;
     private String deviceId;
+    private String fcmToken;
     private String role;
 
     private String code;

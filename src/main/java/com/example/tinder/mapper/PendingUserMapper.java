@@ -22,6 +22,7 @@ public class PendingUserMapper {
         user.setGender(dto.getGender());
         user.setBirthDate(dto.getBirthDate());
         user.setDeviceId(dto.getDeviceId());
+        user.setFcmToken(dto.getFcmToken());
         user.setRole(dto.getRole());
         user.setCode(code);
         user.setCreatedAt(LocalDateTime.now());

@@ -17,4 +17,6 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
 
     // Eski metod (muammoli)
      Optional<Device> findByUserIdAndDeviceName(Long userId, String deviceName);
+
+    List<Device> findAllByUserId(Long toUserId);
 }

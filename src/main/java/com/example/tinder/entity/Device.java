@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class Device extends BaseEntity {
 
     private String deviceName;
+    private String fcmToken;
     private String macAddress;
 
 

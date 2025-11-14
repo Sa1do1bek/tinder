@@ -52,7 +52,8 @@ public class SecurityConfig {
             "/conversation/**",
             "/chat/**",
             "/app",
-            "/oauth2/authorization/**"
+            "/oauth2/authorization/**",
+            "/api/picture/video/**"
     };
 
     @Bean
