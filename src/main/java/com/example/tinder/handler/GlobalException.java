@@ -1,11 +1,15 @@
 package com.example.tinder.handler;
 
 import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.ErrorResponse;
 import com.example.tinder.exception.BadRequestException;
 import com.example.tinder.exception.ResourceNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import okhttp3.Response;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -22,7 +26,7 @@ public class GlobalException {
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ApiResponse handleValidationExceptions(MethodArgumentNotValidException e) {
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException e, HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -30,57 +34,37 @@ public class GlobalException {
             errors.put(fieldName, errorMessage);
         });
 
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message(e.getMessage())
-                .errors(errors)
-                .build();
+        ErrorResponse errorResponse = new ErrorResponse(errors.toString(), 400, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ApiResponse handleResourceNotFoundException(ResourceNotFoundException e) {
-        return ApiResponse.builder()
-                .message(e.getMessage())
-                .status(HttpStatus.NOT_FOUND)
-                .build();
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException e, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), 400, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ApiResponse handleBadRequestException(BadRequestException e) {
-        return ApiResponse.builder()
-                .message(e.getMessage())
-                .status(HttpStatus.BAD_REQUEST)
-                .build();
+    public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException e, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), 400, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ApiResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        String message = "Ma'lumotlar butunligi xatosi. Ehtimol, noyob (unique) qiymat takrorlanmoqda.";
-
-        if (e.getCause() != null && e.getCause().getMessage().contains("Duplicate entry")) {
-            message = "Kiritilgan ma'lumot (masalan, Email/Username) bazada allaqachon mavjud.";
-        }
-
-        return ApiResponse.builder()
-                .message(message)
-                .status(HttpStatus.CONFLICT)
-                .build();
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException e, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), 400, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ApiResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        return ApiResponse.builder()
-                .message("So'rov tanasi (JSON) noto'g'ri formatlangan yoki o'qib bo'lmaydi. Iltimos, ma'lumot turlarini tekshiring.")
-                .status(HttpStatus.BAD_REQUEST)
-                .build();
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), 400, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
-    public ApiResponse handleGeneralException(Exception e) {
-        e.printStackTrace();
-        return ApiResponse.builder()
-                .message("Kutilmagan server xatosi sodir bo'ldi. Iltimos, keyinroq urinib ko'ring.")
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .build();
+    public ResponseEntity<ErrorResponse> handleGeneralException(Exception e, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), 500, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }
