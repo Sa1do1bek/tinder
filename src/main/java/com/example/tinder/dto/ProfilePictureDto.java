@@ -12,8 +12,4 @@ import lombok.NoArgsConstructor;
 public class ProfilePictureDto {
     private Long id;
     private String cloudPath;
-    private String deliveryType;
-    private String url;
-    private String contentType;
-    private long fileSize;
 }

@@ -34,15 +34,6 @@ public class ProfilePictureController {
         return profilePictureService.uploadPicture(user, file);
     }
 
-    @GetMapping("/video/{cloudPath}")
-    public ResponseEntity<byte[]> streamVideo(
-            @PathVariable String cloudPath,
-            @RequestHeader HttpHeaders headers) throws Exception {
-
-        // Service endi to'liq ResponseEntity ni qaytaradi
-        return s3Service.loadVideoChunkBytes(cloudPath, headers.getFirst(HttpHeaders.RANGE));
-    }
-
     @GetMapping("/user")
     public ApiResponse getAllPictures(@AuthenticationPrincipal User user) {
         return profilePictureService.getUserPictures(user.getId());

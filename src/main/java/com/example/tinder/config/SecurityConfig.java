@@ -54,6 +54,7 @@ public class SecurityConfig {
             "/chat/**",
             "/app",
             "/oauth2/authorization/**",
+            "/login/oauth2/**"
     };
 
     @Bean

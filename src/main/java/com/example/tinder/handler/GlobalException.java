@@ -1,12 +1,10 @@
 package com.example.tinder.handler;
 
-import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.ErrorResponse;
 import com.example.tinder.exception.BadRequestException;
 import com.example.tinder.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import okhttp3.Response;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
