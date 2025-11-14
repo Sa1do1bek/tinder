@@ -20,6 +20,7 @@ public class PendingUserMapper {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setFullName(dto.getFullName());
         user.setGender(dto.getGender());
+        user.setAge(dto.getAge());
         user.setBirthDate(dto.getBirthDate());
         user.setDeviceId(dto.getDeviceId());
         user.setFcmToken(dto.getFcmToken());

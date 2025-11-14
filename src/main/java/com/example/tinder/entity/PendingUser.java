@@ -25,6 +25,7 @@ public class PendingUser extends BaseEntity{
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
+    private Integer age;
 
     private Date birthDate;
     private String deviceId;

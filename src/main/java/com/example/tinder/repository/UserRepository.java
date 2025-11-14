@@ -64,26 +64,40 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsernameAndActiveTrue(String username);
 
-    @Query("""
-                SELECT u FROM User u
-                WHERE u.id != :currentUserId                         
-                  AND u.active = TRUE                               
-           
-                  AND u.id NOT IN (
-                      SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :currentUserId
-                  )
-            
-                  AND u.gender = (
-                      SELECT p.preferredGender FROM Preference p WHERE p.user.id = :currentUserId
-                  )
-            
-                  /* AND u.age BETWEEN (SELECT p.minAge FROM Preference p WHERE p.user.id = :currentUserId)
-                                  AND (SELECT p.maxAge FROM Preference p WHERE p.user.id = :currentUserId)
-                  */
-                ORDER BY u.birthDate ASC                            
-                LIMIT 50
-            """)
+    @Query(value = """
+    SELECT DISTINCT u.*
+    FROM users u
+    JOIN preference p ON p.user_preference = :currentUserId
+
+    -- Userning o'zidagi interestlar bilan compare qilish uchun
+    JOIN users_interest ui ON ui.user_interest = u.id
+
+    WHERE 
+        u.id != :currentUserId
+        AND u.active = true
+
+        -- Gender preference
+        AND (
+            p.preferred_gender IS NULL 
+            OR u.gender = p.preferred_gender
+        )
+
+        -- Age preference
+        AND u.age BETWEEN p.min_age AND p.max_age
+
+        -- Interest match (kamida bitta mos bo'lishi shart)
+        AND EXISTS (
+            SELECT 1 
+            FROM users_interest cui
+            WHERE cui.user_interest = u.id
+            AND cui.name IN (
+                SELECT name 
+                FROM users_interest
+                WHERE preference_id = p.id
+            )
+        )
+    """, nativeQuery = true)
     List<User> findRecommendations(
-            @Param("currentUserId") Long currentUserId
-    );
+            @Param("currentUserId") Long currentUserId);
+
 }

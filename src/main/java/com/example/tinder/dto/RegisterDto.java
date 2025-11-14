@@ -23,6 +23,7 @@ public class RegisterDto {
     private String password;
     private String fullName;
     private Gender gender;
+    private Integer age;
     private Date birthDate;
     private String deviceId;
     private String fcmToken;

@@ -27,6 +27,7 @@ public class UserMapper {
                 .username(dto.getUsername())
                 .birthDate(dto.getBirthDate())
                 .gender(dto.getGender())
+                .age(dto.getAge())
                 .build();
     }
 
@@ -53,6 +54,7 @@ public class UserMapper {
                 .longitude(location.map(UserLocation::getLongitude).orElse(null))
                 .latitude(location.map(UserLocation::getLatitude).orElse(null))
                 .gender(user.getGender())
+                .age(user.getAge())
                 .interests(interests)
                 .bio(user.getBio())
                 .build();

@@ -153,9 +153,8 @@ public class SwipeServiceImpl implements SwipeService {
 
     @Override
     public ApiResponse getMyRecommends(Long currentUserId) {
-        User user = userRepository.findById(currentUserId)
+        userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
 
         List<UserDto> list = userRepository.findRecommendations(currentUserId)
                 .stream()
