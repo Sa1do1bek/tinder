@@ -138,6 +138,7 @@ public class AuthServiceImpl implements AuthService {
             user.setPassword(pending.getPassword());
             user.setStatus(UserStatus.ACTIVE);
             user.setGender(pending.getGender());
+            user.setAge(pending.getAge());
             user.setBirthDate(pending.getBirthDate());
             user.setFullname(pending.getFullName());
 
