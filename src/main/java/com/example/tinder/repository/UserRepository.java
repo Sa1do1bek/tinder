@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User,Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
@@ -27,16 +27,18 @@ public interface UserRepository extends JpaRepository<User,Long> {
     @Transactional
     @Query(value = "delete from user_roles as us where us.user_id=?1 and us.role_id=?2", nativeQuery = true)
     void deleteRoleFromUser(Long userId, Long roleId);
+
     @Query(value = "select * from users as u where u.status='ACTIVE'", nativeQuery = true)
     Page<User> getAllActiveUsers(Pageable pageable);
+
     @Query("SELECT u FROM User u WHERE u.username = :username")
     Optional<User> findByUsername(String username);
 
     @Query("""
-    SELECT u FROM User u 
-    WHERE (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')))
-    AND (:gender IS NULL OR u.gender = :gender)
-""")
+                SELECT u FROM User u 
+                WHERE (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')))
+                AND (:gender IS NULL OR u.gender = :gender)
+            """)
     List<User> searchUsers(
             @Param("username") String username,
             @Param("gender") Gender gender
@@ -46,14 +48,14 @@ public interface UserRepository extends JpaRepository<User,Long> {
     boolean existsByEmail(String email);
 
     @Query("""
-    SELECT u FROM User u
-    WHERE u.status = 'ACTIVE'
-      AND u.id <> :userId
-      AND u.id NOT IN (
-          SELECT s.swiped.id FROM Swipe s
-          WHERE s.swiper.id = :userId
-      )
-""")
+                SELECT u FROM User u
+                WHERE u.status = 'ACTIVE'
+                  AND u.id <> :userId
+                  AND u.id NOT IN (
+                      SELECT s.swiped.id FROM Swipe s
+                      WHERE s.swiper.id = :userId
+                  )
+            """)
     Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
@@ -61,4 +63,27 @@ public interface UserRepository extends JpaRepository<User,Long> {
     boolean existsByEmailAndActiveTrue(@NotBlank(message = "email cannot be null or empty") @Email String email);
 
     boolean existsByUsernameAndActiveTrue(String username);
+
+    @Query("""
+                SELECT u FROM User u
+                WHERE u.id != :currentUserId                         
+                  AND u.active = TRUE                               
+           
+                  AND u.id NOT IN (
+                      SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :currentUserId
+                  )
+            
+                  AND u.gender = (
+                      SELECT p.preferredGender FROM Preference p WHERE p.user.id = :currentUserId
+                  )
+            
+                  /* AND u.age BETWEEN (SELECT p.minAge FROM Preference p WHERE p.user.id = :currentUserId)
+                                  AND (SELECT p.maxAge FROM Preference p WHERE p.user.id = :currentUserId)
+                  */
+                ORDER BY u.birthDate ASC                            
+                LIMIT 50
+            """)
+    List<User> findRecommendations(
+            @Param("currentUserId") Long currentUserId
+    );
 }
