@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -53,11 +54,10 @@ public class SecurityConfig {
             "/chat/**",
             "/app",
             "/oauth2/authorization/**",
-            "/api/picture/video/**"
     };
 
     @Bean
-    protected SecurityFilterChain configure(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, Oauth2LoginSuccessHandler oauth2LoginSuccessHandler) throws Exception {
+    protected SecurityFilterChain configure(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, Oauth2LoginSuccessHandler oauth2LoginSuccessHandler, AuthenticationProvider authenticationProvider) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -79,6 +79,7 @@ public class SecurityConfig {
                     exception.authenticationEntryPoint(customAuthenticationEntryPoint)
                             .accessDeniedHandler(customAccessDeniedHandler);
                 })
+                .authenticationProvider(authenticationProvider)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))

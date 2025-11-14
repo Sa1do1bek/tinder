@@ -219,16 +219,6 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        try {
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
-            authenticationManager.authenticate(authentication);
-        } catch (Exception e) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid credentials")
-                    .build();
-        }
-
         this.tokenRepository.deleteByUserId(user.getId());
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
