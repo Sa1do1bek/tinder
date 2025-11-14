@@ -1,36 +1,32 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.service.S3Service;
-import io.minio.*;
-import io.minio.http.Method;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourceRegion;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLConnection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
-        private final String bucketName = "tinder";
-        private final String endpoint = "http://localhost:9000";
-        private final String accessKey = "minioadmin";
-        private final String secretKey = "minio_strong_password";
-        private MinioClient minioClient;
+    private final String bucketName = "s3-tenzorsoft";
+    private final String endpoint = "https://s3.tenzorsoft.uz";
+    private final String accessKey = "REMOVED";
+    private final String secretKey = "REMOVED";
+
+    private MinioClient minioClient;
 
     @PostConstruct
     public void init() {
