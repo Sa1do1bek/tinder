@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk-slim-bullseye
 ENV TZ=Asia/Tashkent
 EXPOSE 8080
 WORKDIR /app
