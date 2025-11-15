@@ -16,10 +16,7 @@ import java.util.Date;
 @Builder
 @Table(name = "pending_users")
 @Entity
-public class PendingUser {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class PendingUser extends BaseEntity{
 
     private String email;
     private String username;
@@ -28,13 +25,14 @@ public class PendingUser {
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
+    private Integer age;
 
     private Date birthDate;
     private String deviceId;
+    private String fcmToken;
     private String role;
 
     private String code;
-    private LocalDateTime createdAt;
 }
 
 

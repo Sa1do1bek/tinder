@@ -28,4 +28,8 @@ public class SwipeController {
         return swipeService.getSwipesByUser(user.getId());
     }
 
+    @GetMapping("/get/recommendation/{userId}")
+    public ApiResponse getRecommendation(@PathVariable("userId") Long userId){
+        return swipeService.getMyRecommends(userId);
+    }
 }

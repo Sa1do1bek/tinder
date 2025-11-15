@@ -23,8 +23,10 @@ public class RegisterDto {
     private String password;
     private String fullName;
     private Gender gender;
+    private Integer age;
     private Date birthDate;
     private String deviceId;
+    private String fcmToken;
     @NotBlank(message = "role cannot be null or empty")
     private String role;
 

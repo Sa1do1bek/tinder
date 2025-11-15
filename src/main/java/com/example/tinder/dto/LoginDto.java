@@ -16,4 +16,5 @@ public class LoginDto {
     @NotBlank(message = "password cannot be null or empty")
     private String password;
     private String deviceId;
+    private String fcmToken;
 }

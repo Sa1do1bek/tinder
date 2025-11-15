@@ -26,6 +26,7 @@ public class User extends BaseEntity implements UserDetails {
     private String password;
     @Enumerated(EnumType.STRING)
     private Gender gender;
+    private Integer age;
     private Date birthDate;
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserInterest> userInterests;

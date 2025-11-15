@@ -2,10 +2,7 @@ package com.example.tinder.mapper;
 
 import com.example.tinder.dto.RegisterDto;
 import com.example.tinder.dto.UserDto;
-import com.example.tinder.entity.User;
-import com.example.tinder.entity.UserInterest;
-import com.example.tinder.entity.UserLocation;
-import com.example.tinder.entity.UserRole;
+import com.example.tinder.entity.*;
 import com.example.tinder.enums.Interest;
 import com.example.tinder.repository.RoleRepository;
 import com.example.tinder.repository.UserLocationRepository;
@@ -30,6 +27,7 @@ public class UserMapper {
                 .username(dto.getUsername())
                 .birthDate(dto.getBirthDate())
                 .gender(dto.getGender())
+                .age(dto.getAge())
                 .build();
     }
 
@@ -56,6 +54,7 @@ public class UserMapper {
                 .longitude(location.map(UserLocation::getLongitude).orElse(null))
                 .latitude(location.map(UserLocation::getLatitude).orElse(null))
                 .gender(user.getGender())
+                .age(user.getAge())
                 .interests(interests)
                 .bio(user.getBio())
                 .build();

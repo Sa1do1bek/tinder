@@ -3,14 +3,17 @@ package com.example.tinder.service.impl;
 import com.example.tinder.service.S3Service;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.SetBucketPolicyArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLConnection;
 import java.util.UUID;
 
@@ -22,6 +25,7 @@ public class S3ServiceImpl implements S3Service {
     private final String endpoint = "https://s3.tenzorsoft.uz";
     private final String accessKey = "REMOVED";
     private final String secretKey = "REMOVED";
+
     private MinioClient minioClient;
 
     @PostConstruct
