@@ -1,12 +1,10 @@
 package com.example.tinder.controller;
 
-import com.example.tinder.annotation.LogUserAction;
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
-import com.example.tinder.enums.UserAction;
 import com.example.tinder.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -43,7 +41,6 @@ public class UserController {
         return this.userService.updateUserNameAndFullName(user.getId(), username, fullname);
     }
     @PutMapping("/updateEmail")
-    @LogUserAction(action = UserAction.UPDATE_PROFILE, logRequestBody = true)
     public ApiResponse updateEmail(@RequestParam("email") String email,
                                    @RequestParam("newEmail") String newEmail) {
         return this.userService.updateEmail(email, newEmail);
@@ -59,7 +56,6 @@ public class UserController {
     }
 
     @PutMapping("/updatePassword")
-    @LogUserAction(action = UserAction.UPDATE_PASSWORD)
     public ApiResponse updatePassword(@RequestParam String oldPassword,
                                       @RequestParam String newPassword,
                                       @AuthenticationPrincipal User user) {

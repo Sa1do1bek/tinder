@@ -2,8 +2,6 @@ package com.example.tinder.service;
 
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.entity.User;
-import org.springframework.core.io.support.ResourceRegion;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 

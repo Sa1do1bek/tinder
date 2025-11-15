@@ -24,7 +24,6 @@ public class UserDto {
     private List<String> role = new ArrayList<>();
     private String profilePic;
     private Gender gender;
-    private Integer age;
     private Date birthDate;
     private List<Interest> interests = new ArrayList<>();
     private String bio;

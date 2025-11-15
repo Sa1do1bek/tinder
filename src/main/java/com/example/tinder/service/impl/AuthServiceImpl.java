@@ -8,7 +8,6 @@ import com.example.tinder.entity.*;
 import com.example.tinder.enums.Role;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
-import com.example.tinder.mapper.PendingUserMapper;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.AuthService;
@@ -28,12 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+    private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final DeviceRepository deviceRepository;
     private final TokenRepository tokenRepository;
@@ -47,7 +46,6 @@ public class AuthServiceImpl implements AuthService {
     private final Utils utils;
     private final PendingUserRepository pendingUserRepository;
     private final UserLocationRepository userLocationRepository;
-    private final PendingUserMapper pendingUserMapper;
 
     @Override
     public ApiResponse registerByEmail(RegisterDto dto) {
@@ -77,10 +75,17 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
         Optional<PendingUser> optionalPendingUser = pendingUserRepository.findByEmail(dto.getEmail());
-        PendingUser pendingUser = pendingUserMapper
-                .toPendingUser(optionalPendingUser.orElse(new PendingUser()), dto, code);
+        PendingUser pendingUser = optionalPendingUser.orElse(new PendingUser());
+        pendingUser.setEmail(dto.getEmail());
+        pendingUser.setUsername(dto.getUsername());
         pendingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
-
+        pendingUser.setFullName(dto.getFullName());
+        pendingUser.setGender(dto.getGender());
+        pendingUser.setBirthDate(dto.getBirthDate());
+        pendingUser.setDeviceId(dto.getDeviceId());
+        pendingUser.setRole(dto.getRole());
+        pendingUser.setCode(code);
+        pendingUser.setCreatedAt(LocalDateTime.now());
         pendingUserRepository.save(pendingUser);
         return ApiResponse.builder()
                 .status(HttpStatus.OK)
@@ -122,45 +127,57 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        User user = userRepository.findByEmail(dto.getEmail()).orElseGet(User::new);
-
+        Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
         UserRole role = roleRepository.findByName(pending.getRole()).orElse(null);
+
+        User user;
         Set<UserRole> roles = new HashSet<>();
         if (role != null) {
             roles.add(role);
         }
 
-        boolean isNewUser = user.getId() == null;
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
 
-        user.setEmail(pending.getEmail());
-        user.setUsername(pending.getUsername());
-        user.setPassword(pending.getPassword());
-        user.setStatus(UserStatus.ACTIVE);
-        user.setGender(pending.getGender());
-        user.setAge(pending.getAge());
-        user.setBirthDate(pending.getBirthDate());
-        user.setFullname(pending.getFullName());
-        user.setRole(roles);
-        user.setActive(true);
+            user.setUsername(pending.getUsername());
+            user.setPassword(pending.getPassword());
+            user.setStatus(UserStatus.ACTIVE);
+            user.setGender(pending.getGender());
+            user.setBirthDate(pending.getBirthDate());
+            user.setFullname(pending.getFullName());
 
-        if (!isNewUser) {
             user.getProfilePictures().clear();
             user.getUserInterests().clear();
             user.setBio(null);
             user.setProfilePic(null);
-            user.setUpdatedAt(LocalDateTime.now());
 
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
+
+            user.setRole(roles);
+            user.setActive(true);
+            user.setUpdatedAt(LocalDateTime.now());
         } else {
-            user.setProfilePictures(new ArrayList<>());
-            user.setUserInterests(new ArrayList<>());
-            user.setBio(null);
+            user = User.builder()
+                    .email(pending.getEmail())
+                    .username(pending.getUsername())
+                    .password(pending.getPassword())
+                    .status(UserStatus.ACTIVE)
+                    .gender(pending.getGender())
+                    .birthDate(pending.getBirthDate())
+                    .fullname(pending.getFullName())
+                    .role(roles)
+                    .active(true)
+                    .profilePictures(new ArrayList<>())
+                    .userInterests(new ArrayList<>())
+                    .bio(null)
+                    .build();
         }
 
         User savedUser = userRepository.save(user);
 
         tokenRepository.deleteByUserId(savedUser.getId());
-        deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId(), pending.getFcmToken());
+
+        deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
         String jwtToken = jwtUtil.generateToken(savedUser.getUsername());
         Token token = Token.builder()
@@ -196,17 +213,27 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Email not found"));
-
-        if (!user.isActive()) {
+        User user;
+        try {
+            user = this.userRepository.findByEmail(dto.getEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        } catch (ResourceNotFoundException e) {
             return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Account deleted. Please register again.")
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Invalid authentication characters")
                     .build();
         }
 
-        //delete old token
+        try {
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
+            authenticationManager.authenticate(authentication);
+        } catch (Exception e) {
+            return ApiResponse.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .message("Invalid credentials")
+                    .build();
+        }
+
         this.tokenRepository.deleteByUserId(user.getId());
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
@@ -221,25 +248,22 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         this.tokenRepository.save(newToken);
 
-        boolean isTrustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
-                .isPresent();
+        Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
+                .orElse(null);
 
-        if (!isTrustedDevice) {
-            String code = utils.getCode();
+        String code = utils.getCode();
+        if (trustedDevice == null) {
             if (utils.sendCodeToMail(dto.getEmail(), code)) {
-                Device device = Device.builder()
-                        .user(user)
-                        .deviceName(dto.getDeviceId())
-                        .fcmToken(userToken)
-                        .build();
+                Device device = new Device();
+                device.setUser(user);
+                device.setDeviceName(dto.getDeviceId());
                 Device save = this.deviceRepository.save(device);
 
-                Code c = Code.builder()
-                        .user(user)
-                        .device(save)
-                        .code(code)
-                        .createdAt(LocalDateTime.now())
-                        .build();
+                Code c = new Code();
+                c.setCreatedAt(LocalDateTime.now());
+                c.setCode(code);
+                c.setUser(user);
+                c.setDevice(save);
                 this.codeRepository.save(c);
 
                 return ApiResponse.builder()
@@ -280,52 +304,36 @@ public class AuthServiceImpl implements AuthService {
 
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
         if (!user.isActive()) {
             return ApiResponse.builder()
                     .status(HttpStatus.FORBIDDEN)
                     .message("Account deleted. Please register again.")
                     .build();
         }
-
         Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
 
         String code = utils.getCode();
         if (utils.sendCodeToMail(email, code)) {
-            this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId())
-                    .ifPresentOrElse(
-                            c -> {
-                                c.setCode(code);
-                                c.setCreatedAt(LocalDateTime.now());
-                                this.codeRepository.save(c);
-                            },
-                            () -> {
-                                Code newCode = Code.builder()
-                                        .code(code)
-                                        .createdAt(LocalDateTime.now())
-                                        .user(user)
-                                        .device(device)
-                                        .build();
-                                this.codeRepository.save(newCode);
-                            }
-                    );
-
+            Code c = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
+            if (c != null) {
+                c.setCode(code);
+                c.setCreatedAt(LocalDateTime.now());
+                this.codeRepository.save(c);
+            }
             return ApiResponse.builder()
                     .status(HttpStatus.OK)
-                    .message("Auth code sent successfully")
+                    .message("Auth code sent")
                     .build();
         }
-
         return ApiResponse.builder()
                 .status(HttpStatus.BAD_REQUEST)
-                .message("Failed to send authentication code to email")
+                .message("Error while sending auth code")
                 .build();
     }
 
     @Override
-    @Transactional
-    public ApiResponse checkCodeByEmail(String email, String code, String deviceId, String fcmToken) {
+    public ApiResponse checkCodeByEmail(String email, String code, String deviceId) {
         if (email == null || email.trim().isEmpty()) {
             return ApiResponse.builder()
                     .status(HttpStatus.BAD_REQUEST)
@@ -334,56 +342,63 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = this.userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("User not found")
-                    .build();
+        if (user != null) {
+            if (!user.isActive()) {
+                return ApiResponse.builder()
+                        .status(HttpStatus.FORBIDDEN)
+                        .message("Account deleted. Please register again.")
+                        .build();
+            }
+            Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
+                    .orElse(null);
+            if (device != null) {
+                Code c = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
+
+                if (c != null && c.getDevice() != null && c.getDevice().getUser() != null
+                        && c.getDevice().getUser().getId().equals(user.getId())) {
+                    c.getDevice().setAddedAt(LocalDateTime.now());
+                    c.getDevice().setDeviceName(deviceId);
+                    c.getDevice().setExpiredAt(LocalDateTime.now().plusDays(15));
+                    this.deviceRepository.save(c.getDevice());
+                }
+
+                if (!this.utils.checkCode(email, code, device.getId())) {
+                    return ApiResponse.builder()
+                            .status(HttpStatus.BAD_REQUEST)
+                            .message("Error")
+                            .build();
+                }
+
+                Map<String, Object> map = new HashMap<>();
+                Device devices = this.deviceService.addTrustedDeviceByLogin(user.getId(), deviceId);
+                devices.setUser(user);
+                devices.setDeviceName(deviceId);
+                Device save = this.deviceRepository.save(devices);
+
+                Code cc = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
+                if (cc != null) {
+                    cc.setApprovedAt(LocalDateTime.now());
+                    cc.setDevice(save);
+                    this.codeRepository.save(cc);
+                }
+
+
+                String currentToken = jwtUtil.generateToken(user.getUsername());
+                map.put("user", this.userMapper.toDto(user));
+
+                return ApiResponse.builder()
+                        .status(HttpStatus.OK)
+                        .message("SUCCESS")
+                        .data(map)
+                        .build();
+            }
         }
-
-        if (!user.isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Account deleted. Please register again.")
-                    .build();
-        }
-
-        Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId).orElse(null);
-        if (device == null) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .message("Device record not found. Resend code or try logging in again.")
-                    .build();
-        }
-
-        Code authCode = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
-
-        if (authCode == null || !this.utils.checkCode(email, code, device.getId())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid or expired verification code.")
-                    .build();
-        }
-
-        device.setFcmToken(fcmToken);
-        device.setAddedAt(LocalDateTime.now());
-        device.setExpiredAt(LocalDateTime.now().plusDays(15));
-        this.deviceRepository.save(device);
-
-        authCode.setApprovedAt(LocalDateTime.now());
-        this.codeRepository.save(authCode);
-
-        String currentToken = jwtUtil.generateToken(user.getUsername());
-
-        Map<String, Object> responseData = new HashMap<>();
-        responseData.put("user", this.userMapper.toDto(user));
-        responseData.put("token", currentToken);
 
         return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Login SUCCESS")
-                .data(responseData)
+                .status(HttpStatus.BAD_REQUEST)
+                .message("User not found")
                 .build();
     }
+
 
 }

@@ -8,5 +8,4 @@ import org.springframework.stereotype.Component;
 public interface SwipeService {
     ApiResponse swipe(Long swiperId, Long swipedId, SwipeStatus status);
     ApiResponse getSwipesByUser(Long userId);
-    ApiResponse getMyRecommends(Long currentUserId);
 }
