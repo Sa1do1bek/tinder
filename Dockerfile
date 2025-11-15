@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-jdk-slim
 ENV TZ=Asia/Tashkent
 EXPOSE 8080
 WORKDIR /app
