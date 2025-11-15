@@ -15,7 +15,7 @@ public interface AuthService {
 
     ApiResponse verify(VerifyDto dto);
 
-    ApiResponse resendCodeToEmail(String email,String deviceId, Long id);
+    ApiResponse resendCodeToEmail(String email,String deviceId,Long id);
 
-    ApiResponse checkCodeByEmail(String email, String code,String deviceId, String fcmToken);
+    ApiResponse checkCodeByEmail(String email, String code,String deviceId);
 }

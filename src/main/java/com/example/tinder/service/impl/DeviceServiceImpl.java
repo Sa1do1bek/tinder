@@ -30,11 +30,10 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public Device addTrustedDevice(Long userId, String deviceId, String fcmToken) {
+    public Device addTrustedDevice(Long userId, String deviceId) {
         Device devices = new Device();
         devices.setDeviceName(deviceId);
         devices.setAddedAt(LocalDateTime.now());
-        devices.setFcmToken(fcmToken);
         User user = this.userRepository.findById(userId).orElse(null);
         if (user != null) {
             devices.setUser(user);

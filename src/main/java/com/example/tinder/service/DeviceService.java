@@ -8,7 +8,7 @@ public interface DeviceService {
 
     boolean isDeviceTrusted(Long userId, String deviceId);
 
-    Device addTrustedDevice(Long userId, String deviceId, String fcmToken);
+    Device addTrustedDevice(Long userId, String deviceId);
 
     Device addTrustedDeviceByLogin(Long userId, String deviceId);
 

@@ -1,13 +1,10 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.SwipeStatus;
-import com.example.tinder.exception.ResourceNotFoundException;
-import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.MatchRepository;
 import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserRepository;
@@ -20,7 +17,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +27,6 @@ public class SwipeServiceImpl implements SwipeService {
     private final MatchRepository matchRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ConversationService conversationService;
-    private final UserMapper userMapper;
 
     @Override
     public ApiResponse swipe(Long swiperId, Long swipedId, SwipeStatus status) {
@@ -148,23 +143,6 @@ public class SwipeServiceImpl implements SwipeService {
                 .message("Success")
                 .status(HttpStatus.OK)
                 .data(result)
-                .build();
-    }
-
-    @Override
-    public ApiResponse getMyRecommends(Long currentUserId) {
-        userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        List<UserDto> list = userRepository.findRecommendations(currentUserId)
-                .stream()
-                .map(userMapper::toDto)
-                .toList();
-
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(list)
-                .message("Success")
                 .build();
     }
 }
