@@ -92,21 +92,19 @@ function connectWebSocket() {
         return;
     }
 
-    const socket = new SockJS(`${API_BASE_URL}/ws`);
+    const socket = new SockJS(`${API_BASE_URL}/ws?token=${authToken}`);
     stompClient = Stomp.over(socket);
 
     stompClient.connect(
-        {'Authorization': `Bearer ${authToken}`},
+        {}, // bu bo‘sh bo‘ladi
         (frame) => {
             console.log("WebSocket muvaffaqiyatli ulandi");
 
-            // Conversation yangilanishlari uchun obuna
             stompClient.subscribe(`/user/${currentUser.id}/queue/conversations`, (message) => {
                 console.log("Yangi suhbat yangilandi:", message.body);
                 loadUserConversations();
             });
 
-            // Agar chat ochiq bo'lsa, unga obuna bo'lish
             if (currentConversationId) {
                 subscribeToChat(currentConversationId);
             }
@@ -362,8 +360,11 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
                 userId: response.data.meta.userId,
                 type: "register",
             }
-            showMessage("Tasdiqlash kodi yuborildi", "info")
+
             showPage("verifyPage")
+            setTimeout(() => {
+                showMessage("Tasdiqlash kodi yuborildi", "info")
+            }, 50)
         }
     } catch (error) {
         hideLoading()
@@ -775,7 +776,7 @@ async function loadUserConversations() {
 
     try {
         const response = await request.post("/api/notification/send", {
-            params: { userId: currentUser.id },
+            params: {userId: currentUser.id},
         })
 
         if (response.data.status === "OK") {
@@ -1028,7 +1029,7 @@ async function loadUserConversations() {
 
     try {
         const response = await request.get("/conversation/getUserConversations", {
-            params: { userId: currentUser.id }
+            params: {userId: currentUser.id}
         });
 
         console.log("API javobi:", response.data);
@@ -1062,7 +1063,7 @@ async function getOrCreateConversation(user1Id, user2Id) {
     try {
         // Avval conversation borligini tekshiramiz
         const findResponse = await request.get("/conversation/find", {
-            params: { user1Id, user2Id }
+            params: {user1Id, user2Id}
         });
 
         if (findResponse.data.status === "OK" && findResponse.data.data) {
@@ -1071,7 +1072,7 @@ async function getOrCreateConversation(user1Id, user2Id) {
 
         // Yangi conversation yaratamiz
         const createResponse = await request.post("/conversation/create", null, {
-            params: { user1Id, user2Id }
+            params: {user1Id, user2Id}
         });
 
         if (createResponse.data.status === "OK" || createResponse.data.status?.value === 200) {
@@ -1206,7 +1207,7 @@ function formatLastMessageTime(conversation) {
 
     try {
         const date = new Date(msgTime);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
     } catch {
         return "";
     }
@@ -1245,7 +1246,7 @@ async function loadChatMessages(conversationId) {
         showLoading();
 
         const response = await request.get("/chat/messages", {
-            params: { conversationId }
+            params: {conversationId}
         });
 
         if (response.data && Array.isArray(response.data)) {
@@ -1344,7 +1345,6 @@ function addMessageToChat(messageData, isSent) {
 }
 
 
-
 // Enter tugmasi bilan xabar yuborish
 document.getElementById("messageInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
@@ -1423,7 +1423,7 @@ async function checkUpdatedEmail(oldEmail, newEmail, code) {
 
         hideLoading()
 
-        if (response.data.status ==="OK") {
+        if (response.data.status === "OK") {
             currentUser.email = newEmail
             updateProfileDisplay()
             showMessage("Email muvaffaqiyatli yangilandi", "success")
