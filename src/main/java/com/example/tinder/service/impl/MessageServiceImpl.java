@@ -82,9 +82,17 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public List<MessageDto> getMessageByConversationId(Long conversationId) {
-        Conversation conversation = conversationRepository.findById(conversationId)
+    public List<MessageDto> getMessageByConversationId(Long conversationId, User currentUser) {
+        conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new NoSuchElementException("Conversation not found"));
+
+        messageRepository.findByConversationId(conversationId).stream()
+                .filter(message -> message.getRecipient().equals(currentUser))
+                .filter(message -> !message.getIsRead())
+                .forEach(message -> {
+                    message.setIsRead(true);
+                    messageRepository.save(message);
+                });
 
         return messageRepository.findByConversationId(conversationId).stream()
                 .sorted(Comparator.comparing(Message::getCreatedAt))

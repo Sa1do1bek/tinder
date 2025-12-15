@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthHandshakeInterceptor implements HandshakeInterceptor {
 
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
