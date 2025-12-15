@@ -22,6 +22,7 @@ public class UserController {
                                      @RequestParam("roleId") Long roleId) {
         return this.userService.addRoleToUser(userId, roleId);
     }
+
     @DeleteMapping("/deleteRoleFromUser")
     public ApiResponse deleteRoleFromUser(@RequestParam("userId") Long userId,
                                           @RequestParam("roleId") Long roleId) {
@@ -40,12 +41,12 @@ public class UserController {
                                                  @RequestParam("fullname") String fullname) {
         return this.userService.updateUserNameAndFullName(user.getId(), username, fullname);
     }
+
     @PutMapping("/updateEmail")
     public ApiResponse updateEmail(@RequestParam("email") String email,
                                    @RequestParam("newEmail") String newEmail) {
         return this.userService.updateEmail(email, newEmail);
     }
-
 
 
     @PostMapping("/checkUpdatedEmail")
@@ -68,27 +69,31 @@ public class UserController {
                                             @RequestParam("code") String code) {
         return this.userService.checkUpdatedPassword(email, password, code);
     }
+
     @PostMapping("/checkUsername")
     public ApiResponse checkUsername(@RequestParam("username") String username) {
         return this.userService.checkUsername(username);
     }
+
     @GetMapping("/getAllActiveUser")
     public ApiResponse getAllActiveUser(@AuthenticationPrincipal User user,
                                         @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "20") int size) {
         return this.userService.getAllActiveUser(PageRequest.of(page, size), user.getId());
     }
+
     @GetMapping("/getRejectedUsers")
     public ApiResponse getAllRejectedUsers(@AuthenticationPrincipal User user,
-                                           @RequestParam(defaultValue = "0")int page,
-                                           @RequestParam(defaultValue = "5") int size){
-        return userService.getAllRejectUsers(PageRequest.of(page,size),user.getId());
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "5") int size) {
+        return userService.getAllRejectUsers(PageRequest.of(page, size), user.getId());
     }
+
     @GetMapping("/getAcceptedUsers")
     public ApiResponse getAllAcceptedUsers(@AuthenticationPrincipal User user,
-                                           @RequestParam(defaultValue = "0")int page,
-                                           @RequestParam(defaultValue = "5") int size){
-        return userService.getAllAcceptUsers(PageRequest.of(page,size),user.getId());
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "5") int size) {
+        return userService.getAllAcceptUsers(PageRequest.of(page, size), user.getId());
     }
 
     @GetMapping("/getUserByToken")
@@ -105,8 +110,8 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ApiResponse search(@RequestParam(required = false)String username, @RequestParam(required = false) Gender gender){
-        return userService.search(username,gender);
+    public ApiResponse search(@RequestParam(required = false) String username, @RequestParam(required = false) Gender gender) {
+        return userService.search(username, gender);
     }
 
     @PutMapping("/updateGenderOrBrithDateOrInterest")
@@ -120,4 +125,11 @@ public class UserController {
         return userService.deleteUser(user);
     }
 
+    @GetMapping("/is-online-chat-partner")
+    public ApiResponse thisUserIsOnline(
+            @RequestParam("conversationId") Long conversationId,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        return ApiResponse.builder().build();
+    }
 }

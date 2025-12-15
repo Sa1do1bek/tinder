@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,8 +32,10 @@ public class MessageController {
 
     @GetMapping("/messages")
     public ResponseEntity<List<MessageDto>> getMessagesByConversation(
-            @RequestParam Long conversationId) {
-        List<MessageDto> messages = messageService.getMessageByConversationId(conversationId);
+            @RequestParam Long conversationId,
+            @AuthenticationPrincipal com.example.tinder.entity.User currentUser
+    ) {
+        List<MessageDto> messages = messageService.getMessageByConversationId(conversationId, currentUser);
         return ResponseEntity.ok(messages);
     }
 }

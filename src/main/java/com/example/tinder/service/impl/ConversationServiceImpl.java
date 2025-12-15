@@ -78,7 +78,6 @@ public class ConversationServiceImpl implements ConversationService {
     }
 
 
-
     @Override
     public ApiResponse getUserConversations(Long userId) {
         List<Conversation> conversations = conversationRepository.findByUserId(userId);
@@ -93,7 +92,6 @@ public class ConversationServiceImpl implements ConversationService {
                 .data(dtoList)
                 .build();
     }
-
 
 
     @Override
@@ -136,7 +134,6 @@ public class ConversationServiceImpl implements ConversationService {
     }
 
 
-
     private ConversationDTO toDto(Conversation conversation) {
         return ConversationDTO.builder()
                 .id(conversation.getId())
@@ -145,5 +142,9 @@ public class ConversationServiceImpl implements ConversationService {
                 .user2Id(conversation.getUser2().getId())
                 .user2Name(conversation.getUser2().getFullname())
                 .build();
+    }
+
+    private ApiResponse isOnlineChatPartner(Long conversationId) {
+        return ApiResponse.builder().build();
     }
 }
