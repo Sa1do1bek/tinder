@@ -6,6 +6,8 @@ import com.example.tinder.dto.MessageDto;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.Message;
 import com.example.tinder.entity.User;
+import com.example.tinder.enums.ErrorType;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.ConversationRepository;
 import com.example.tinder.repository.MessageRepository;
 import com.example.tinder.repository.UserRepository;
@@ -33,22 +35,17 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public ApiResponse sendMessage(ChatMessageDto chatMessageDto) {
+    public ApiResponse<?> sendMessage(ChatMessageDto chatMessageDto) {
         try {
             User sender = getUserOrThrow(chatMessageDto.getSenderId());
             User receiver = getUserOrThrow(chatMessageDto.getReceiverId());
             if (!sender.isActive()) {
-                return ApiResponse.builder()
-                        .status(HttpStatus.FORBIDDEN)
-                        .message("Sender account is inactive")
-                        .build();
+                throw RestException.restThrow(ErrorType.SENDER_ACCOUNT_INACTIVE);
             }
 
             if (!receiver.isActive()) {
-                return ApiResponse.builder()
-                        .status(HttpStatus.FORBIDDEN)
-                        .message("Receiver account is inactive")
-                        .build();
+                throw RestException.restThrow(ErrorType.RECEIVER_ACCOUNT_INACTIVE);
+
             }
             Conversation conversation = conversationService
                     .getOrCreateConversationEntity(sender.getId(), receiver.getId())
@@ -67,17 +64,10 @@ public class MessageServiceImpl implements MessageService {
             Map<String, Object> messageData = buildMessageData(saved, sender, conversation);
             sendToWebSocket(conversation.getId(), sender.getId(), receiver.getId(), messageData);
 
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("Message sent successfully")
-                    .data(toDto(saved))
-                    .build();
+            return ApiResponse.success(toDto(saved) ,"MESSAGE_SENT_SUCCESSFULLY");
 
         } catch (Exception e) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .message("Failed to send message: " + e.getMessage())
-                    .build();
+            throw RestException.restThrow(ErrorType.FAILED_TO_SEND_MESSAGE);
         }
     }
 

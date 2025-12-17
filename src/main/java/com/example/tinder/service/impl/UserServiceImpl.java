@@ -2,10 +2,14 @@ package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.entity.*;
+import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.Gender;
+import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.UserService;
@@ -28,7 +32,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final TokenRepository tokenRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -39,112 +42,84 @@ public class UserServiceImpl implements UserService {
     private final SwipeRepository  swipeRepository;
 
     @Override
-    public ApiResponse updateUserNameAndFullName(Long userId, String username, String fullname) {
+    public ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname) {
         User user = this.userRepository.findById(userId).
                 orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (utils.existUsername(username)) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("username already exists")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_ALREADY_EXISTS);
         }
         user.setUsername(username);
         user.setFullname(fullname);
         this.userRepository.save(user);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("User updated successfully")
-                .build();
+        return ApiResponse.success("User updated successfully");
     }
 
-    @Override
-    public ApiResponse addRoleToUser(Long userId, Long roleId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        UserRole role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+//    @Override
+//    public ApiResponse<?> addRoleToUser(Long userId, Long roleId) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//
+//        if (user.getRole() != null) {
+//            user.getRole().add(role);
+//        } else {
+//            user.setRole(new HashSet<>(Set.of(role)));
+//        }
+//
+//        userRepository.save(user);
+//
+//        return ApiResponse.success("Role added to user successfully");
+//    }
 
-        if (user.getRole() != null) {
-            user.getRole().add(role);
-        } else {
-            user.setRole(new HashSet<>(Set.of(role)));
-        }
-
-        userRepository.save(user);
-
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Role added to user successfully")
-                .build();
-    }
-
-    @Override
-    public ApiResponse deleteRoleFromUser(Long userId, Long roleId) {
-        this.userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        this.roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
-        this.userRepository.deleteRoleFromUser(userId, roleId);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Delete role from user")
-                .build();
-    }
+//    @Override
+//    public ApiResponse<?> deleteRoleFromUser(Long userId, Long roleId) {
+//        this.userRepository.findById(userId)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//        this.roleRepository.findById(roleId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+//        this.userRepository.deleteRoleFromUser(userId, roleId);
+//        return ApiResponse.success("Delete role from user");
+//    }
 
     @Override
-    public ApiResponse getUserById(Long id) {
+    public ApiResponse<?> getUserById(Long id) {
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("SUCCESS")
-                .data(this.userMapper.toDto(user))
-                .build();
+        return ApiResponse.success(this.userMapper.toDto(user), "SUCCESS");
     }
 
 
     @Override
-    public ApiResponse getAllActiveUser(Pageable pageable, Long currentUserId) {
+    public ApiResponse<?> getAllActiveUser(Pageable pageable, Long currentUserId) {
         Page<User> page = this.userRepository.getAllUnswipedActiveUsers(currentUserId, pageable);
         if (page != null && !page.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .data(this.userMapper.dtoList(page.getContent()))
-                    .elements(page.getTotalElements())
-                    .pages(page.getTotalPages())
-                    .build();
+
+            return ApiResponse.success(this.userMapper.dtoList(page.getContent()), "SUCCESS");
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(new ArrayList<>())
-                .build();
+        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
     }
 
 
     @Override
-    public ApiResponse getUserByToken(String token) {
+    public ApiResponse<?> getUserByToken(String token) {
         Token t = this.tokenRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Token not found"));
         User user = this.userRepository.findById(t.getUser().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(this.userMapper.toDto(user))
-                .build();
+
+
+        return ApiResponse.success(this.userMapper.toDto(user), "SUCCESS");
     }
 
     @Override
-    public ApiResponse updateEmail(String email, String newEmail) {
+    public ApiResponse<?> updateEmail(String email, String newEmail) {
         User user = this.userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Optional<User> optional = this.userRepository.findByEmail(newEmail);
         if (optional.isPresent()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid user email")
-                    .build();
+            throw RestException.restThrow(ErrorType.INVALID_EMAIL);
         }
+
         String code = utils.getCode();
         if (utils.sendCodeToMail(newEmail, code)) {
             Optional<Code> codeOptional = this.codeRepository.findByUserId(user.getId());
@@ -155,24 +130,21 @@ public class UserServiceImpl implements UserService {
                 this.codeRepository.save(c);
                 this.userRepository.save(user);
 
-                return ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .message("Authentication code sent")
-                        .build();
+                return ApiResponse.success("Authentication code sent");
             }
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Authentication code error")
-                .build();
+
+        throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
     }
 
     @Override
-    public ApiResponse checkUpdatedEmail(String oldEmail, String newEmail, String code) {
+    public ApiResponse<?> checkUpdatedEmail(String oldEmail, String newEmail, String code) {
         User user = this.userRepository.findByEmail(oldEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
         Code co = this.codeRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Authentication error"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR));
+
         if (co.getCode().equals(code)) {
             user.setEmail(newEmail);
             co.setApprovedAt(LocalDateTime.now());
@@ -180,38 +152,26 @@ public class UserServiceImpl implements UserService {
             this.userRepository.save(user);
             this.codeRepository.save(co);
 
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("User updated successfully")
-                    .build();
+            return ApiResponse.success("User email updated successfully");
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Authentication error")
-                .build();
+        throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
     }
 
-    public ApiResponse updatePassword(User user, String oldPassword, String newPassword) {
+    public ApiResponse<?> updatePassword(User user, String oldPassword, String newPassword) {
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Old password is incorrect")
-                    .build();
+            throw RestException.restThrow(ErrorType.OLD_PASSWORD_INCORRECT);
         }
 
         String encodedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPassword);
         userRepository.save(user);
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Password successfully updated")
-                .build();
+        return ApiResponse.success("Password updated successfully");
     }
 
 
     @Override
-    public ApiResponse checkUpdatedPassword(String email, String password, String code) {
+    public ApiResponse<?> checkUpdatedPassword(String email, String password, String code) {
         User user = this.userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Code co = this.codeRepository.findByUserId(user.getId())
@@ -223,39 +183,29 @@ public class UserServiceImpl implements UserService {
             co.setApprovedAt(LocalDateTime.now());
             this.codeRepository.save(co);
 
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("User updated")
-                    .build();
+            return ApiResponse.success("Password updated successfully");
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Auth code error")
-                .build();
+
+        throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
     }
 
     @Override
-    public ApiResponse checkUsername(String username) {
+    public ApiResponse<?> checkUsername(String username) {
         if (this.utils.existUsername(username)) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Username already exists")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_ALREADY_EXISTS);
+
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("success")
-                .build();
+        return ApiResponse.success("SUCCESS");
     }
 
     @Override
-    public ApiResponse updateProfilePhoto(Long attachmentId, Long userId) {
+    public ApiResponse<?> updateProfilePhoto(Long attachmentId, Long userId) {
         return null;
     }
 
     @Override
     @Transactional // Tranzaksiya qo'shildi
-    public ApiResponse googleAuth(String email, String fullName, String picPath) {
+    public ApiResponse<?> googleAuth(String email, String fullName, String picPath) {
         if (utils.checkEmail(email)) {
             User user = this.userRepository.findByEmail(email).orElse(null);
             String token;
@@ -276,11 +226,11 @@ public class UserServiceImpl implements UserService {
                         .build();
                 tokenRepository.save(newToken);
 
-                return ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .meta(Map.of("user", this.userMapper.toDto(user)))
-                        .data(token)
-                        .build();
+                return ApiResponse.success(
+                        LoginResponse.builder()
+                        .token(token)
+                        .user(this.userMapper.toDto(user))
+                        .build(), "SUCCESS");
             } else {
                 // Foydalanuvchi mavjud bo'lmasa (yangi ro'yxatdan o'tish):
                 user = new User();
@@ -291,9 +241,7 @@ public class UserServiceImpl implements UserService {
                 user.setStatus(UserStatus.ACTIVE); // Google orqali ro'yxatdan o'tganlar faol bo'lishi kerak
                 user.setActive(true);
 
-                UserRole userRole = roleRepository.findByName("USER")
-                        .orElseThrow(() -> new ResourceNotFoundException("ROLE NOT FOUND"));
-                user.setRole(new HashSet<>(Set.of(userRole)));
+                user.setRole(UserRole.USER);
                 user.setProfilePic(picPath);
                 User save = userRepository.save(user);
 
@@ -307,22 +255,19 @@ public class UserServiceImpl implements UserService {
                 t.setExpiredAt(LocalDateTime.now().plusDays(10));
                 tokenRepository.save(t);
 
-                return ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .message("Google authorized")
-                        .data(token)
-                        .meta(Map.of("user", this.userMapper.toDto(user)))
-                        .build();
+                return ApiResponse.success(
+                        LoginResponse.builder()
+                        .token(token)
+                        .user(this.userMapper.toDto(save))
+                        .build(), "GOOGLE AUTHORIZED SUCCESSFULLY"
+                );
             }
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("User email is invalid")
-                .build();
+        throw RestException.restThrow(ErrorType.INVALID_EMAIL);
     }
 
     @Override
-    public ApiResponse search(String username, Gender gender) {
+    public ApiResponse<?> search(String username, Gender gender) {
         List<User> users = userRepository.searchUsers(username, gender);
 
         List<Map<String, Object>> result = users.stream().map(user -> {
@@ -335,22 +280,15 @@ public class UserServiceImpl implements UserService {
             return userInfo;
         }).toList();
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(result)
-                .message("Search results")
-                .build();
+        return ApiResponse.success(result, "SEARCH RESULTS");
     }
 
     @Override
     @Transactional
-    public ApiResponse updateUserGBI(Long userId, UpdateUserGBIDto dto) {
+    public ApiResponse<?> updateUserGBI(Long userId, UpdateUserGBIDto dto) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .message("User not found")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
 
         User user = optionalUser.get();
@@ -369,7 +307,7 @@ public class UserServiceImpl implements UserService {
                             .user(user)
                             .name(interest)
                             .build())
-                    .collect(Collectors.toList());
+                    .toList();
 
             user.getUserInterests().addAll(newInterests);
         }
@@ -379,60 +317,43 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("User updated successfully")
-                .build();
+        return ApiResponse.success("User updated successfully");
     }
 
     @Override
-    public ApiResponse getAllRejectUsers(PageRequest pageRequest, Long userId) {
+    public ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId) {
         Page<User> rejectedUsers = swipeRepository.findAllRejectedUsers(userId, pageRequest);
 
         if (!rejectedUsers.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .data(userMapper.dtoList(rejectedUsers.getContent()))
-                    .elements(rejectedUsers.getTotalElements())
-                    .pages(rejectedUsers.getTotalPages())
-                    .build();
+            return ApiResponse.success(userMapper.dtoList(rejectedUsers.getContent()), "SUCCESS");
         }
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(new ArrayList<>())
-                .build();
+        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
     }
     @Override
-    public ApiResponse getAllAcceptUsers(PageRequest pageRequest, Long userId) {
+    public ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId) {
         Page<User> rejectedUsers = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
 
         if (!rejectedUsers.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .data(userMapper.dtoList(rejectedUsers.getContent()))
-                    .elements(rejectedUsers.getTotalElements())
-                    .pages(rejectedUsers.getTotalPages())
-                    .build();
+
+            return ApiResponse.success(userMapper.dtoList(rejectedUsers.getContent()), "SUCCESS");
+//            return ApiResponse.builder()
+//                    .status(HttpStatus.OK)
+//                    .data(userMapper.dtoList(rejectedUsers.getContent()))
+//                    .elements(rejectedUsers.getTotalElements())
+//                    .pages(rejectedUsers.getTotalPages())
+//                    .build();
         }
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(new ArrayList<>())
-                .build();
+        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
     }
 
     @Override
-    public ApiResponse deleteUser(User user) {
+    public ApiResponse<?> deleteUser(User user) {
         user.setActive(false);
         tokenRepository.deleteByUserId(user.getId());
         userRepository.save(user);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("User deleted successfully")
-                .build();
-
-
+        return ApiResponse.success("User deleted successfully");
     }
 
 

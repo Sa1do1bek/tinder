@@ -25,7 +25,7 @@ public class MessageController {
 
     @MessageMapping("/chat/send")
     @SendToUser("/queue/messages")
-    public ApiResponse sendMessage(@Payload ChatMessageDto chatMessageDto) {
+    public ApiResponse<?> sendMessage(@Payload ChatMessageDto chatMessageDto) {
         return messageService.sendMessage(chatMessageDto);
     }
 

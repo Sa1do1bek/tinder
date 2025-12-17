@@ -2,6 +2,7 @@ package com.example.tinder.dto;
 
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.Interest;
+import com.example.tinder.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,7 @@ public class UserDto {
     private String email;
     private String fullname;
     private String status;
-    private List<String> role = new ArrayList<>();
+    private UserRole role;
     private String profilePic;
     private Gender gender;
     private Date birthDate;

@@ -4,7 +4,9 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.ProfilePictureDto;
 import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.entity.User;
+import com.example.tinder.enums.ErrorType;
 import com.example.tinder.exception.ResourceNotFoundException;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.ProfilePictureRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ProfilePictureService;
@@ -28,12 +30,9 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
 
     @Override
     @Transactional
-    public ApiResponse uploadPicture(User user, MultipartFile file) {
+    public ApiResponse<?> uploadPicture(User user, MultipartFile file) {
         if (!user.isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Hisobingiz deaktiv holatda. Rasm yuklab bo‘lmaydi.")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_INACTIVE);
         }
         try {
             String cloudPath = s3Service.uploadFile(file);
@@ -53,23 +52,18 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             profilePictureRepository.save(picture);
             userRepository.save(user);
 
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("Rasm muvaffaqiyatli yuklandi")
-                    .build();
+            return ApiResponse.success("Rasm muvaffaqiyatli yuklandi");
+
         } catch (Exception e) {
             throw new RuntimeException("Rasm yuklashda xatolik: " + e.getMessage());
         }
     }
 
     @Override
-    public ApiResponse getUserPictures(Long userId) {
+    public ApiResponse<?> getUserPictures(Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty() || !userOpt.get().isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Hisob faol emas yoki topilmadi")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_INACTIVE);
         }
         List<ProfilePicture> pictures = profilePictureRepository.findAllByUserId(userId);
 
@@ -79,44 +73,32 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
                         .cloudPath(p.getCloudPath())
                         .build())
                 .toList();
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .data(dtoList)
-                .build();
+        return ApiResponse.success(dtoList, "SUCCESS");
+
     }
 
     @Override
     @Transactional
-    public ApiResponse deletePicture(Long pictureId, Long userId) {
+    public ApiResponse<?> deletePicture(Long pictureId, Long userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .message("Foydalanuvchi topilmadi.")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
         User user = optionalUser.get();
         if (!user.isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Hisobingiz deaktiv holatda. Rasmni o‘chira olmaysiz.")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_INACTIVE);
+
         }
 
         Optional<ProfilePicture> optionalPicture = profilePictureRepository.findById(pictureId);
         if (optionalPicture.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .message("Profil rasmi topilmadi.")
-                    .build();
+            throw RestException.restThrow(ErrorType.PROFILE_PICTURE_NOT_FOUND);
         }
         ProfilePicture picture = optionalPicture.get();
 
         if (!picture.getUser().getId().equals(userId)) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Sizga bu rasmni o‘chirishga ruxsat berilmagan.")
-                    .build();
+            throw RestException.restThrow(ErrorType.CANNOT_DELETE_OTHER_USERS_PICTURE);
+
         }
 
         // Agar o'chirilayotgan rasm foydalanuvchining asosiy rasmi bo'lsa, asosiy rasmni null qilish
@@ -144,51 +126,34 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         // Ma'lumotlar bazasidan rasmni o'chirish
         profilePictureRepository.delete(picture);
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Profil rasmi muvaffaqiyatli o‘chirildi.")
-                .build();
+        return ApiResponse.success("PICTURE DELETED SUCCESSFULLY");
+
     }
 
     @Override
     @Transactional
-    public ApiResponse setAsMainPicture(Long userId, Long pictureId) {
+    public ApiResponse<?> setAsMainPicture(Long userId, Long pictureId) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .message("Foydalanuvchi topilmadi.")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
         User user = optionalUser.get();
 
         Optional<ProfilePicture> optionalPicture = profilePictureRepository.findById(pictureId);
         if (optionalPicture.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .message("Rasm topilmadi.")
-                    .build();
+            throw RestException.restThrow(ErrorType.PICTURE_NOT_FOUND);
         }
         ProfilePicture profilePicture = optionalPicture.get();
 
         if (!user.isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Hisobingiz deaktiv. Asosiy rasmni o‘zgartira olmaysiz.")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_INACTIVE);
         }
         if (!profilePicture.getUser().getId().equals(userId)) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Rasm bu foydalanuvchiga tegishli emas.")
-                    .build();
+            throw RestException.restThrow(ErrorType.CANNOT_SET_OTHER_USERS_PICTURE);
+
         }
         user.setProfilePic(profilePicture.getCloudPath());
         userRepository.save(user);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Asosiy rasm muvaffaqiyatli yangilandi.")
-                .data(profilePicture.getCloudPath())
-                .build();
+        return ApiResponse.success(profilePicture.getCloudPath() ,"Asosiy rasm muvaffaqiyatli o'zgartirildi.");
     }
 }

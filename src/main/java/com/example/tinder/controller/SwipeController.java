@@ -16,7 +16,7 @@ public class SwipeController {
     private final SwipeService swipeService;
 
     @PostMapping("/swipeUser")
-    public ApiResponse swipeUser(@AuthenticationPrincipal User user,
+    public ApiResponse<?> swipeUser(@AuthenticationPrincipal User user,
                                  @RequestParam("swipedId")Long swipedId,
                                  @RequestParam("status")SwipeStatus status
                                  ){
@@ -24,7 +24,7 @@ public class SwipeController {
     }
 
     @GetMapping("/getSwipesByUser")
-    public ApiResponse getSwipesByUser(@AuthenticationPrincipal User user){
+    public ApiResponse<?> getSwipesByUser(@AuthenticationPrincipal User user){
         return swipeService.getSwipesByUser(user.getId());
     }
 

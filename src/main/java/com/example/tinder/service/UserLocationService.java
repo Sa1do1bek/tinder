@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public interface UserLocationService {
 
-    ApiResponse update(Long userId, UserLocationDto userLocationDto);
+    ApiResponse<?> update(Long userId, UserLocationDto userLocationDto);
 
     List<UserDto> getNearbyUsers(Long userId, double radiusKm);
 }

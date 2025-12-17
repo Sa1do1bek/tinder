@@ -23,7 +23,7 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
     @PostMapping("/send")
-    public ApiResponse sendNotification(@RequestBody NotificationDto notificationDto) {
+    public ApiResponse<?> sendNotification(@RequestBody NotificationDto notificationDto) {
       return notificationService.sendNotification(notificationDto);
     }
 }

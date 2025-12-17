@@ -4,6 +4,8 @@ import com.example.tinder.dto.*;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.entity.UserLocation;
+import com.example.tinder.enums.ErrorType;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.UserLocationRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.UserLocationService;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,14 +29,10 @@ public class UserLocationServiceImpl implements UserLocationService {
 
     @Override
     @Transactional
-    public ApiResponse update(Long userId, UserLocationDto userLocationDto) {
+    public ApiResponse<?> update(Long userId, UserLocationDto userLocationDto) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
-            return ApiResponse.builder()
-                    .message("User not found")
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
-
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
         User user = userOpt.get();
 
@@ -42,10 +41,8 @@ public class UserLocationServiceImpl implements UserLocationService {
         userLocation.setLatitude(userLocationDto.getLatitude());
         userLocation.setLongitude(userLocationDto.getLongitude());
         userLocationRepository.save(userLocation);
-        return ApiResponse.builder()
-                .message("Successfully updated user location")
-                .status(HttpStatus.OK)
-                .build();
+
+        return ApiResponse.success("Successfully updated user location");
     }
 
     @Override

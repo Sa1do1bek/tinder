@@ -1,6 +1,7 @@
 package com.example.tinder.entity;
 
 import com.example.tinder.enums.Gender;
+import com.example.tinder.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,7 +32,7 @@ public class PendingUser {
 
     private Date birthDate;
     private String deviceId;
-    private String role;
+    private UserRole role;
 
     private String code;
     private LocalDateTime createdAt;

@@ -9,11 +9,11 @@ import java.util.Optional;
 @Component
 public interface ConversationService {
 
-    ApiResponse getUserConversations(Long userId);
+    ApiResponse<?> getUserConversations(Long userId);
 
-    ApiResponse getOrCreateConversation(Long user1Id, Long user2Id);
+    ApiResponse<?> getOrCreateConversation(Long user1Id, Long user2Id);
 
-    ApiResponse findConversationBetweenUsers(Long user1Id, Long user2Id);
+    ApiResponse<?> findConversationBetweenUsers(Long user1Id, Long user2Id);
     boolean isMatchExists(Long user1Id, Long user2Id);
     Optional<Conversation> getOrCreateConversationEntity(Long user1Id, Long user2Id);
 }

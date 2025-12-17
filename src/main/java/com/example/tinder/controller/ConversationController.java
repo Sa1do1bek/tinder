@@ -15,17 +15,17 @@ public class ConversationController {
     private final ConversationService conversationService;
 
     @GetMapping("/getUserConversations")
-    public ApiResponse getUserConversations(@AuthenticationPrincipal User user) {
+    public ApiResponse<?> getUserConversations(@AuthenticationPrincipal User user) {
         return conversationService.getUserConversations(user.getId());
     }
 
     @PostMapping("/getOrCreate")
-    public ApiResponse getOrCreateConversation(@AuthenticationPrincipal User user, @RequestParam Long user2Id) {
+    public ApiResponse<?> getOrCreateConversation(@AuthenticationPrincipal User user, @RequestParam Long user2Id) {
         return conversationService.getOrCreateConversation(user.getId(), user2Id);
     }
 
     @GetMapping("/find")
-    public ApiResponse findConversation(@AuthenticationPrincipal User user, @RequestParam Long user2Id) {
+    public ApiResponse<?> findConversation(@AuthenticationPrincipal User user, @RequestParam Long user2Id) {
         return conversationService.findConversationBetweenUsers(user.getId(), user2Id);
     }
 }

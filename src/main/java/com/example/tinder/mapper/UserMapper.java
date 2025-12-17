@@ -5,9 +5,7 @@ import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.entity.UserLocation;
-import com.example.tinder.entity.UserRole;
 import com.example.tinder.enums.Interest;
-import com.example.tinder.repository.RoleRepository;
 import com.example.tinder.repository.UserLocationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +18,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class UserMapper {
-    private final RoleRepository roleRepository;
     private  final UserLocationRepository userLocationRepository;
 
     public User toEntityByEmail(RegisterDto dto) {
@@ -36,7 +33,6 @@ public class UserMapper {
     public UserDto toDto(User user) {
         Optional<UserLocation> location = userLocationRepository.findByUserId(user.getId());
 
-        List<UserRole> list = this.roleRepository.findByUserId(user.getId());
         List<Interest> interests = user.getUserInterests() != null
                 ? user.getUserInterests().stream()
                 .map(UserInterest::getName)
@@ -48,8 +44,7 @@ public class UserMapper {
                 .email(user.getEmail())
                 .fullname(user.getFullname())
                 .status(String.valueOf(user.getStatus()))
-                .role(list != null && !list.isEmpty() ?
-                        list.stream().map(UserRole::getName).toList() : new ArrayList<>())
+                .role(user.getRole())
                 .username(user.getUsername())
                 .profilePic(user.getProfilePic())
                 .birthDate(user.getBirthDate())

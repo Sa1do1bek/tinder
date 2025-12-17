@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 @Component
 public interface AuthService {
 
-    ApiResponse loginByEmail(LoginDto dto);
+    ApiResponse<?> loginByEmail(LoginDto dto);
 
-    ApiResponse registerByEmail(RegisterDto dto);
+    ApiResponse<?> registerByEmail(RegisterDto dto);
 
-    ApiResponse verify(VerifyDto dto);
+    ApiResponse<?> verify(VerifyDto dto);
 
-    ApiResponse resendCodeToEmail(String email,String deviceId,Long id);
+    ApiResponse<?> resendCodeToEmail(String email,String deviceId,Long id);
 
-    ApiResponse checkCodeByEmail(String email, String code,String deviceId);
+    ApiResponse<?> checkCodeByEmail(String email, String code,String deviceId);
 }

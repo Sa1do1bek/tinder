@@ -1,9 +1,12 @@
 package com.example.tinder.service.impl;
 
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.ConversationDTO;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.User;
+import com.example.tinder.enums.ErrorType;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.ConversationMapper;
 import com.example.tinder.repository.ConversationRepository;
 import com.example.tinder.repository.MatchRepository;
@@ -27,17 +30,14 @@ public class ConversationServiceImpl implements ConversationService {
 
 
     @Override
-    public ApiResponse getOrCreateConversation(Long user1Id, Long user2Id) {
+    public ApiResponse<?> getOrCreateConversation(Long user1Id, Long user2Id) {
         System.out.println("❗ getOrCreateConversation called with: " + user1Id + " and " + user2Id);
 
         Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
         if (optional.isPresent()) {
             System.out.println("✅ Conversation already exists");
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("Conversation already exists")
-                    .data(toDto(optional.get()))
-                    .build();
+
+            return ApiResponse.success(toDto(optional.get()), "Conversation already exists");
         }
 
         User user1 = userRepository.findById(user1Id)
@@ -55,43 +55,31 @@ public class ConversationServiceImpl implements ConversationService {
 
         System.out.println("✅ Conversation created with id: " + saved.getId());
 
-        return ApiResponse.builder()
-                .status(HttpStatus.CREATED)
-                .message("Conversation created successfully")
-                .data(toDto(saved))
-                .build();
+        return ApiResponse.success(toDto(saved), "Conversation created successfully");
     }
 
 
     @Override
-    public ApiResponse findConversationBetweenUsers(Long user1Id, Long user2Id) {
+    public ApiResponse<?> findConversationBetweenUsers(Long user1Id, Long user2Id) {
         Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
 
-        return optional.map(conversation -> ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .data(toDto(conversation))
-                        .build())
-                .orElseGet(() -> ApiResponse.builder()
-                        .status(HttpStatus.NOT_FOUND)
-                        .message("Conversation not found")
-                        .build());
+        return optional.map(conversation ->
+                ApiResponse.success(toDto(conversation) , "Conversation found")
+        ).orElseThrow( () -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
+//
     }
 
 
 
     @Override
-    public ApiResponse getUserConversations(Long userId) {
+    public ApiResponse<?> getUserConversations(Long userId) {
         List<Conversation> conversations = conversationRepository.findByUserId(userId);
 
         List<ConversationDTO> dtoList = conversations.stream()
                 .map(conversationMapper::toDto)
                 .toList();
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Conversations retrieved successfully")
-                .data(dtoList)
-                .build();
+        return ApiResponse.success(dtoList, "Conversations retrieved successfully");
     }
 
 

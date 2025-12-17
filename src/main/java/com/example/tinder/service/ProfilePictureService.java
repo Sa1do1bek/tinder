@@ -8,11 +8,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public interface ProfilePictureService {
 
-    ApiResponse uploadPicture(User user, MultipartFile file);
+    ApiResponse<?> uploadPicture(User user, MultipartFile file);
 
-    ApiResponse getUserPictures(Long userId);
+    ApiResponse<?> getUserPictures(Long userId);
 
-    ApiResponse deletePicture(Long id, Long userId);
+    ApiResponse<?> deletePicture(Long id, Long userId);
 
-    ApiResponse setAsMainPicture(Long userId, Long pictureId);
+    ApiResponse<?> setAsMainPicture(Long userId, Long pictureId);
 }

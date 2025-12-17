@@ -16,30 +16,29 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/loginByEmail")
-    public ApiResponse loginByEmail(@Valid @RequestBody LoginDto dto) {
+    public ApiResponse<?> loginByEmail(@Valid @RequestBody LoginDto dto) {
         return this.authService.loginByEmail(dto);
     }
 
     @PostMapping("/registerByEmail")
-    public ApiResponse registerByEmail(@Valid @RequestBody RegisterDto dto) {
+    public ApiResponse<?> registerByEmail(@Valid @RequestBody RegisterDto dto) {
         return this.authService.registerByEmail(dto);
     }
 
     @PostMapping("/verify")
-    public ApiResponse verify(@RequestBody VerifyDto dto) {
-        ApiResponse response = this.authService.verify(dto);
-        return response;
+    public ApiResponse<?> verify(@RequestBody VerifyDto dto) {
+        return (ApiResponse<?>) this.authService.verify(dto);
     }
 
     @PostMapping("/resendCodeToEmail")
-    public ApiResponse resendCodeToEmail(@RequestParam("email") String email,
+    public ApiResponse<?> resendCodeToEmail(@RequestParam("email") String email,
                                          @RequestParam("deviceId") String deviceId,
                                          @RequestParam("id") Long id) {
         return this.authService.resendCodeToEmail(email, deviceId, id);
     }
 
     @PostMapping("/checkCodeByEmail")
-    public ApiResponse checkCodeByEmail(@RequestParam("email") String email,
+    public ApiResponse<?> checkCodeByEmail(@RequestParam("email") String email,
                                         @RequestParam("code") String code,
                                         @RequestParam("deviceId") String deviceId) {
         return this.authService.checkCodeByEmail(email, code, deviceId);

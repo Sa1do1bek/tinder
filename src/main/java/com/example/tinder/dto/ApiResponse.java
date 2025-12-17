@@ -1,28 +1,67 @@
 package com.example.tinder.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.http.HttpStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter
+@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiResponse{
-    private Integer code;
-    private String message;
-    private HttpStatus status;
-    private Map<String, String> errors;
-    private Map<String, Object> meta = new HashMap<>();
-    private Object data;
-    private Long elements;
-    private Integer pages;
+public class ApiResponse<T>{
+    private final Boolean success;
 
+    private String message;
+
+    private T data;
+
+    private ApiResponse(Boolean success) {
+        this.success = success;
+    }
+
+    private ApiResponse(T data, Boolean success) {
+        this.data = data;
+        this.success = success;
+    }
+
+    private ApiResponse(T data, Boolean success, String message) {
+        this.data = data;
+        this.success = success;
+        this.message = message;
+    }
+
+    private ApiResponse(String message, Boolean success) {
+        this.message = message;
+        this.success = success;
+    }
+
+    public static <E> ApiResponse<E> success(E data) {
+        return new ApiResponse<>(data, Boolean.TRUE);
+    }
+
+    public static <E> ApiResponse<E> success(E data, String message) {
+        return new ApiResponse<>(data, Boolean.TRUE, message);
+    }
+
+    public static <E> ApiResponse<E> success() {
+        return new ApiResponse<>(Boolean.TRUE);
+    }
+
+    public static ApiResponse<String> success(String message) {
+        return new ApiResponse<>(message, Boolean.TRUE);
+    }
+
+    public static ApiResponse<ErrorResponse> error(String errorMsg) {
+        return new ApiResponse<>(errorMsg, Boolean.FALSE);
+    }
+
+    public static ApiResponse<ErrorResponse> error(String errorMsg, Integer errorCode, String errorPath) {
+        return new ApiResponse<>(new ErrorResponse(errorMsg, errorCode, errorPath), Boolean.FALSE);
+    }
+
+    public static ApiResponse<ErrorResponse> error(ErrorResponse data) {
+        return new ApiResponse<>(data, Boolean.FALSE);
+    }
 }

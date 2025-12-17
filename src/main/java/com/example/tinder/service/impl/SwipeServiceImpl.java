@@ -4,7 +4,9 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
+import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SwipeStatus;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.MatchRepository;
 import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserRepository;
@@ -29,38 +31,26 @@ public class SwipeServiceImpl implements SwipeService {
     private final ConversationService conversationService;
 
     @Override
-    public ApiResponse swipe(Long swiperId, Long swipedId, SwipeStatus status) {
+    public ApiResponse<?> swipe(Long swiperId, Long swipedId, SwipeStatus status) {
         if (swiperId.equals(swipedId)) {
-            return ApiResponse.builder()
-                    .message("You can't swipe yourself.")
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
+            throw RestException.restThrow(ErrorType.YOU_CANNOT_SWIPE_YOURSELF);
         }
 
         Optional<User> swipedOpt = userRepository.findById(swipedId);
         Optional<User> swiperOpt = userRepository.findById(swiperId);
 
         if (swiperOpt.isEmpty() || swipedOpt.isEmpty()) {
-            return ApiResponse.builder()
-                    .message("User not found")
-                    .status(HttpStatus.NOT_FOUND)
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
         User swiper = swiperOpt.get();
         User swiped = swipedOpt.get();
 
         if (!swiper.isActive()) {
-            return ApiResponse.builder()
-                    .message("Your account is inactive. Please register again.")
-                    .status(HttpStatus.FORBIDDEN)
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_INACTIVE);
         }
 
         if (!swiped.isActive()) {
-            return ApiResponse.builder()
-                    .message("This user is no longer available.")
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
+            throw RestException.restThrow(ErrorType.THIS_USER_IS_NO_LONGER_AVAILABLE);
         }
 
 
@@ -111,23 +101,16 @@ public class SwipeServiceImpl implements SwipeService {
                         "/topic/notification/" + swiperOpt.get().getId(),
                         matchNotification
                 );
-
-                return ApiResponse.builder()
-                        .message("Match found! You can now start chatting.")
-                        .status(HttpStatus.OK)
-                        .build();
+                return ApiResponse.success("Match found! You can now start chatting.");
             }
         }
 
-        return ApiResponse.builder()
-                .status(HttpStatus.ACCEPTED)
-                .message("Swipe recorded")
-                .build();
+        return ApiResponse.success("Swipe recorded.");
     }
 
     @Override
     @Transactional
-    public ApiResponse getSwipesByUser(Long userId) {
+    public ApiResponse<?> getSwipesByUser(Long userId) {
         List<Swipe> swipeList = swipeRepository.findAllBySwiper_Id(userId);
         List<Map<String, Object>> result = new ArrayList<>();
 
@@ -139,10 +122,6 @@ public class SwipeServiceImpl implements SwipeService {
             result.add(data);
         }
 
-        return ApiResponse.builder()
-                .message("Success")
-                .status(HttpStatus.OK)
-                .data(result)
-                .build();
+        return ApiResponse.success(result, "SUCCESS");
     }
 }

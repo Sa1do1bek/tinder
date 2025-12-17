@@ -10,35 +10,35 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface UserService {
-    ApiResponse updateUserNameAndFullName(Long userId, String username, String fullname);
-    ApiResponse addRoleToUser(Long userId, Long roleId);
-    ApiResponse deleteRoleFromUser(Long userId, Long roleId);
-    ApiResponse getUserById(Long id);
-    ApiResponse getAllActiveUser(Pageable pageable, Long userId);
-    ApiResponse getUserByToken(String token);
+    ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname);
+//    ApiResponse<?> addRoleToUser(Long userId, Long roleId);
+//    ApiResponse<?> deleteRoleFromUser(Long userId, Long roleId);
+    ApiResponse<?> getUserById(Long id);
+    ApiResponse<?> getAllActiveUser(Pageable pageable, Long userId);
+    ApiResponse<?> getUserByToken(String token);
 
 
-    ApiResponse updateEmail(String email, String newEmail);
+    ApiResponse<?> updateEmail(String email, String newEmail);
 
-    ApiResponse checkUpdatedEmail(String oldEmail, String newEmail, String code);
+    ApiResponse<?> checkUpdatedEmail(String oldEmail, String newEmail, String code);
 
-    ApiResponse updatePassword(User user, String email, String newPassword);
+    ApiResponse<?> updatePassword(User user, String email, String newPassword);
 
-    ApiResponse checkUpdatedPassword(String email, String password, String code);
+    ApiResponse<?> checkUpdatedPassword(String email, String password, String code);
 
-    ApiResponse checkUsername(String username);
+    ApiResponse<?> checkUsername(String username);
 
-    ApiResponse updateProfilePhoto(Long attachmentId,Long userId);
+    ApiResponse<?> updateProfilePhoto(Long attachmentId,Long userId);
 
-    ApiResponse googleAuth(String email, String fullName, String picPath);
+    ApiResponse<?> googleAuth(String email, String fullName, String picPath);
 
-    ApiResponse search(String username, Gender gender);
+    ApiResponse<?> search(String username, Gender gender);
 
-    ApiResponse updateUserGBI(Long userId, UpdateUserGBIDto dto);
+    ApiResponse<?> updateUserGBI(Long userId, UpdateUserGBIDto dto);
 
-    ApiResponse getAllRejectUsers(PageRequest pageRequest, Long userId);
-    ApiResponse getAllAcceptUsers(PageRequest pageRequest, Long userId);
+    ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId);
+    ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId);
 
 
-    ApiResponse deleteUser(User user);
+    ApiResponse<?> deleteUser(User user);
 }

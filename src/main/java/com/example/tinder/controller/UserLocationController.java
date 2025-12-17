@@ -18,7 +18,7 @@ public class UserLocationController {
   private final UserLocationService userLocationService;
 
     @PostMapping("/update")
-    public ApiResponse update(@AuthenticationPrincipal User user, UserLocationDto userLocationDto){
+    public ApiResponse<?> update(@AuthenticationPrincipal User user, UserLocationDto userLocationDto){
         return userLocationService.update(user.getId(),userLocationDto);
     }
 

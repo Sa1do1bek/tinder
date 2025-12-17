@@ -25,7 +25,4 @@ public class RegisterDto {
     private Gender gender;
     private Date birthDate;
     private String deviceId;
-    @NotBlank(message = "role cannot be null or empty")
-    private String role;
-
 }

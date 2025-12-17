@@ -4,10 +4,13 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.LoginDto;
 import com.example.tinder.dto.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
+import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.entity.*;
-import com.example.tinder.enums.Role;
+import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.AuthService;
@@ -37,7 +40,6 @@ public class AuthServiceImpl implements AuthService {
     private final DeviceRepository deviceRepository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RoleRepository roleRepository;
     private final CodeRepository codeRepository;
     private final UserRepository userRepository;
     private final DeviceService deviceService;
@@ -48,31 +50,20 @@ public class AuthServiceImpl implements AuthService {
     private final UserLocationRepository userLocationRepository;
 
     @Override
-    public ApiResponse registerByEmail(RegisterDto dto) {
+    public ApiResponse<?> registerByEmail(RegisterDto dto) {
         if (!utils.checkEmail(dto.getEmail())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid email format")
-                    .build();
+            throw RestException.restThrow(ErrorType.INVALID_EMAIL_FORMAT);
         }
         if (userRepository.existsByEmailAndActiveTrue(dto.getEmail())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Email already taken")
-                    .build();
+            throw RestException.restThrow(ErrorType.EMAIL_ALREADY_TAKEN);
         }
         if (userRepository.existsByUsernameAndActiveTrue(dto.getUsername())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Username already taken")
-                    .build();
+            throw RestException.restThrow(ErrorType.USERNAME_ALREADY_TAKEN);
+
         }
         String code = utils.getCode();
         if (!utils.sendCodeToMail(dto.getEmail(), code)) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Error sending verification code")
-                    .build();
+            throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
         Optional<PendingUser> optionalPendingUser = pendingUserRepository.findByEmail(dto.getEmail());
         PendingUser pendingUser = optionalPendingUser.orElse(new PendingUser());
@@ -83,26 +74,22 @@ public class AuthServiceImpl implements AuthService {
         pendingUser.setGender(dto.getGender());
         pendingUser.setBirthDate(dto.getBirthDate());
         pendingUser.setDeviceId(dto.getDeviceId());
-        pendingUser.setRole(dto.getRole());
+        pendingUser.setRole(UserRole.USER);
         pendingUser.setCode(code);
         pendingUser.setCreatedAt(LocalDateTime.now());
         pendingUserRepository.save(pendingUser);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("Verification code sent to email")
-                .build();
+        return ApiResponse.success("VERIFICATION_CODE_SENT_TO_EMAIL");
     }
 
     @Override
     @Transactional
-    public ApiResponse verify(VerifyDto dto) {
+    public ApiResponse<?> verify(VerifyDto dto) {
         Optional<PendingUser> optionalPending = pendingUserRepository.findByEmail(dto.getEmail());
 
         if (optionalPending.isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid verification code or email")
-                    .build();
+            throw RestException.restThrow(ErrorType.INVALID_VERIFICATION_CODE_OR_EMAIL);
+
+
         }
 
         PendingUser pending = optionalPending.get();
@@ -111,30 +98,20 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("Dto code: " + dto.getCode());
 
         if (!pending.getCode().equals(dto.getCode())) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid verification code or email")
-                    .build();
+            throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
 
 
         long EXPIRATION_MINUTES = 5;
         if (pending.getCreatedAt().plusMinutes(EXPIRATION_MINUTES).isBefore(LocalDateTime.now())) {
             pendingUserRepository.delete(pending);
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Verification code has expired. Please register again.")
-                    .build();
+            throw RestException.restThrow(ErrorType.VERIFICATION_CODE_EXPIRED);
         }
 
         Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
-        UserRole role = roleRepository.findByName(pending.getRole()).orElse(null);
+
 
         User user;
-        Set<UserRole> roles = new HashSet<>();
-        if (role != null) {
-            roles.add(role);
-        }
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
@@ -153,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
 
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
 
-            user.setRole(roles);
+            user.setRole(UserRole.USER);
             user.setActive(true);
             user.setUpdatedAt(LocalDateTime.now());
         } else {
@@ -165,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
                     .gender(pending.getGender())
                     .birthDate(pending.getBirthDate())
                     .fullname(pending.getFullName())
-                    .role(roles)
+                    .role(UserRole.USER)
                     .active(true)
                     .profilePictures(new ArrayList<>())
                     .userInterests(new ArrayList<>())
@@ -191,26 +168,19 @@ public class AuthServiceImpl implements AuthService {
 
         pendingUserRepository.delete(pending);
 
-        return ApiResponse.builder()
-                .status(HttpStatus.OK)
-                .message("User registered successfully")
-                .data(Map.of(
-                        "token", jwtToken,
-                        "user", userMapper.toDto(savedUser)
-                ))
-                .build();
-
+         return ApiResponse.success(Map.of(
+                "token", jwtToken,
+                "user", userMapper.toDto(savedUser))
+                ,"USER_REGISTERED_SUCCESSFULLY"
+        );
     }
 
 
     @Override
     @Transactional
-    public ApiResponse loginByEmail(LoginDto dto) {
+    public ApiResponse<?> loginByEmail(LoginDto dto) {
         if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("User email invalid")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_EMAIL_INVALID);
         }
 
         User user;
@@ -218,20 +188,14 @@ public class AuthServiceImpl implements AuthService {
             user = this.userRepository.findByEmail(dto.getEmail())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         } catch (ResourceNotFoundException e) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid authentication characters")
-                    .build();
+            throw RestException.restThrow(ErrorType.INVALID_AUTHENTICATION_CHARACTERS);
         }
 
         try {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
             authenticationManager.authenticate(authentication);
         } catch (Exception e) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("Invalid credentials")
-                    .build();
+            throw RestException.restThrow(ErrorType.INVALID_CREDENTIALS);
         }
 
         this.tokenRepository.deleteByUserId(user.getId());
@@ -266,49 +230,43 @@ public class AuthServiceImpl implements AuthService {
                 c.setDevice(save);
                 this.codeRepository.save(c);
 
-                return ApiResponse.builder()
-                        .code(0)
-                        .status(HttpStatus.OK)
-                        .message("Code sent")
-                        .data(userToken)
-                        .meta(Map.of("user", this.userMapper.toDto(user)))
-                        .build();
+
+                return ApiResponse.success(
+                        LoginResponse.builder()
+                                .message("CODE SENT")
+                                .code(0)
+                                .user(this.userMapper.toDto(user))
+                                .token(userToken)
+                                .build()
+                );
             }
         }
 
         if (!user.isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Account deleted. Please register again.")
-                    .build();
+            throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
         }
 
-        return ApiResponse.builder()
-                .code(1)
-                .status(HttpStatus.OK)
-                .message("SUCCESS")
-                .data(userToken)
-                .meta(Map.of("user", this.userMapper.toDto(user)))
-                .build();
+        return ApiResponse.success(
+                LoginResponse.builder()
+                        .message("SUCCESS")
+                        .code(1)
+                        .user(this.userMapper.toDto(user))
+                        .token(userToken)
+                        .build()
+        );
     }
 
     @Override
     @Transactional
-    public ApiResponse resendCodeToEmail(String email, String deviceId, Long id) {
+    public ApiResponse<?> resendCodeToEmail(String email, String deviceId, Long id) {
         if (email == null || email.trim().isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("User email invalid")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_EMAIL_INVALID);
         }
 
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (!user.isActive()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.FORBIDDEN)
-                    .message("Account deleted. Please register again.")
-                    .build();
+            throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
         }
         Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
@@ -321,33 +279,21 @@ public class AuthServiceImpl implements AuthService {
                 c.setCreatedAt(LocalDateTime.now());
                 this.codeRepository.save(c);
             }
-            return ApiResponse.builder()
-                    .status(HttpStatus.OK)
-                    .message("Auth code sent")
-                    .build();
+            return ApiResponse.success("CODE_SENT");
         }
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("Error while sending auth code")
-                .build();
+        throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
     }
 
     @Override
-    public ApiResponse checkCodeByEmail(String email, String code, String deviceId) {
+    public ApiResponse<?> checkCodeByEmail(String email, String code, String deviceId) {
         if (email == null || email.trim().isEmpty()) {
-            return ApiResponse.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .message("User email invalid")
-                    .build();
+            throw RestException.restThrow(ErrorType.USER_EMAIL_INVALID);
         }
 
         User user = this.userRepository.findByEmail(email).orElse(null);
         if (user != null) {
             if (!user.isActive()) {
-                return ApiResponse.builder()
-                        .status(HttpStatus.FORBIDDEN)
-                        .message("Account deleted. Please register again.")
-                        .build();
+                throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
             }
             Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
                     .orElse(null);
@@ -363,10 +309,7 @@ public class AuthServiceImpl implements AuthService {
                 }
 
                 if (!this.utils.checkCode(email, code, device.getId())) {
-                    return ApiResponse.builder()
-                            .status(HttpStatus.BAD_REQUEST)
-                            .message("Error")
-                            .build();
+                    throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
                 }
 
                 Map<String, Object> map = new HashMap<>();
@@ -386,19 +329,11 @@ public class AuthServiceImpl implements AuthService {
                 String currentToken = jwtUtil.generateToken(user.getUsername());
                 map.put("user", this.userMapper.toDto(user));
 
-                return ApiResponse.builder()
-                        .status(HttpStatus.OK)
-                        .message("SUCCESS")
-                        .data(map)
-                        .build();
+                return ApiResponse.success(this.userMapper.toDto(user), "SECCESS");
             }
         }
 
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message("User not found")
-                .build();
+        throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
     }
-
 
 }

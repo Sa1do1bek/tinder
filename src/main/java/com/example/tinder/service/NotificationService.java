@@ -6,5 +6,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface NotificationService {
-    ApiResponse sendNotification(NotificationDto notificationDto);
+    ApiResponse<?> sendNotification(NotificationDto notificationDto);
 }

@@ -89,7 +89,7 @@ public class Utils {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom("tvajoyibgoya@gmail.com");
+            helper.setFrom("akbarmasharipov57@gmail.com");
             helper.setTo(mail);
             helper.setSubject("🔐 HeadHunter APP – Tasdiqlash kodi");
 

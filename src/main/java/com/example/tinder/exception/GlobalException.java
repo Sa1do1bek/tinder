@@ -3,6 +3,7 @@ package com.example.tinder.exception;
 import com.example.tinder.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,41 +12,43 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-
-@RestControllerAdvice
-@RequiredArgsConstructor
-public class GlobalException {
-
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ApiResponse handleValidationExceptions(MethodArgumentNotValidException e) {
-        Map<String, String> errors = new HashMap<>();
-        e.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        return ApiResponse.builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .message(e.getMessage())
-                .errors(errors)
-                .build();
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ApiResponse handleResourceNotFoundException(ResourceNotFoundException e) {
-        return ApiResponse.builder()
-                .message(e.getMessage())
-                .status(HttpStatus.NOT_FOUND)
-                .build();
-    }
-
-    @ExceptionHandler(BadRequestException.class)
-    public ApiResponse handleBadRequestException(BadRequestException e) {
-        return ApiResponse.builder()
-                .message(e.getMessage())
-                .status(HttpStatus.BAD_REQUEST)
-                .build();
-    }
-}
+//
+//@RestControllerAdvice
+//@RequiredArgsConstructor
+//public class GlobalException {
+//
+//
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ApiResponse handleValidationExceptions(MethodArgumentNotValidException e) {
+//        Map<String, String> errors = new HashMap<>();
+//        e.getBindingResult().getAllErrors().forEach((error) -> {
+//            String fieldName = ((FieldError) error).getField();
+//            String errorMessage = error.getDefaultMessage();
+//            errors.put(fieldName, errorMessage);
+//        });
+//
+//        return ApiResponse.builder()
+//                .status(HttpStatus.BAD_REQUEST)
+//                .message(e.getMessage())
+//                .errors(errors)
+//                .build();
+//    }
+//
+//    @ExceptionHandler(ResourceNotFoundException.class)
+//    public ApiResponse handleResourceNotFoundException(ResourceNotFoundException e) {
+//        return ApiResponse.builder()
+//                .message(e.getMessage())
+//                .status(HttpStatus.NOT_FOUND)
+//                .build();
+//    }
+//
+//    @ExceptionHandler(BadRequestException.class)
+//    public ResponseEntity<?> handleBadRequestException(BadRequestException e) {
+//        return ResponseEntity.badRequest().body(ApiResponse.builder()
+//                .status(HttpStatus.BAD_REQUEST)
+//                .message(e.getMessage())
+//                .build()
+//        );
+//
+//    }
+//}

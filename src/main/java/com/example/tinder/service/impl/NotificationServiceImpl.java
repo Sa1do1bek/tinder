@@ -14,16 +14,12 @@ import org.springframework.stereotype.Service;
 public class NotificationServiceImpl implements NotificationService {
     private final SimpMessagingTemplate simpMessagingTemplate;
     @Override
-    public ApiResponse sendNotification(NotificationDto notificationDto) {
+    public ApiResponse<?> sendNotification(NotificationDto notificationDto) {
         simpMessagingTemplate.convertAndSend(
                 "/topic/notification/" + notificationDto.getToUserId(),
                 new NotificationMessage(notificationDto)
         );
 
-        return
-                ApiResponse.builder()
-                        .message("Notification sent")
-                        .status(HttpStatus.OK)
-                        .build();
+        return ApiResponse.success("Notification sent");
     }
 }

@@ -12,7 +12,7 @@ import java.util.Optional;
 @Component
 public interface MessageService {
     Optional<Conversation> findConversationEntity(Long user1Id, Long user2Id);
-    ApiResponse sendMessage(ChatMessageDto chatMessageDto);
+    ApiResponse<?> sendMessage(ChatMessageDto chatMessageDto);
 
     List<MessageDto> getMessageByConversationId(Long conversationId);
 }
