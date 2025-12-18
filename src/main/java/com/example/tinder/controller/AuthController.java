@@ -43,4 +43,11 @@ public class AuthController {
                                         @RequestParam("deviceId") String deviceId) {
         return this.authService.checkCodeByEmail(email, code, deviceId);
     }
+
+    @PostMapping("/checkEmail")
+    public ApiResponse<?> checkEmail(@RequestParam("email") String email) {
+        return this.authService.checkEmail(email);
+    }
+
+
 }
