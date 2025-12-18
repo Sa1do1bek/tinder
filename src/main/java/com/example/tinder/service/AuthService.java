@@ -18,4 +18,7 @@ public interface AuthService {
     ApiResponse<?> resendCodeToEmail(String email,String deviceId,Long id);
 
     ApiResponse<?> checkCodeByEmail(String email, String code,String deviceId);
+
+    ApiResponse<?> checkEmail(String username);
+
 }

@@ -237,7 +237,6 @@ public class AuthServiceImpl implements AuthService {
                                 .message("CODE SENT")
                                 .code(0)
                                 .user(this.userMapper.toDto(user))
-                                .token(userToken)
                                 .build()
                 );
             }
@@ -335,6 +334,16 @@ public class AuthServiceImpl implements AuthService {
         }
 
         throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+    }
+
+    @Override
+    public ApiResponse<?> checkEmail(String username) {
+        userRepository.findByEmail(username).ifPresent(user -> {
+            if (user.isActive()) {
+                throw RestException.restThrow(ErrorType.EMAIL_ALREADY_TAKEN);
+            }
+        });
+        return ApiResponse.success("SUCCESS");
     }
 
 }
