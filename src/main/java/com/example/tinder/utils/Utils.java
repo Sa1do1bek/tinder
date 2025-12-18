@@ -113,7 +113,6 @@ public class Utils {
             return true;
 
         } catch (MessagingException e) {
-            e.printStackTrace();
             return false;
         }
     }

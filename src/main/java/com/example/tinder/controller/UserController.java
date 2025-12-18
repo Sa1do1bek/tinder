@@ -80,11 +80,6 @@ public class UserController {
         return userService.getAllAcceptUsers(PageRequest.of(page,size),user.getId());
     }
 
-    @GetMapping("/getUserByToken")
-    public ApiResponse<?> getUserByToken(@RequestParam("token") String token) {
-        return this.userService.getUserByToken(token);
-    }
-
 
     @PostMapping("/googleAuth")
     public ApiResponse<?> googleAuth(@RequestParam("email") String email,

@@ -53,7 +53,8 @@ public enum ErrorType {
     THIS_USER_IS_NO_LONGER_AVAILABLE("this.user.is.no.longer.available", HttpStatus.BAD_REQUEST ),
     INVALID_EMAIL(" invalid.email", HttpStatus.BAD_REQUEST ),
     AUTHENTICATION_CODE_ERROR("authentication.code.error", HttpStatus.BAD_REQUEST ),
-    OLD_PASSWORD_INCORRECT("old.password.incorrect", HttpStatus.BAD_REQUEST ),;
+    OLD_PASSWORD_INCORRECT("old.password.incorrect", HttpStatus.BAD_REQUEST ),
+    DEVICE_NOT_FOUND("device.not.found", HttpStatus.NOT_FOUND ),;
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;

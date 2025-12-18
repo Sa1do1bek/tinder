@@ -11,12 +11,10 @@ import org.springframework.stereotype.Component;
 @Component
 public interface UserService {
     ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname);
-//    ApiResponse<?> addRoleToUser(Long userId, Long roleId);
-//    ApiResponse<?> deleteRoleFromUser(Long userId, Long roleId);
-    ApiResponse<?> getUserById(Long id);
-    ApiResponse<?> getAllActiveUser(Pageable pageable, Long userId);
-    ApiResponse<?> getUserByToken(String token);
 
+    ApiResponse<?> getUserById(Long id);
+
+    ApiResponse<?> getAllActiveUser(Pageable pageable, Long userId);
 
     ApiResponse<?> updateEmail(String email, String newEmail);
 
@@ -37,8 +35,8 @@ public interface UserService {
     ApiResponse<?> updateUserGBI(Long userId, UpdateUserGBIDto dto);
 
     ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId);
-    ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId);
 
+    ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId);
 
     ApiResponse<?> deleteUser(User user);
 }
