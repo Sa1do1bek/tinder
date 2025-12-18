@@ -19,7 +19,6 @@ import com.example.tinder.utils.JwtUtil;
 import com.example.tinder.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,7 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -168,10 +170,10 @@ public class AuthServiceImpl implements AuthService {
 
         pendingUserRepository.delete(pending);
 
-         return ApiResponse.success(Map.of(
-                "token", jwtToken,
-                "user", userMapper.toDto(savedUser))
-                ,"USER_REGISTERED_SUCCESSFULLY"
+        return ApiResponse.success(Map.of(
+                        "token", jwtToken,
+                        "user", userMapper.toDto(savedUser))
+                , "USER_REGISTERED_SUCCESSFULLY"
         );
     }
 
@@ -184,13 +186,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user;
-        try {
-            user = this.userRepository.findByEmail(dto.getEmail())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        } catch (ResourceNotFoundException e) {
+        Optional<User> byEmail = this.userRepository.findByEmail(dto.getEmail());
+        if (byEmail.isPresent()) {
+            user = byEmail.get();
+        } else {
             throw RestException.restThrow(ErrorType.INVALID_AUTHENTICATION_CHARACTERS);
         }
-
         try {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
             authenticationManager.authenticate(authentication);
