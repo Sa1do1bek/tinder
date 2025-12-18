@@ -132,7 +132,7 @@ public class ConversationServiceImpl implements ConversationService {
                 .build();
     }
 
-    private ApiResponse isOnlineChatPartner(Long conversationId) {
-        return ApiResponse.builder().build();
+    private ApiResponse<?> isOnlineChatPartner(Long conversationId) {
+        return null;
     }
 }
