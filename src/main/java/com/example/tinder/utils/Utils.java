@@ -91,7 +91,7 @@ public class Utils {
 
             helper.setFrom("akbarmasharipov57@gmail.com");
             helper.setTo(mail);
-            helper.setSubject("🔐 HeadHunter APP – Tasdiqlash kodi");
+            helper.setSubject("🔐 Tinder APP – Tasdiqlash kodi");
 
             String htmlContent = """
                         <html>

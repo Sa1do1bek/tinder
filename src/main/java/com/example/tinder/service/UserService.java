@@ -38,5 +38,7 @@ public interface UserService {
 
     ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId);
 
-    ApiResponse<?> deleteUser(User user);
+    ApiResponse<?> deleteUser(String userId);
+
+    ApiResponse<?> me(User user);
 }

@@ -3,15 +3,15 @@ package com.example.tinder.dto;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.Interest;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateUserGBIDto {

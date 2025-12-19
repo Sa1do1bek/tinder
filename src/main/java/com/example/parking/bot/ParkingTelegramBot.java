@@ -9,26 +9,26 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 public class ParkingTelegramBot extends TelegramLongPollingBot {
-    
+
     @Value("${telegram.bot.token}")
     private String botToken;
-    
+
     @Value("${telegram.bot.username}")
     private String botUsername;
-    
+
     @Autowired
     private MessageHandler messageHandler;
-    
+
     @Override
     public String getBotToken() {
         return botToken;
     }
-    
+
     @Override
     public String getBotUsername() {
         return botUsername;
     }
-    
+
     @Override
     public void onUpdateReceived(Update update) {
         messageHandler.handleUpdate(update, this);

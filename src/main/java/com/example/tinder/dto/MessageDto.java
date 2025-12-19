@@ -1,11 +1,15 @@
 package com.example.tinder.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
-@Data
+
+
+@Getter
+@Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class MessageDto {
     private Long id;
     private Long senderId;

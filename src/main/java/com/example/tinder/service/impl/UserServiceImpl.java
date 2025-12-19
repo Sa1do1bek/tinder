@@ -255,8 +255,8 @@ public class UserServiceImpl implements UserService {
 
             List<UserInterest> newInterests = dto.getInterests().stream()
                     .map(interest -> UserInterest.builder()
-                            .user(user)
-                            .name(interest)
+//                            .user(user)
+//                            .name(interest)
                             .build())
                     .toList();
 
@@ -293,10 +293,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ApiResponse<?> deleteUser(User user) {
+    public ApiResponse<?> deleteUser(String userId) {
+        User user = userRepository.findById(Long.parseLong(userId)).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         user.setActive(false);
         userRepository.save(user);
-        return ApiResponse.success("User deleted successfully");
+        return ApiResponse.success("USER DELETED SUCCESSFULLY");
+    }
+
+    @Override
+    public ApiResponse<?> me(User user) {
+        userRepository.findByEmail(user.getEmail()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        return ApiResponse.success(userMapper.toDto(user), "SUCCESS");
     }
 
 

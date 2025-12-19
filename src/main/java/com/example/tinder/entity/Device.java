@@ -15,14 +15,18 @@ import java.time.LocalDateTime;
 public class Device extends BaseEntity {
 
     private String deviceName;
+
     private String macAddress;
 
-
     private LocalDateTime addedAt;
+
     private LocalDateTime expiredAt;
 
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @ToString.Exclude
     private User user;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean isVerified  = false;
 }

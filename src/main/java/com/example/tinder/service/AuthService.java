@@ -1,8 +1,8 @@
 package com.example.tinder.service;
 
 import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.LoginDto;
-import com.example.tinder.dto.RegisterDto;
+import com.example.tinder.dto.auth.LoginDto;
+import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
 import org.springframework.stereotype.Component;
 
