@@ -1,0 +1,48 @@
+package com.example.tinder.dto.prefence;
+
+import com.example.tinder.dto.UserDto;
+import com.example.tinder.enums.Gender;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.*;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class PreferenceDto {
+    private Long id;
+
+    private UserDto user;
+
+    @Enumerated(EnumType.STRING)
+    private Gender preferredGender;
+
+    private Integer minAge;
+
+    private Integer maxAge;
+
+    private Double distance;
+
+
+
+
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PreferenceCreateDto {
+        private UserDto user;
+
+        @Enumerated(EnumType.STRING)
+        private Gender preferredGender;
+
+        private Integer minAge;
+
+        private Integer maxAge;
+
+        private Double distance;
+    }
+}

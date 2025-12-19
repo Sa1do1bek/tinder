@@ -1,4 +1,4 @@
-package com.example.tinder.dto;
+package com.example.tinder.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
 package com.example.tinder.entity;
 
-import com.example.tinder.enums.Interest;
+import com.example.tinder.enums.CategoryType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,14 +12,13 @@ import lombok.*;
 @Entity
 @Table(name = "users_interest")
 public class UserInterest extends BaseEntity {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_interest", nullable = false)
-    private User user;
+
+    private Long userId;
 
     @Enumerated(EnumType.STRING)
-    private Interest name;
+    private CategoryType categoryType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "preference_id")
-    private Preference preference;
+    private String code;
+
+    private String name;
 }

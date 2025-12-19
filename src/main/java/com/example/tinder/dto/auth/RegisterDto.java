@@ -1,4 +1,4 @@
-package com.example.tinder.dto;
+package com.example.tinder.dto.auth;
 
 import com.example.tinder.enums.Gender;
 import jakarta.validation.constraints.Email;

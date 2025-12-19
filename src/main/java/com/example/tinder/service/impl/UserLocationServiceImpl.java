@@ -36,13 +36,13 @@ public class UserLocationServiceImpl implements UserLocationService {
         }
         User user = userOpt.get();
 
-        UserLocation userLocation=userLocationRepository.findByUserId(userId).orElse(UserLocation.builder().user(user).build());
+        UserLocation userLocation = userLocationRepository.findByUserId(userId).orElse(UserLocation.builder().user(user).build());
         userLocation.setUser(user);
         userLocation.setLatitude(userLocationDto.getLatitude());
         userLocation.setLongitude(userLocationDto.getLongitude());
         userLocationRepository.save(userLocation);
 
-        return ApiResponse.success("Successfully updated user location");
+        return ApiResponse.success("SUCCESSFULLY UPDATED USER LOCATION");
     }
 
     @Override
@@ -91,9 +91,9 @@ public class UserLocationServiceImpl implements UserLocationService {
                 .profilePic(user.getProfilePic())
                 .gender(user.getGender())
                 .birthDate(user.getBirthDate())
-                .interests(user.getUserInterests().stream()
-                        .map(UserInterest::getName)
-                        .collect(Collectors.toList()))
+//                .interests(user.getUserInterests().stream()
+//                        .map(UserInterest::getName)
+//                        .collect(Collectors.toList()))
                 .bio(user.getBio())
                 .build();
     }

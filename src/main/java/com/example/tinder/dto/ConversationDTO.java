@@ -1,10 +1,13 @@
 package com.example.tinder.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
+
+@Getter
+@Setter
 @Builder
-@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ConversationDTO {
     private Long id;
     private Long user1Id;

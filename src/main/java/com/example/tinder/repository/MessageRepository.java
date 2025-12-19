@@ -1,6 +1,7 @@
 package com.example.tinder.repository;
 
 import com.example.tinder.entity.Message;
+import jdk.jfr.Registered;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 import java.util.List;
 
+@Registered
 public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("SELECT m FROM Message m WHERE m.conversation.id = :conversationId")
     List<Message> findByConversationId(@Param("conversationId") Long conversationId);

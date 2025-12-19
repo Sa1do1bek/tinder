@@ -21,11 +21,9 @@ public class ProfilePictureController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<?> upload(@RequestParam MultipartFile file,
-                              @AuthenticationPrincipal User user) {
+                              @CurrentUser User user) {
         return profilePictureService.uploadPicture(user, file);
     }
-
-
 
     @GetMapping("/user")
     public ApiResponse<?> getAllPictures(@CurrentUser User user) {
@@ -33,12 +31,12 @@ public class ProfilePictureController {
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<?> delete(@PathVariable Long id,@AuthenticationPrincipal User user) {
+    public ApiResponse<?> delete(@PathVariable Long id,@CurrentUser User user) {
         return profilePictureService.deletePicture(id,user.getId());
     }
 
     @PutMapping("/set-main")
-    public ApiResponse setMain(@AuthenticationPrincipal User user, @RequestParam Long pictureId) {
+    public ApiResponse<?> setMain(@CurrentUser User user, @RequestParam Long pictureId) {
         return profilePictureService.setAsMainPicture(user.getId(), pictureId);
     }
 }

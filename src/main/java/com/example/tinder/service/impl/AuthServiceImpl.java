@@ -1,15 +1,14 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.LoginDto;
-import com.example.tinder.dto.RegisterDto;
+import com.example.tinder.dto.auth.LoginDto;
+import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
 import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
-import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
@@ -40,7 +39,6 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final DeviceRepository deviceRepository;
-    private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final CodeRepository codeRepository;
     private final UserRepository userRepository;
@@ -104,14 +102,14 @@ public class AuthServiceImpl implements AuthService {
         }
 
 
-        long EXPIRATION_MINUTES = 5;
+        long EXPIRATION_MINUTES = 2;
         if (pending.getCreatedAt().plusMinutes(EXPIRATION_MINUTES).isBefore(LocalDateTime.now())) {
             pendingUserRepository.delete(pending);
+            codeRepository.deleteByCode(dto.getCode());
             throw RestException.restThrow(ErrorType.VERIFICATION_CODE_EXPIRED);
         }
 
         Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
-
 
         User user;
 
@@ -154,21 +152,14 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
-        tokenRepository.deleteByUserId(savedUser.getId());
-
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
-        String jwtToken = jwtUtil.generateToken(savedUser.getUsername());
-        Token token = Token.builder()
-                .user(savedUser)
-                .token(jwtToken)
-                .type("Bearer")
-                .createdAt(LocalDateTime.now())
-                .expiredAt(LocalDateTime.now().plusDays(10))
-                .build();
-        tokenRepository.save(token);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
 
         pendingUserRepository.delete(pending);
+
+        codeRepository.deleteByCode(dto.getCode());
 
         return ApiResponse.success(Map.of(
                         "token", jwtToken,
@@ -199,30 +190,21 @@ public class AuthServiceImpl implements AuthService {
             throw RestException.restThrow(ErrorType.INVALID_CREDENTIALS);
         }
 
-        this.tokenRepository.deleteByUserId(user.getId());
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-        String userToken = jwtUtil.generateToken(userDetails.getUsername());
-
-        Token newToken = Token.builder()
-                .user(user)
-                .token(userToken)
-                .type("Bearer")
-                .createdAt(LocalDateTime.now())
-                .expiredAt(LocalDateTime.now().plusDays(10))
-                .build();
-        this.tokenRepository.save(newToken);
-
         Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
                 .orElse(null);
+        System.out.println("Trusted device: " + trustedDevice);
 
         String code = utils.getCode();
+
         if (trustedDevice == null) {
             if (utils.sendCodeToMail(dto.getEmail(), code)) {
                 Device device = new Device();
                 device.setUser(user);
                 device.setDeviceName(dto.getDeviceId());
+                device.setCreatedAt(LocalDateTime.now());
+                device.setUpdatedAt(LocalDateTime.now());
                 Device save = this.deviceRepository.save(device);
+                System.out.println("Device saved: " + save);
 
                 Code c = new Code();
                 c.setCreatedAt(LocalDateTime.now());
@@ -246,6 +228,9 @@ public class AuthServiceImpl implements AuthService {
             throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
         }
 
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String userToken = jwtUtil.generateToken(userDetails.getUsername());
+
         return ApiResponse.success(
                 LoginResponse.builder()
                         .message("SUCCESS")
@@ -264,12 +249,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = this.userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
         if (!user.isActive()) {
             throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
         }
         Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.DEVICE_NOT_FOUND));
 
         String code = utils.getCode();
         if (utils.sendCodeToMail(email, code)) {
@@ -325,11 +311,12 @@ public class AuthServiceImpl implements AuthService {
                     this.codeRepository.save(cc);
                 }
 
-
-                String currentToken = jwtUtil.generateToken(user.getUsername());
+                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+                String currentToken = jwtUtil.generateToken(userDetails.getUsername());
                 map.put("user", this.userMapper.toDto(user));
+                map.put("token", currentToken);
 
-                return ApiResponse.success(this.userMapper.toDto(user), "SECCESS");
+                return ApiResponse.success(this.userMapper.toDto(user), "SUCCESS");
             }
         }
 

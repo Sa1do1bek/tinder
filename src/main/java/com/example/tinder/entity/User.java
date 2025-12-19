@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Predicate;
 
 @Getter
 @Setter
@@ -24,22 +25,32 @@ import java.util.List;
 public class User extends BaseEntity implements UserDetails {
     @Column(unique = true, nullable = false)
     private String username;
+
     @Column(unique = true)
     private String email;
     private String fullname;
+
     @Enumerated(EnumType.STRING)
     private UserStatus status;
     private String password;
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
     private Date birthDate;
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @ManyToMany
+//    @JoinTable(
+//            name = "user_intnerest",
+//            joinColumns = @JoinColumn(name = "user_id"),
+//            inverseJoinColumns = @JoinColumn(name = "category_id")
+//    )
     private List<UserInterest> userInterests;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfilePicture> profilePictures;
     private String profilePic;
     private String bio;
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean active = true;
 
     @Enumerated(EnumType.STRING)

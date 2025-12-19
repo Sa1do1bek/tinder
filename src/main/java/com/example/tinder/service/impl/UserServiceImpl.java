@@ -21,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,11 +34,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final TokenRepository tokenRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CodeRepository codeRepository;
     private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
     private final Utils utils;
     private final UserInterestRepository userInterestRepository;
     private final SwipeRepository  swipeRepository;
@@ -54,31 +56,6 @@ public class UserServiceImpl implements UserService {
         return ApiResponse.success("User updated successfully");
     }
 
-//    @Override
-//    public ApiResponse<?> addRoleToUser(Long userId, Long roleId) {
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-//
-//        if (user.getRole() != null) {
-//            user.getRole().add(role);
-//        } else {
-//            user.setRole(new HashSet<>(Set.of(role)));
-//        }
-//
-//        userRepository.save(user);
-//
-//        return ApiResponse.success("Role added to user successfully");
-//    }
-
-//    @Override
-//    public ApiResponse<?> deleteRoleFromUser(Long userId, Long roleId) {
-//        this.userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-//        this.roleRepository.findById(roleId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
-//        this.userRepository.deleteRoleFromUser(userId, roleId);
-//        return ApiResponse.success("Delete role from user");
-//    }
 
     @Override
     public ApiResponse<?> getUserById(Long id) {
@@ -99,17 +76,6 @@ public class UserServiceImpl implements UserService {
         return ApiResponse.success(new ArrayList<>(), "SUCCESS");
     }
 
-
-    @Override
-    public ApiResponse<?> getUserByToken(String token) {
-        Token t = this.tokenRepository.findByToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Token not found"));
-        User user = this.userRepository.findById(t.getUser().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-
-        return ApiResponse.success(this.userMapper.toDto(user), "SUCCESS");
-    }
 
     @Override
     public ApiResponse<?> updateEmail(String email, String newEmail) {
@@ -212,48 +178,33 @@ public class UserServiceImpl implements UserService {
 
             if (user != null) {
                 // Foydalanuvchi mavjud bo'lsa:
-                // 1. Mavjud barcha tokenlarni o'chirish
-                tokenRepository.deleteByUserId(user.getId());
-
-                // 2. Yangi token yaratish
-                token = jwtUtil.generateToken(user.getUsername());
-                Token newToken = Token.builder()
-                        .user(user)
-                        .token(token)
-                        .type("Bearer")
-                        .createdAt(LocalDateTime.now())
-                        .expiredAt(LocalDateTime.now().plusDays(10))
-                        .build();
-                tokenRepository.save(newToken);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+                token = jwtUtil.generateToken(userDetails.getUsername());
 
                 return ApiResponse.success(
                         LoginResponse.builder()
                         .token(token)
                         .user(this.userMapper.toDto(user))
                         .build(), "SUCCESS");
+
+
+
             } else {
                 // Foydalanuvchi mavjud bo'lmasa (yangi ro'yxatdan o'tish):
                 user = new User();
                 user.setEmail(email);
                 user.setFullname(fullName);
-                // Username'ni ham o'rnatish kerak, chunki JWT uni ishlatadi
-                user.setUsername(email); // Yoki boshqa noyob qiymat
-                user.setStatus(UserStatus.ACTIVE); // Google orqali ro'yxatdan o'tganlar faol bo'lishi kerak
+                user.setUsername(email);
+                user.setStatus(UserStatus.ACTIVE);
                 user.setActive(true);
 
                 user.setRole(UserRole.USER);
                 user.setProfilePic(picPath);
                 User save = userRepository.save(user);
 
-                // Yangi foydalanuvchi uchun token yaratish
-                token = jwtUtil.generateToken(save.getUsername());
-                Token t = new Token();
-                t.setToken(token);
-                t.setUser(save);
-                t.setType("Bearer");
-                t.setCreatedAt(LocalDateTime.now());
-                t.setExpiredAt(LocalDateTime.now().plusDays(10));
-                tokenRepository.save(t);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+                token = jwtUtil.generateToken(userDetails.getUsername());
+
 
                 return ApiResponse.success(
                         LoginResponse.builder()
@@ -304,8 +255,8 @@ public class UserServiceImpl implements UserService {
 
             List<UserInterest> newInterests = dto.getInterests().stream()
                     .map(interest -> UserInterest.builder()
-                            .user(user)
-                            .name(interest)
+//                            .user(user)
+//                            .name(interest)
                             .build())
                     .toList();
 
@@ -335,25 +286,24 @@ public class UserServiceImpl implements UserService {
         Page<User> rejectedUsers = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
 
         if (!rejectedUsers.isEmpty()) {
-
             return ApiResponse.success(userMapper.dtoList(rejectedUsers.getContent()), "SUCCESS");
-//            return ApiResponse.builder()
-//                    .status(HttpStatus.OK)
-//                    .data(userMapper.dtoList(rejectedUsers.getContent()))
-//                    .elements(rejectedUsers.getTotalElements())
-//                    .pages(rejectedUsers.getTotalPages())
-//                    .build();
         }
 
         return ApiResponse.success(new ArrayList<>(), "SUCCESS");
     }
 
     @Override
-    public ApiResponse<?> deleteUser(User user) {
+    public ApiResponse<?> deleteUser(String userId) {
+        User user = userRepository.findById(Long.parseLong(userId)).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         user.setActive(false);
-        tokenRepository.deleteByUserId(user.getId());
         userRepository.save(user);
-        return ApiResponse.success("User deleted successfully");
+        return ApiResponse.success("USER DELETED SUCCESSFULLY");
+    }
+
+    @Override
+    public ApiResponse<?> me(User user) {
+        userRepository.findByEmail(user.getEmail()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        return ApiResponse.success(userMapper.toDto(user), "SUCCESS");
     }
 
 

@@ -34,12 +34,13 @@ public class DeviceServiceImpl implements DeviceService {
         Device devices = new Device();
         devices.setDeviceName(deviceId);
         devices.setAddedAt(LocalDateTime.now());
+        devices.setIsVerified(true);
         User user = this.userRepository.findById(userId).orElse(null);
         if (user != null) {
             devices.setUser(user);
         }
-        // 15 kundan keyin expire bo'lishi kerak
-        devices.setExpiredAt(LocalDateTime.now().plusDays(15));
+        // 30 kundan keyin expire bo'lishi kerak
+        devices.setExpiredAt(LocalDateTime.now().plusDays(30));
 
         return trustedDeviceRepository.save(devices);
     }
@@ -48,8 +49,8 @@ public class DeviceServiceImpl implements DeviceService {
     public Device addTrustedDeviceByLogin(Long userId, String deviceId) {
         Device devices = new Device();
         devices.setAddedAt(LocalDateTime.now());
-        // 15 kundan keyin expire bo'lishi kerak
-        devices.setExpiredAt(LocalDateTime.now().plusDays(15));
+        // 30 kundan keyin expire bo'lishi kerak
+        devices.setExpiredAt(LocalDateTime.now().plusDays(30));
 
         return devices;
     }

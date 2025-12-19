@@ -4,6 +4,7 @@ import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.ChatMessageDto;
 import com.example.tinder.dto.MessageDto;
 import com.example.tinder.service.MessageService;
+import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -33,7 +34,7 @@ public class MessageController {
     @GetMapping("/messages")
     public ResponseEntity<List<MessageDto>> getMessagesByConversation(
             @RequestParam Long conversationId,
-            @AuthenticationPrincipal com.example.tinder.entity.User currentUser
+            @CurrentUser com.example.tinder.entity.User currentUser
     ) {
         List<MessageDto> messages = messageService.getMessageByConversationId(conversationId, currentUser);
         return ResponseEntity.ok(messages);

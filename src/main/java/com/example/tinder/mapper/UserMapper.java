@@ -1,6 +1,6 @@
 package com.example.tinder.mapper;
 
-import com.example.tinder.dto.RegisterDto;
+import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
@@ -33,11 +33,11 @@ public class UserMapper {
     public UserDto toDto(User user) {
         Optional<UserLocation> location = userLocationRepository.findByUserId(user.getId());
 
-        List<Interest> interests = user.getUserInterests() != null
-                ? user.getUserInterests().stream()
-                .map(UserInterest::getName)
-                .collect(Collectors.toList())
-                : new ArrayList<>();
+//        List<Interest> interests = user.getUserInterests() != null
+//                ? user.getUserInterests().stream()
+//                .map(UserInterest::getName)
+//                .collect(Collectors.toList())
+//                : new ArrayList<>();
 
         return UserDto.builder()
                 .id(user.getId())
@@ -47,11 +47,12 @@ public class UserMapper {
                 .role(user.getRole())
                 .username(user.getUsername())
                 .profilePic(user.getProfilePic())
+                .profilePictures(user.getProfilePictures())
                 .birthDate(user.getBirthDate())
                 .longitude(location.map(UserLocation::getLongitude).orElse(null))
                 .latitude(location.map(UserLocation::getLatitude).orElse(null))
                 .gender(user.getGender())
-                .interests(interests)
+//                .interests(interests)
                 .bio(user.getBio())
                 .build();
     }
