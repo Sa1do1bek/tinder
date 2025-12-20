@@ -306,5 +306,12 @@ public class UserServiceImpl implements UserService {
         return ApiResponse.success(userMapper.toDto(user), "SUCCESS");
     }
 
+    @Override
+    public ApiResponse<?> addInterest(User user, UserInterest userInterest) {
+        user.getUserInterests().add(userInterest);
+        userRepository.save(user);
+        return ApiResponse.success(userMapper.toDto(user), "SUCCESSFULLY ADDED INTEREST");
+    }
+
 
 }

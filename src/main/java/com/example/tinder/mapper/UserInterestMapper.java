@@ -4,6 +4,9 @@ import com.example.tinder.dto.interest.UserInterestDto;
 import com.example.tinder.entity.UserInterest;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class UserInterestMapper {
 
@@ -45,4 +48,11 @@ public class UserInterestMapper {
         return entity;
     }
 
+    public List<UserInterestDto> toListDto(List<UserInterest> list) {
+        if (list != null && !list.isEmpty()) {
+            return list.stream().map(this::toDto).toList();
+        }
+        return new ArrayList<>();
+
+    }
 }

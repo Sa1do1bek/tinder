@@ -3,7 +3,9 @@ package com.example.tinder.service;
 import com.example.tinder.dto.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.User;
+import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.Gender;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -41,4 +43,6 @@ public interface UserService {
     ApiResponse<?> deleteUser(String userId);
 
     ApiResponse<?> me(User user);
+
+    ApiResponse<?> addInterest(User user, UserInterest userInterest);
 }

@@ -11,6 +11,7 @@ import com.example.tinder.mapper.UserInterestMapper;
 import com.example.tinder.repository.UserInterestRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.UserInterestService;
+import com.example.tinder.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,9 +26,10 @@ public class UserInterestServiceImpl implements UserInterestService {
     private final UserInterestRepository repository;
     private final UserInterestMapper mapper;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @Override
-    public ApiResponse<?> add(UserInterestDto.UserInterestCreateDto dto ) {
+    public ApiResponse<?> addCategory(UserInterestDto.UserInterestCreateDto dto ) {
 
         Optional<UserInterest> byCode = repository.findByCode(dto.getCode());
         if (byCode.isPresent()) {
@@ -65,6 +67,65 @@ public class UserInterestServiceImpl implements UserInterestService {
         List<CategoryType> types = new ArrayList<>(Arrays.asList(values));
         return ApiResponse.success(types);
     }
+
+    @Override
+    public ApiResponse<?> getAllCategoriesByType(CategoryType type) {
+        List<UserInterest> byType = repository.findByCategoryType(type);
+        return ApiResponse.success(mapper.toListDto(byType), "INTEREST_FETCHED_SUCCESSFULLY");
+    }
+
+    @Override
+    public ApiResponse<?> addCategoryToUser(Long userId, List<Long> categoryIds) {
+
+        Optional<User> byId = userRepository.findById(userId);
+        if (byId.isEmpty()) {
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+        }
+        User user = byId.get();
+
+        if (categoryIds.isEmpty()){
+            throw RestException.restThrow(ErrorType.NULL_REQUEST_BODY);
+        }
+
+        List<UserInterest> interest = new ArrayList<>();
+        for (Long id : categoryIds) {
+            Optional<UserInterest> c = repository.findById(id);
+            if (c.isEmpty()) {
+                throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+            }
+            interest.add(c.get());
+            userService.addInterest(user, c.get());
+        }
+
+        return ApiResponse.success(mapper.toListDto(interest), "INTEREST_FETCHED_SUCCESSFULLY");
+    }
+
+    @Override
+    public ApiResponse<?> getUserCategories(Long userId) {
+        List<UserInterest> list = repository.findByUserId(userId);
+        if (list.isEmpty()) {
+            throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
+        }
+
+        return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
+    }
+
+    @Override
+    public ApiResponse<?> getUserCategoriesByType(Long userId, CategoryType type) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+        }
+
+        List<UserInterest> list = repository.findByUserIdAndType(userId, type);
+        if (list.isEmpty()) {
+            throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
+        }
+
+        return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
+    }
+
+
 
 
 }
