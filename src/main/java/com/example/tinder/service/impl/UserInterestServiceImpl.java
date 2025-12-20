@@ -31,14 +31,17 @@ public class UserInterestServiceImpl implements UserInterestService {
     @Override
     public ApiResponse<?> addCategory(UserInterestDto.UserInterestCreateDto dto ) {
 
+        CategoryType categoryType;
+        try {
+            categoryType = CategoryType.valueOf(dto.getCategoryType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw RestException.restThrow(ErrorType.INVALID_CATEGORY_TYPE);
+        }
+
+
         Optional<UserInterest> byCode = repository.findByCode(dto.getCode());
         if (byCode.isPresent()) {
             throw RestException.restThrow(ErrorType.INTEREST_ALREADY_EXISTS);
-        }
-
-        Optional<User> optionalUser = userRepository.findById(dto.getUserId());
-        if (optionalUser.isEmpty()) {
-            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
 
         UserInterest entity = mapper.toCreateEntity(dto);

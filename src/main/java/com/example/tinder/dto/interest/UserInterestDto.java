@@ -26,7 +26,6 @@ public class UserInterestDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class UserInterestCreateDto{
-        private Long userId;
         @Enumerated(EnumType.STRING)
         private CategoryType categoryType;
         private String code;
