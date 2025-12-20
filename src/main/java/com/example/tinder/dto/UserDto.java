@@ -1,8 +1,6 @@
 package com.example.tinder.dto;
 
 import com.example.tinder.dto.prefence.PreferenceDto;
-import com.example.tinder.entity.Preference;
-import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.Interest;
 import com.example.tinder.enums.UserRole;
@@ -25,7 +23,6 @@ public class UserDto {
     private String status;
     private UserRole role;
     private String profilePic;
-    private List<ProfilePicture> profilePictures;
     private Gender gender;
     private Date birthDate;
     private PreferenceDto preference;

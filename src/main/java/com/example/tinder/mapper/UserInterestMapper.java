@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserInterestMapper {
 
-    public static UserInterest toEntity(UserInterestDto dto) {
+    public UserInterest toEntity(UserInterestDto dto) {
         if (dto == null) return null;
 
         UserInterest entity = new UserInterest();
@@ -20,7 +20,7 @@ public class UserInterestMapper {
         return entity;
     }
 
-    public static UserInterestDto toDto(UserInterest entity) {
+    public UserInterestDto toDto(UserInterest entity) {
         if (entity == null) return null;
 
         UserInterestDto dto = new UserInterestDto();
@@ -33,7 +33,7 @@ public class UserInterestMapper {
         return dto;
     }
 
-    public static UserInterest toCreateEntity(UserInterestDto.UserInterestCreateDto dto) {
+    public UserInterest toCreateEntity(UserInterestDto.UserInterestCreateDto dto) {
         if (dto == null) return null;
 
         UserInterest entity = new UserInterest();

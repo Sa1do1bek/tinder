@@ -18,7 +18,9 @@ public class UserInterest extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private CategoryType categoryType;
 
+    @Column(nullable = false, unique = true)
     private String code;
 
+    @Column(nullable = false, unique = true)
     private String name;
 }

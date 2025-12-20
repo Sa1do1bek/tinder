@@ -5,6 +5,7 @@ import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import net.minidev.json.annotate.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Predicate;
 
 @Getter
 @Setter
@@ -44,7 +44,8 @@ public class User extends BaseEntity implements UserDetails {
 //            joinColumns = @JoinColumn(name = "user_id"),
 //            inverseJoinColumns = @JoinColumn(name = "category_id")
 //    )
-    private List<UserInterest> userInterests;
+    @JsonIgnore
+    private List<UserInterest> userInterests = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfilePicture> profilePictures;
@@ -56,6 +57,9 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private UserRole role;
+
+
+
 
 
     @Override

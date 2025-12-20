@@ -47,7 +47,6 @@ public class UserMapper {
                 .role(user.getRole())
                 .username(user.getUsername())
                 .profilePic(user.getProfilePic())
-                .profilePictures(user.getProfilePictures())
                 .birthDate(user.getBirthDate())
                 .longitude(location.map(UserLocation::getLongitude).orElse(null))
                 .latitude(location.map(UserLocation::getLatitude).orElse(null))

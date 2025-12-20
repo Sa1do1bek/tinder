@@ -29,7 +29,6 @@ public enum ErrorType {
     PHONE_NUMBER_IS_NOT_FOUND("phone.number.is.not.found", HttpStatus.BAD_REQUEST ),
     INVALID_PHONE_NUMBER_OR_PASSWORD("invalid.phone.number.or.password", HttpStatus.BAD_REQUEST ),
     NULL_REQUEST_BODY("null.request.body", HttpStatus.BAD_REQUEST ),
-    OUTER_DEVICE_NOT_FOUND("outer.device.not.found", HttpStatus.NOT_FOUND ),
     SENDER_ACCOUNT_INACTIVE("sender.account.inactive", HttpStatus.BAD_REQUEST ),
     RECEIVER_ACCOUNT_INACTIVE("receiver.account.inactive", HttpStatus.BAD_REQUEST ),
     FAILED_TO_SEND_MESSAGE("failed.to.send.message", HttpStatus.INTERNAL_SERVER_ERROR ),
@@ -54,7 +53,9 @@ public enum ErrorType {
     INVALID_EMAIL(" invalid.email", HttpStatus.BAD_REQUEST ),
     AUTHENTICATION_CODE_ERROR("authentication.code.error", HttpStatus.BAD_REQUEST ),
     OLD_PASSWORD_INCORRECT("old.password.incorrect", HttpStatus.BAD_REQUEST ),
-    DEVICE_NOT_FOUND("device.not.found", HttpStatus.NOT_FOUND ),;
+    DEVICE_NOT_FOUND("device.not.found", HttpStatus.NOT_FOUND ),
+    INTEREST_ALREADY_EXISTS("interest.already.exists", HttpStatus.BAD_REQUEST ),
+    INTEREST_NOT_FOUND("interest.not.found", HttpStatus.NOT_FOUND ),;
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;
