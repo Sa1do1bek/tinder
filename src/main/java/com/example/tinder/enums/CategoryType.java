@@ -14,4 +14,8 @@ public enum CategoryType {
     SMOKE,
     WORKOUT,
     SOCIAL_MEDIA;
+
+    public String toUpperCase() {
+        return this.toString().toUpperCase();
+    }
 }

@@ -40,7 +40,6 @@ public class UserInterestMapper {
         if (dto == null) return null;
 
         UserInterest entity = new UserInterest();
-        entity.setUserId(dto.getUserId());
         entity.setCode(dto.getCode());
         entity.setName(dto.getName());
         entity.setCategoryType(dto.getCategoryType());

@@ -55,7 +55,8 @@ public enum ErrorType {
     OLD_PASSWORD_INCORRECT("old.password.incorrect", HttpStatus.BAD_REQUEST ),
     DEVICE_NOT_FOUND("device.not.found", HttpStatus.NOT_FOUND ),
     INTEREST_ALREADY_EXISTS("interest.already.exists", HttpStatus.BAD_REQUEST ),
-    INTEREST_NOT_FOUND("interest.not.found", HttpStatus.NOT_FOUND ),;
+    INTEREST_NOT_FOUND("interest.not.found", HttpStatus.NOT_FOUND ),
+    INVALID_CATEGORY_TYPE("invalid.category.type", HttpStatus.BAD_REQUEST ),;
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;
