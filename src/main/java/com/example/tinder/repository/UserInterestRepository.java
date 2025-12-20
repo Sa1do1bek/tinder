@@ -16,10 +16,10 @@ import java.util.Optional;
 @Repository
 public interface UserInterestRepository extends JpaRepository<UserInterest, Long> {
 
-    @Modifying
-    @Transactional
-    @Query("delete from UserInterest ui where ui.userId = :userId")
-    void deleteAllByUserId(@Param("userId") Long userId);
+//    @Modifying
+//    @Transactional
+//    @Query("delete from UserInterest ui where ui.userId = :userId")
+//    void deleteAllByUserId(@Param("userId") Long userId);
 
 
     @Query(value = """
@@ -38,19 +38,20 @@ public interface UserInterestRepository extends JpaRepository<UserInterest, Long
     List<UserInterest> findByCategoryType(@Param("type") CategoryType type);
 
 
-    @Query(value = """
-                SELECT i FROM UserInterest i
-                WHERE i.userId = :userId
-                AND i.visibility = true
-            """)
+    @Query("""
+        SELECT ui
+        FROM User u JOIN u.userInterests ui
+        WHERE u.id = :userId
+    """)
     List<UserInterest> findByUserId(Long userId);
 
 
     @Query(value = """
-                SELECT i FROM UserInterest i
-                WHERE i.userId = :userId
-                AND i.categoryType = :type
-                AND i.visibility = true
+                SELECT ui FROM User u 
+                JOIN u.userInterests ui
+                WHERE u.id = :userId
+                AND ui.categoryType = :type
+                AND ui.visibility = true
             """)
     List<UserInterest> findByUserIdAndType(Long userId, CategoryType type);
 }
