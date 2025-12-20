@@ -183,6 +183,7 @@ public class AuthServiceImpl implements AuthService {
         } else {
             throw RestException.restThrow(ErrorType.INVALID_AUTHENTICATION_CHARACTERS);
         }
+
         try {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), dto.getPassword());
             authenticationManager.authenticate(authentication);
