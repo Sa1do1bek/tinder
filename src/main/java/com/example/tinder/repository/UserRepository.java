@@ -85,14 +85,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query("""
-        SELECT u FROM User u 
-        WHERE u.id != :currentUserId 
-        AND u.active = true 
-        AND (CAST(u.gender AS string) = :preferredGender)
-        AND (u.id NOT IN (SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :currentUserId))
-        AND (u.birthDate IS NOT NULL AND 
-            (YEAR(CURRENT_DATE) - YEAR(u.birthDate)) BETWEEN :minAge AND :maxAge)
-        """)
+    SELECT u FROM User u 
+    WHERE u.id != :currentUserId 
+    AND u.active = true 
+    AND (:preferredGender = 'EVERYONE' OR CAST(u.gender AS string) = :preferredGender)
+    AND (u.id NOT IN (SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :currentUserId))
+    AND (u.birthDate IS NOT NULL AND 
+        function('date_part', 'year', function('age', u.birthDate)) BETWEEN :minAge AND :maxAge)
+    """)
     Page<User> findDiscoveryUsersJPQL(
             @Param("currentUserId") Long currentUserId,
             @Param("preferredGender") String preferredGender,
