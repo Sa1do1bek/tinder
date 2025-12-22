@@ -42,6 +42,14 @@ public class User extends BaseEntity implements UserDetails {
     @JsonIgnore
     private List<UserInterest> userInterests = new ArrayList<>();
 
+    @OneToOne
+    private Preference preference;
+
+    private Double height; // Bo'yi
+    private String jobTitle; // Kasbi
+    private String company; // Ish joyi
+    private String school; // O'qish joyi
+
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfilePicture> profilePictures;
     private String profilePic;
