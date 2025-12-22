@@ -92,9 +92,9 @@ public class UserController {
         return userService.search(username,gender);
     }
 
-    @PutMapping("/updateGenderOrBrithDateOrInterest")
-    public ApiResponse<?> updateUserGenderOrBrithdateOrInterest(@CurrentUser User user,
-                                                             @RequestBody UpdateUserGBIDto dto) {
+    @PutMapping("/updateGenderOrBrithDate")
+    public ApiResponse<?> updateUserGenderOrBrithdate(@CurrentUser User user,
+                                                      @RequestBody UpdateUserGBIDto dto) {
         return userService.updateUserGBI(user.getId(), dto);
     }
 

@@ -17,4 +17,5 @@ public interface PreferenceRepository extends JpaRepository<Preference, Long>{
                 AND p.visibility = true
             """)
     Optional<Preference> findByUserId(@Param("userId") Long userId);
+
 }
