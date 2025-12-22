@@ -1,6 +1,6 @@
 package com.example.tinder.mapper;
 
-import com.example.tinder.dto.interest.UserInterestDto;
+import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.entity.UserInterest;
 import org.springframework.stereotype.Component;
 

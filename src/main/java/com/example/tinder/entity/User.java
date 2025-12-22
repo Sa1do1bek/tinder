@@ -39,11 +39,6 @@ public class User extends BaseEntity implements UserDetails {
     private Date birthDate;
 
     @ManyToMany
-//    @JoinTable(
-//            name = "user_intnerest",
-//            joinColumns = @JoinColumn(name = "user_id"),
-//            inverseJoinColumns = @JoinColumn(name = "category_id")
-//    )
     @JsonIgnore
     private List<UserInterest> userInterests = new ArrayList<>();
 

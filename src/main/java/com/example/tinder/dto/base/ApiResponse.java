@@ -1,11 +1,7 @@
-package com.example.tinder.dto;
+package com.example.tinder.dto.base;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
-import org.springframework.http.HttpStatus;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Getter
 @ToString

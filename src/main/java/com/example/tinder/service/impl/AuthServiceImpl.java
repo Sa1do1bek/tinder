@@ -1,12 +1,13 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
 import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.RestException;
@@ -48,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
     private final Utils utils;
     private final PendingUserRepository pendingUserRepository;
     private final UserLocationRepository userLocationRepository;
+    private final PreferenceRepository preferenceRepository;
 
     @Override
     public ApiResponse<?> registerByEmail(RegisterDto dto) {
@@ -122,17 +124,19 @@ public class AuthServiceImpl implements AuthService {
             user.setGender(pending.getGender());
             user.setBirthDate(pending.getBirthDate());
             user.setFullname(pending.getFullName());
-
             user.getProfilePictures().clear();
             user.getUserInterests().clear();
             user.setBio(null);
             user.setProfilePic(null);
-
-            userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
-
             user.setRole(UserRole.USER);
             user.setActive(true);
             user.setUpdatedAt(LocalDateTime.now());
+
+            userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
+            preferenceRepository.findByUserId(user.getId()).ifPresent(preferenceRepository::delete);
+
+            savePreference(user);
+
         } else {
             user = User.builder()
                     .email(pending.getEmail())
@@ -148,6 +152,9 @@ public class AuthServiceImpl implements AuthService {
                     .userInterests(new ArrayList<>())
                     .bio(null)
                     .build();
+
+
+            savePreference(user);
         }
 
         User savedUser = userRepository.save(user);
@@ -166,6 +173,20 @@ public class AuthServiceImpl implements AuthService {
                         "user", userMapper.toDto(savedUser))
                 , "USER_REGISTERED_SUCCESSFULLY"
         );
+    }
+
+    private void savePreference(User user) {
+        Preference preference = new Preference();
+        preference.setUser(user);
+        preference.setPreferredGender(Gender.EVERYONE);
+        preference.setDistance(70.0);
+        preference.setMinAge(18);
+        preference.setMaxAge(50);
+        preference.setVisibility(true);
+        preference.setCreatedAt(LocalDateTime.now());
+        preference.setUpdatedAt(LocalDateTime.now());
+
+        preferenceRepository.save(preference);
     }
 
 

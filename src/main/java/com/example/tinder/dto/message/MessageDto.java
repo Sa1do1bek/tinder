@@ -1,4 +1,4 @@
-package com.example.tinder.dto;
+package com.example.tinder.dto.message;
 
 import lombok.*;
 

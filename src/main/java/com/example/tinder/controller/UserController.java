@@ -1,6 +1,6 @@
 package com.example.tinder.controller;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
@@ -23,10 +23,10 @@ public class UserController {
 
 
     @PutMapping("/updateUserNameAndFullName")
-    public ApiResponse<?> updateUserNameAndFullName(@CurrentUser User user,
+    public ApiResponse<?> updateUserNameAndFullName(@RequestParam("userId") Long userId,
                                                  @RequestParam("username") String username,
                                                  @RequestParam("fullname") String fullname) {
-        return this.userService.updateUserNameAndFullName(user.getId(), username, fullname);
+        return this.userService.updateUserNameAndFullName(userId, username, fullname);
     }
     @PutMapping("/updateEmail")
     public ApiResponse<?> updateEmail(@RequestParam("email") String email,

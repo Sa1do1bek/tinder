@@ -1,6 +1,6 @@
 package com.example.tinder.service;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.UserLocationDto;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.example.tinder.dto.interest;
+package com.example.tinder.dto;
 
 import com.example.tinder.enums.CategoryType;
 import jakarta.persistence.EnumType;

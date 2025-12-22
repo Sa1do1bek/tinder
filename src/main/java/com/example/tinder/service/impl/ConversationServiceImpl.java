@@ -1,8 +1,7 @@
 package com.example.tinder.service.impl;
 
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.ConversationDTO;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.message.ConversationDTO;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
@@ -13,7 +12,6 @@ import com.example.tinder.repository.MatchRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ConversationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

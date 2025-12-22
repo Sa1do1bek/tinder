@@ -1,5 +1,6 @@
-package com.example.tinder.dto;
+package com.example.tinder.dto.message;
 
+import com.example.tinder.dto.NotificationDto;
 import lombok.*;
 
 @Getter

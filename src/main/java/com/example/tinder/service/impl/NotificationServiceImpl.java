@@ -1,11 +1,10 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.NotificationDto;
-import com.example.tinder.dto.NotificationMessage;
+import com.example.tinder.dto.message.NotificationMessage;
 import com.example.tinder.service.NotificationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 

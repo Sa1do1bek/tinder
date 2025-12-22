@@ -1,6 +1,6 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.entity.*;
@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,10 +44,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname) {
         User user = this.userRepository.findById(userId).
-                orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
         if (utils.existUsername(username)) {
             throw RestException.restThrow(ErrorType.USER_ALREADY_EXISTS);
         }
+
         user.setUsername(username);
         user.setFullname(fullname);
         this.userRepository.save(user);
@@ -250,18 +250,6 @@ public class UserServiceImpl implements UserService {
         if (dto.getGender() != null)
             user.setGender(dto.getGender());
 
-        if (dto.getInterests() != null) {
-            user.getUserInterests().clear();
-
-            List<UserInterest> newInterests = dto.getInterests().stream()
-                    .map(interest -> UserInterest.builder()
-//                            .user(user)
-//                            .name(interest)
-                            .build())
-                    .toList();
-
-            user.getUserInterests().addAll(newInterests);
-        }
         if (dto.getBio() != null){
             user.setBio(dto.getBio());
         }
