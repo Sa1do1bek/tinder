@@ -1,9 +1,8 @@
 package com.example.tinder.controller;
 
 
-import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.interest.UserInterestDto;
-import com.example.tinder.entity.User;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.enums.CategoryType;
 import com.example.tinder.service.UserInterestService;
 import lombok.RequiredArgsConstructor;

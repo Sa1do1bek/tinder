@@ -1,6 +1,6 @@
 package com.example.tinder.controller;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.NotificationDto;
 import com.example.tinder.service.NotificationService;
 import org.springframework.beans.factory.annotation.Qualifier;

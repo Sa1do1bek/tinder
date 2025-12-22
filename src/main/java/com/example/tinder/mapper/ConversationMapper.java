@@ -1,6 +1,6 @@
 package com.example.tinder.mapper;
 
-import com.example.tinder.dto.ConversationDTO;
+import com.example.tinder.dto.message.ConversationDTO;
 import com.example.tinder.entity.Conversation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -1,8 +1,7 @@
 package com.example.tinder.service;
 
-import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.interest.UserInterestDto;
-import com.example.tinder.entity.User;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.enums.CategoryType;
 import org.springframework.stereotype.Service;
 

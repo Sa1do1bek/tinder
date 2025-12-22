@@ -1,11 +1,13 @@
 package com.example.tinder.dto;
 
-import com.example.tinder.dto.prefence.PreferenceDto;
+import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.Interest;
 import com.example.tinder.enums.UserRole;
+import com.example.tinder.enums.UserStatus;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,13 +22,12 @@ public class UserDto {
     private String username;
     private String email;
     private String fullname;
-    private String status;
+    private UserStatus status;
     private UserRole role;
     private String profilePic;
     private Gender gender;
     private Date birthDate;
     private PreferenceDto preference;
-    private List<Interest> interests = new ArrayList<>();
     private String bio;
     private String latitude;
     private String longitude;

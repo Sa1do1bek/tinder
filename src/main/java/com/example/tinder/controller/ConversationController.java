@@ -1,6 +1,6 @@
 package com.example.tinder.controller;
 
-import com.example.tinder.dto.ApiResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.service.ConversationService;
 import com.example.tinder.utils.CurrentUser;

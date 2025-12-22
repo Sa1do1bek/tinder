@@ -1,7 +1,7 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.interest.UserInterestDto;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.CategoryType;

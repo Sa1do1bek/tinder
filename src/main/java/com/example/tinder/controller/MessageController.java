@@ -1,8 +1,8 @@
 package com.example.tinder.controller;
 
-import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.ChatMessageDto;
-import com.example.tinder.dto.MessageDto;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.message.ChatMessageDto;
+import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.service.MessageService;
 import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

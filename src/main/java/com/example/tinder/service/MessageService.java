@@ -1,8 +1,8 @@
 package com.example.tinder.service;
 
-import com.example.tinder.dto.ApiResponse;
-import com.example.tinder.dto.ChatMessageDto;
-import com.example.tinder.dto.MessageDto;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.message.ChatMessageDto;
+import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.User;
 import org.springframework.stereotype.Component;
