@@ -16,5 +16,4 @@ public class UserLocation extends BaseEntity {
     private User user;
     private String latitude;
     private String longitude;
-
 }
