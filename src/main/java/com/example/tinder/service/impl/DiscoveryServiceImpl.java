@@ -53,8 +53,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 pageable
         );
 
-        Page<DiscoveryResponseDTO> responseDTOPage = usersPage.map(user -> convertToCardResponse(user, myLoc));
-        return ApiResponse.success(responseDTOPage, "SUCCESSFULLY DISCOVERED USERS");
+        // .map(...) dan keyin .getContent() ni chaqiramiz
+        List<DiscoveryResponseDTO> responseList = usersPage
+                .map(user -> convertToCardResponse(user, myLoc))
+                .getContent(); // Mana shu joyi Listga aylantirib beradi
+
+        return ApiResponse.success(responseList, "SUCCESSFULLY DISCOVERED USERS");
     }
 
 
