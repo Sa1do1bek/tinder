@@ -13,8 +13,6 @@ import lombok.*;
 @Table(name = "users_interest")
 public class UserInterest extends BaseEntity {
 
-//    private Long userId;
-
     @Enumerated(EnumType.STRING)
     private CategoryType categoryType;
 

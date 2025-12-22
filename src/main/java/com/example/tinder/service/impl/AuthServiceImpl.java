@@ -132,11 +132,12 @@ public class AuthServiceImpl implements AuthService {
             user.setActive(true);
             user.setUpdatedAt(LocalDateTime.now());
 
+            userRepository.save(user);
+
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
             preferenceRepository.findByUserId(user.getId()).ifPresent(preferenceRepository::delete);
 
             savePreference(user);
-
         } else {
             user = User.builder()
                     .email(pending.getEmail())
@@ -153,11 +154,11 @@ public class AuthServiceImpl implements AuthService {
                     .bio(null)
                     .build();
 
-
-            savePreference(user);
         }
 
         User savedUser = userRepository.save(user);
+
+        savePreference(user);
 
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
