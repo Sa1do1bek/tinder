@@ -5,10 +5,12 @@ import com.example.tinder.entity.User;
 import com.example.tinder.service.DiscoveryService;
 import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -21,7 +23,10 @@ public class DiscoveryController {
 
     @GetMapping("/find")
     public ApiResponse<?> getHomeUsers(@CurrentUser User currentUser,
-                                       @PageableDefault(page = 0, size = 20) Pageable pageable) {
+                                       @RequestParam(required = false, defaultValue = "0") Integer page,
+                                       @RequestParam(required = false, defaultValue = "20") Integer size)
+    {
+        Pageable pageable = PageRequest.of(page, size);
         return discoveryService.getDiscoveryUsers(currentUser.getId(), pageable);
     }
 }
