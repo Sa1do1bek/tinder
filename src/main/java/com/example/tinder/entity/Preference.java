@@ -2,7 +2,7 @@ package com.example.tinder.entity;
 
 import com.example.tinder.enums.Gender;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -24,18 +24,22 @@ public class Preference extends BaseEntity{
     private Gender preferredGender;
 
     @Column(name = "min_age")
-    @Size(min = 18, max = 75)
-    private Integer minAge = 18;
+    @Min(18)
+    @Max(75)
+    private Integer minAge;
 
     @Column(name = "max_age")
-    @Size(min = 23, max = 100)
-    private Integer maxAge = 120;
+    @Min(23)
+    @Max(100)
+    private Integer maxAge;
 
-    @Size(min = 2, max = 160)
+    @DecimalMin("2.0")
+    @DecimalMax("160.0")
     private Double distance;
 
-    @OneToMany(mappedBy = "preference", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "preference")
     private List<PreferredLocation> preferredLocations;
 
-
+    @OneToMany(mappedBy = "preferenceLanguage")
+    private List<UserInterest> languages;
 }
