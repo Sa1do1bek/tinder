@@ -253,6 +253,9 @@ public class UserServiceImpl implements UserService {
         if (dto.getBio() != null){
             user.setBio(dto.getBio());
         }
+        if (dto.getFullName() != null){
+            user.setFullname(dto.getFullName());
+        }
 
         userRepository.save(user);
 

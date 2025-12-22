@@ -80,4 +80,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsernameAndActiveTrue(String username);
 
+
+    //:preferredGender = 'EVERYONE' OR
+
+
+    @Query("""
+        SELECT u FROM User u 
+        WHERE u.id != :currentUserId 
+        AND u.active = true 
+        AND (CAST(u.gender AS string) = :preferredGender)
+        AND (u.id NOT IN (SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :currentUserId))
+        AND (u.birthDate IS NOT NULL AND 
+            (YEAR(CURRENT_DATE) - YEAR(u.birthDate)) BETWEEN :minAge AND :maxAge)
+        """)
+    Page<User> findDiscoveryUsersJPQL(
+            @Param("currentUserId") Long currentUserId,
+            @Param("preferredGender") String preferredGender,
+            @Param("minAge") Integer minAge,
+            @Param("maxAge") Integer maxAge,
+            Pageable pageable);
 }

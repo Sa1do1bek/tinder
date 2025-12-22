@@ -3,15 +3,21 @@ package com.example.tinder.service.impl;
 import com.example.tinder.dto.DiscoveryResponseDTO;
 import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.entity.Preference;
 import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserLocation;
+import com.example.tinder.enums.ErrorType;
+import com.example.tinder.exception.RestException;
+import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.repository.UserLocationRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.DiscoveryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
@@ -25,21 +31,35 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
     private final UserRepository userRepository;
     private final UserLocationRepository locationRepository;
+    private final PreferenceRepository preferenceRepository;
 
-    public ApiResponse<?> getDiscoveryUsers(Long currentUserId) {
+    @Override
+    public ApiResponse<?> getDiscoveryUsers(Long currentUserId, Pageable pageable) {
+
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        
+        Preference pref = preferenceRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND));
 
-        Optional<UserLocation> currentUserLoc = locationRepository.findByUserId(currentUserId);
 
+        Optional<UserLocation> myLoc = locationRepository.findByUserId(currentUser.getId());
 
-        List<User> allUsers = userRepository.findAll();
+        Page<User> usersPage = userRepository.findDiscoveryUsersJPQL(
+                currentUserId,
+                pref.getPreferredGender().name(),
+                pref.getMinAge(),
+                pref.getMaxAge(),
+                pageable
+        );
 
-        return ApiResponse.success( allUsers.stream()
-                .filter(user -> !user.getId().equals(currentUserId))
-                .map(user -> convertToCardResponse(user, currentUserLoc))
-                .collect(Collectors.toList()), "SUCCESSFULLY DISCOVERED USERS");
+        Page<DiscoveryResponseDTO> responseDTOPage = usersPage.map(user -> convertToCardResponse(user, myLoc));
+        return ApiResponse.success(responseDTOPage, "SUCCESSFULLY DISCOVERED USERS");
     }
+
+
+
+
 
     private DiscoveryResponseDTO convertToCardResponse(User targetUser, Optional<UserLocation> currentLoc) {
         int age = 0;

@@ -11,6 +11,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateUserGBIDto {
+    private String fullName;
     private Date birthDate;
     private Gender gender;
     private String bio;
