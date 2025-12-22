@@ -12,9 +12,9 @@ import lombok.*;
 @Table(name = "preffered_location")
 public class PreferredLocation extends BaseEntity {
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Preference preference;
     private String latitude;
     private String longitude;
 }

@@ -4,6 +4,9 @@ import com.example.tinder.enums.Gender;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.validator.constraints.NotEmpty;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,4 +33,9 @@ public class Preference extends BaseEntity{
 
     @Size(min = 2, max = 160)
     private Double distance;
+
+    @OneToMany(mappedBy = "preference", fetch = FetchType.LAZY)
+    private List<PreferredLocation> preferredLocations;
+
+
 }

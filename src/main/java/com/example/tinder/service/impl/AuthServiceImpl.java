@@ -137,7 +137,6 @@ public class AuthServiceImpl implements AuthService {
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
             preferenceRepository.findByUserId(user.getId()).ifPresent(preferenceRepository::delete);
 
-            savePreference(user);
         } else {
             user = User.builder()
                     .email(pending.getEmail())
@@ -158,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
-        savePreference(user);
+        savePreference(savedUser);
 
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
