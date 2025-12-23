@@ -42,12 +42,13 @@ public interface UserInterestRepository extends JpaRepository<UserInterest, Long
         SELECT ui
         FROM User u JOIN u.userInterests ui
         WHERE u.id = :userId
+        AND ui.visibility = true
     """)
     List<UserInterest> findByUserId(Long userId);
 
 
     @Query(value = """
-                SELECT ui FROM User u 
+                SELECT ui FROM User u
                 JOIN u.userInterests ui
                 WHERE u.id = :userId
                 AND ui.categoryType = :type

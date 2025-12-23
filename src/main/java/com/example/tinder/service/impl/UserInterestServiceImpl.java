@@ -133,10 +133,18 @@ public class UserInterestServiceImpl implements UserInterestService {
         return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
     }
 
+    @Override
+    public ApiResponse<?> getAllUserCategoriesByUserId(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
 
+        List<UserInterest> list = repository.findByUserId(userId);
+        if (list.isEmpty()) {
+            throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
+        }
 
-
-
+        return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
+    }
 
 
 }
