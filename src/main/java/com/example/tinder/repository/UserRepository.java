@@ -61,7 +61,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                    SELECT s.swiped.id FROM Swipe s
                    WHERE s.swiper.id = :userId
                )""",
-
            countQuery =
                 """
                 SELECT COUNT(u) FROM User u
@@ -81,7 +80,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsernameAndActiveTrue(String username);
 
 
-    //:preferredGender = 'EVERYONE' OR
 
 
     @Query("""
@@ -94,6 +92,88 @@ public interface UserRepository extends JpaRepository<User, Long> {
         function('date_part', 'year', function('age', u.birthDate)) BETWEEN :minAge AND :maxAge)
     """)
     Page<User> findDiscoveryUsersJPQL(
+            @Param("currentUserId") Long currentUserId,
+            @Param("preferredGender") String preferredGender,
+            @Param("minAge") Integer minAge,
+            @Param("maxAge") Integer maxAge,
+            Pageable pageable);
+
+
+
+
+
+
+
+
+
+
+    @Query(value = """
+    SELECT u.*, 
+    (SELECT COUNT(*) FROM users_user_interests uui
+     WHERE uui.user_id = u.id AND uui.user_interests_id IN 
+     (SELECT user_interests_id FROM users_user_interests WHERE user_id = :currentUserId)
+    ) as match_score,
+    (6371 * acos(
+        least(1.0, greatest(-1.0, 
+            cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+            cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+            sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+        ))
+    )) as distance_val
+    FROM users u
+    JOIN users_location ul ON u.id = ul.user_id
+    WHERE u.id != :currentUserId
+    AND u.active = true
+    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+    AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+    AND (6371 * acos(
+        least(1.0, greatest(-1.0, 
+            cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+            cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+            sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+        ))
+    )) <= :maxDistance
+    ORDER BY match_score DESC, distance_val ASC
+    """,
+            countQuery = "SELECT count(*) FROM users u JOIN users_location ul ON u.id = ul.user_id WHERE u.id != :currentUserId AND u.active = true",
+            nativeQuery = true)
+    Page<User> findDiscoveryUsersWithSmartMatching(
+            @Param("currentUserId") Long currentUserId,
+            @Param("preferredGender") String preferredGender,
+            @Param("minAge") Integer minAge,
+            @Param("maxAge") Integer maxAge,
+            @Param("maxDistance") Double maxDistance,
+            @Param("lat") Double lat,
+            @Param("lon") Double lon,
+            Pageable pageable);
+
+
+
+
+    @Query(value = """
+    SELECT u.*, 
+    (SELECT COUNT(*) FROM users_user_interests uui 
+     WHERE uui.user_id = u.id AND uui.user_interests_id IN 
+     (SELECT user_interests_id FROM users_user_interests WHERE user_id = :currentUserId)
+    ) as match_score
+    FROM users u
+    WHERE u.id != :currentUserId 
+    AND u.active = true 
+    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+    AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+    ORDER BY match_score DESC, u.fullname ASC
+    """,
+            countQuery = """
+    SELECT count(*) FROM users u 
+    WHERE u.id != :currentUserId AND u.active = true
+    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+    AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+    """,
+            nativeQuery = true)
+    Page<User> findDiscoveryUsersWithoutLocation(
             @Param("currentUserId") Long currentUserId,
             @Param("preferredGender") String preferredGender,
             @Param("minAge") Integer minAge,

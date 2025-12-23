@@ -36,29 +36,73 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     @Override
     public ApiResponse<?> getDiscoveryUsers(Long currentUserId, Pageable pageable) {
 
+//        User currentUser = userRepository.findById(currentUserId)
+//                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+//
+//        Preference pref = preferenceRepository.findByUserId(currentUserId)
+//                .orElseThrow(() -> RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND));
+//
+//
+//        Optional<UserLocation> myLoc = locationRepository.findByUserId(currentUser.getId());
+//
+//        Page<User> usersPage = userRepository.findDiscoveryUsersJPQL(
+//                currentUserId,
+//                pref.getPreferredGender().name(),
+//                pref.getMinAge(),
+//                pref.getMaxAge(),
+//                pageable
+//        );
+//
+//        // .map(...) dan keyin .getContent() ni chaqiramiz
+//        List<DiscoveryResponseDTO> responseList = usersPage
+//                .map(user -> convertToCardResponse(user, myLoc))
+//                .getContent(); // Mana shu joyi Listga aylantirib beradi
+//
+//        return ApiResponse.success(responseList, "SUCCESSFULLY DISCOVERED USERS");
+//        ---------------------------------------------------------------------------------
+
+
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
-        
+
         Preference pref = preferenceRepository.findByUserId(currentUserId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND));
 
+        UserLocation myLoc = locationRepository.findByUserId(currentUserId)
+                .orElse(null);
 
-        Optional<UserLocation> myLoc = locationRepository.findByUserId(currentUser.getId());
+        Page<User> usersPage;
 
-        Page<User> usersPage = userRepository.findDiscoveryUsersJPQL(
-                currentUserId,
-                pref.getPreferredGender().name(),
-                pref.getMinAge(),
-                pref.getMaxAge(),
-                pageable
-        );
+        if (myLoc != null && myLoc.getLatitude() != null) {
+            usersPage = userRepository.findDiscoveryUsersWithSmartMatching(
+                    currentUserId,
+                    pref.getPreferredGender().name(),
+                    pref.getMinAge(),
+                    pref.getMaxAge(),
+                    pref.getDistance(), // Masalan 50.0 km
+                    Double.parseDouble(myLoc.getLatitude()),
+                    Double.parseDouble(myLoc.getLongitude()),
+                    pageable
+            );
+        } else {
+            // Lokatsiya yo'q bo'lsa, eski oddiy queryni chaqiring yoki masofasizini yozing
+            usersPage = userRepository.findDiscoveryUsersWithoutLocation(
+                    currentUserId, pref.getPreferredGender().name(),
+                    pref.getMinAge(), pref.getMaxAge(), pageable);
+        }
 
-        // .map(...) dan keyin .getContent() ni chaqiramiz
-        List<DiscoveryResponseDTO> responseList = usersPage
-                .map(user -> convertToCardResponse(user, myLoc))
-                .getContent(); // Mana shu joyi Listga aylantirib beradi
+        // Faqat ma'lumotlarni o'zini (List) qaytarish
+        List<DiscoveryResponseDTO> responseList = usersPage.getContent().stream()
+                .map(user -> convertToCardResponse(user, Optional.ofNullable(myLoc)))
+                .collect(Collectors.toList());
 
         return ApiResponse.success(responseList, "SUCCESSFULLY DISCOVERED USERS");
+
+
+
+
+
+
     }
 
 
