@@ -59,7 +59,8 @@ public enum ErrorType {
     INVALID_CATEGORY_TYPE("invalid.category.type", HttpStatus.BAD_REQUEST ),
     USER_LOCATION_NOT_FOUND("user.location.not.found",  HttpStatus.NOT_FOUND ),
     PREFERENCE_NOT_FOUND("preference.not.found",  HttpStatus.NOT_FOUND ),
-    LOCATION_NOT_FOUND("location.not.found",  HttpStatus.NOT_FOUND ),;
+    LOCATION_NOT_FOUND("location.not.found",  HttpStatus.NOT_FOUND ),
+    USERNAME_ALREADY_EXISTS("username.already.exists",  HttpStatus.BAD_REQUEST ),;
 
 
     private final String msg;

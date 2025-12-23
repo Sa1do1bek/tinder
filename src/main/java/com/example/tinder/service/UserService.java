@@ -44,4 +44,6 @@ public interface UserService {
     ApiResponse<?> me(User user);
 
     ApiResponse<?> addInterest(User user, UserInterest userInterest);
+
+    ApiResponse<?> updateUsername(User user, String username);
 }
