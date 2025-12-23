@@ -37,7 +37,6 @@ public class PreferenceMapper {
                 .maxAge(entity.getMaxAge())
                 .minAge(entity.getMinAge())
                 .preferredGender(entity.getPreferredGender())
-                .user(userMapper.toDto(entity.getUser()))
                 .build();
     }
 }
