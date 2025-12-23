@@ -28,43 +28,61 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
 
     @Override
     @Transactional
-    public ApiResponse<?> uploadPicture(User user, MultipartFile file) {
+    public ApiResponse<?> uploadPictures(User user, List<MultipartFile> files) {
         if (!user.isActive()) {
             throw RestException.restThrow(ErrorType.USER_INACTIVE);
         }
-        try {
-            String cloudPath = s3Service.uploadFile(file);
-            ProfilePicture picture = new ProfilePicture();
-            picture.setCloudPath(cloudPath);
-            picture.setUser(user);
 
+        if (files == null || files.isEmpty()) {
+            throw new RuntimeException("Hech qanday rasm tanlanmagan");
+        }
+
+        try {
+            // 1. S3 ga barcha rasmlarni list sifatida yuklash
+            List<String> cloudPaths = s3Service.uploadFiles(files);
+
+            List<ProfilePicture> newPictures = new ArrayList<>();
+
+            for (String path : cloudPaths) {
+                ProfilePicture picture = new ProfilePicture();
+                picture.setCloudPath(path);
+                picture.setUser(user);
+                newPictures.add(picture);
+
+                // Agar foydalanuvchining asosiy rasmi hali yo'q bo'lsa, birinchisini o'rnatamiz
+                if (user.getProfilePic() == null) {
+                    user.setProfilePic(path);
+                }
+            }
+
+            // 2. Bazaga yangi ob'ektlarni saqlash
+            profilePictureRepository.saveAll(newPictures);
+
+            // 3. Userning profilePictures listini yangilash
             if (user.getProfilePictures() == null) {
                 user.setProfilePictures(new ArrayList<>());
             }
-            user.getProfilePictures().add(picture);
-
-            if (user.getProfilePic() == null) {
-                user.setProfilePic(cloudPath);
-            }
-
-            profilePictureRepository.save(picture);
+            user.getProfilePictures().addAll(newPictures);
             userRepository.save(user);
 
-            return ApiResponse.success("Rasm muvaffaqiyatli yuklandi");
+            return ApiResponse.success("Rasmlar muvaffaqiyatli yuklandi. Soni: " + cloudPaths.size());
 
         } catch (Exception e) {
-            throw new RuntimeException("Rasm yuklashda xatolik: " + e.getMessage());
+            throw new RuntimeException("Rasmlarni yuklashda xatolik: " + e.getMessage());
         }
     }
 
+    // Qolgan metodlar (getUserPictures, deletePicture, setAsMainPicture) o'zgarishsiz qoladi
+    // Chunki ular bitta ID bilan ishlashda davom etadi.
+
     @Override
     public ApiResponse<?> getUserPictures(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty() || !userOpt.get().isActive()) {
-            throw RestException.restThrow(ErrorType.USER_INACTIVE);
-        }
-        List<ProfilePicture> pictures = profilePictureRepository.findAllByUserId(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
+        if (!user.isActive()) throw RestException.restThrow(ErrorType.USER_INACTIVE);
+
+        List<ProfilePicture> pictures = profilePictureRepository.findAllByUserId(userId);
         List<ProfilePictureDto> dtoList = pictures.stream()
                 .map(p -> ProfilePictureDto.builder()
                         .id(p.getId())
@@ -72,86 +90,54 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
                         .build())
                 .toList();
         return ApiResponse.success(dtoList, "SUCCESS");
-
     }
 
     @Override
     @Transactional
     public ApiResponse<?> deletePicture(Long pictureId, Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
-            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
-        }
-        User user = optionalUser.get();
-        if (!user.isActive()) {
-            throw RestException.restThrow(ErrorType.USER_INACTIVE);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
-        }
-
-        Optional<ProfilePicture> optionalPicture = profilePictureRepository.findById(pictureId);
-        if (optionalPicture.isEmpty()) {
-            throw RestException.restThrow(ErrorType.PROFILE_PICTURE_NOT_FOUND);
-        }
-        ProfilePicture picture = optionalPicture.get();
+        ProfilePicture picture = profilePictureRepository.findById(pictureId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PROFILE_PICTURE_NOT_FOUND));
 
         if (!picture.getUser().getId().equals(userId)) {
             throw RestException.restThrow(ErrorType.CANNOT_DELETE_OTHER_USERS_PICTURE);
-
         }
 
-        // Agar o'chirilayotgan rasm foydalanuvchining asosiy rasmi bo'lsa, asosiy rasmni null qilish
-        if (user.getProfilePic() != null && picture.getCloudPath().equals(user.getProfilePic())) {
+        // Asosiy rasm bo'lsa, uni null qilish
+        if (picture.getCloudPath().equals(user.getProfilePic())) {
             user.setProfilePic(null);
-            userRepository.save(user);
         }
 
-        // Foydalanuvchining rasmlar ro'yxatidan ham olib tashlash
-        if (user.getProfilePictures() != null) {
-            user.getProfilePictures().removeIf(p -> p.getId().equals(picture.getId()));
-            userRepository.save(user); // O'zgarishlarni saqlash
-        }
+        // Listdan o'chirish
+        user.getProfilePictures().removeIf(p -> p.getId().equals(pictureId));
+        userRepository.save(user);
 
-        // S3 dan faylni o'chirish
-        try {
-            s3Service.deleteFile(picture.getCloudPath());
-        } catch (RuntimeException e) {
-            // S3 dan o'chirishda xato bo'lsa ham, DB yozuvini o'chirishni davom ettirish
-            // Yoki bu yerda tranzaksiyani bekor qilishni tanlashingiz mumkin
-            // Hozircha, faqat logga yozamiz va davom etamiz
-            System.err.println("S3 dan rasmni o'chirishda xato: " + e.getMessage());
-        }
+        // S3 dan o'chirish
+        s3Service.deleteFile(picture.getCloudPath());
 
-        // Ma'lumotlar bazasidan rasmni o'chirish
+        // DB dan o'chirish
         profilePictureRepository.delete(picture);
 
         return ApiResponse.success("PICTURE DELETED SUCCESSFULLY");
-
     }
 
     @Override
     @Transactional
     public ApiResponse<?> setAsMainPicture(Long userId, Long pictureId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
-            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
-        }
-        User user = optionalUser.get();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
-        Optional<ProfilePicture> optionalPicture = profilePictureRepository.findById(pictureId);
-        if (optionalPicture.isEmpty()) {
-            throw RestException.restThrow(ErrorType.PICTURE_NOT_FOUND);
-        }
-        ProfilePicture profilePicture = optionalPicture.get();
+        ProfilePicture profilePicture = profilePictureRepository.findById(pictureId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PICTURE_NOT_FOUND));
 
-        if (!user.isActive()) {
-            throw RestException.restThrow(ErrorType.USER_INACTIVE);
-        }
         if (!profilePicture.getUser().getId().equals(userId)) {
             throw RestException.restThrow(ErrorType.CANNOT_SET_OTHER_USERS_PICTURE);
-
         }
+
         user.setProfilePic(profilePicture.getCloudPath());
         userRepository.save(user);
-        return ApiResponse.success(profilePicture.getCloudPath() ,"Asosiy rasm muvaffaqiyatli o'zgartirildi.");
+        return ApiResponse.success(profilePicture.getCloudPath() ,"Asosiy rasm o'zgartirildi.");
     }
 }

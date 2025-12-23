@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/picture")
 @RequiredArgsConstructor
@@ -18,9 +20,9 @@ public class ProfilePictureController {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<?> upload(@RequestParam MultipartFile file,
+    public ApiResponse<?> upload(@RequestParam("files") List<MultipartFile> files,
                               @CurrentUser User user) {
-        return profilePictureService.uploadPicture(user, file);
+        return profilePictureService.uploadPictures(user, files);
     }
 
     @GetMapping("/user")

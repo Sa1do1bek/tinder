@@ -1,10 +1,7 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.service.S3Service;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.SetBucketPolicyArgs;
-import io.minio.RemoveObjectArgs;
+import io.minio.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
+
     private final String bucketName = "s3-tenzorsoft";
     private final String endpoint = "https://s3.tenzorsoft.uz";
     private final String accessKey = "REMOVED";
@@ -31,9 +32,9 @@ public class S3ServiceImpl implements S3Service {
                 .credentials(accessKey, secretKey)
                 .build();
         try {
-            boolean found = minioClient.bucketExists(io.minio.BucketExistsArgs.builder().bucket(bucketName).build());
+            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {
-                minioClient.makeBucket(io.minio.MakeBucketArgs.builder().bucket(bucketName).build());
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
 
             String policy = """
@@ -55,9 +56,9 @@ public class S3ServiceImpl implements S3Service {
                             .config(policy)
                             .build()
             );
-            System.out.println("MinIO bucket made public.");
+            log.info("MinIO bucket '{}' is ready and public.", bucketName);
         } catch (Exception e) {
-            System.err.println("MinIO policy error or bucket creation error: " + e.getMessage());
+            log.error("MinIO initialization error: {}", e.getMessage());
         }
     }
 
@@ -75,34 +76,36 @@ public class S3ServiceImpl implements S3Service {
             );
             return endpoint + "/" + bucketName + "/" + fileName;
         } catch (Exception e) {
-            throw new RuntimeException("MinIO upload failed: " + e.getMessage());
+            log.error("MinIO upload failed: {}", e.getMessage());
+            throw new RuntimeException("Fayl yuklashda xatolik: " + e.getMessage());
         }
     }
 
     @Override
-    public String uploadFile(byte[] bytes) {
-        try {
-            String fileName = UUID.randomUUID() + ".jpg";
-            String mimeType = detectMimeType(bytes);
+    public List<String> uploadFiles(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-            try (InputStream is = new ByteArrayInputStream(bytes)) {
-                minioClient.putObject(
-                        PutObjectArgs.builder()
-                                .bucket(bucketName)
-                                .object(fileName)
-                                .stream(is, bytes.length, -1)
-                                .contentType(mimeType)
-                                .build()
-                );
+        List<String> uploadedUrls = new ArrayList<>();
+        try {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    uploadedUrls.add(uploadFile(file));
+                }
             }
-            return endpoint + "/" + bucketName + "/" + fileName;
+            return uploadedUrls;
         } catch (Exception e) {
-            throw new RuntimeException("MinIO upload failed: " + e.getMessage());
+            log.error("Multiple upload failed, rolling back... Error: {}", e.getMessage());
+            uploadedUrls.forEach(this::deleteFile);
+            throw new RuntimeException("Rasmlar guruhini yuklashda xatolik yuz berdi.");
         }
     }
 
+    // --- FAYLNI O'CHIRISH ---
     @Override
     public void deleteFile(String fileUrl) {
+        if (fileUrl == null || !fileUrl.contains("/")) return;
         try {
             String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
             minioClient.removeObject(
@@ -111,17 +114,16 @@ public class S3ServiceImpl implements S3Service {
                             .object(fileName)
                             .build()
             );
-            log.info("File deleted from MinIO: {}", fileName);
+            log.info("File deleted: {}", fileName);
         } catch (Exception e) {
-            log.error("Error deleting file from MinIO: {}", e.getMessage());
-            throw new RuntimeException("Faylni o'chirishda xatolik yuz berdi: " + e.getMessage());
+            log.error("Error deleting file: {}", e.getMessage());
         }
     }
 
     private String detectMimeType(byte[] bytes) {
         try (InputStream is = new ByteArrayInputStream(bytes)) {
             String mimeType = URLConnection.guessContentTypeFromStream(is);
-            return mimeType != null ? mimeType : "application/octet-stream";
+            return mimeType != null ? mimeType : "image/jpeg";
         } catch (IOException e) {
             return "application/octet-stream";
         }
