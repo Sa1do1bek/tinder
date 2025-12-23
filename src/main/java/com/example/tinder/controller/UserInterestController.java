@@ -53,6 +53,12 @@ public class UserInterestController {
         return userInterestService.getUserCategoriesByType(user.getId(), type);
     }
 
+    @GetMapping("/getAllUserCategories")
+    public ApiResponse<?> getUserCategoriesByType(@CurrentUser User user) {
+        return userInterestService.getAllUserCategoriesByUserId(user.getId());
+    }
+
+
 
 
 
