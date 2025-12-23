@@ -2,7 +2,9 @@ package com.example.tinder.controller;
 
 import com.example.tinder.dto.PreferenceDto;
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.entity.User;
 import com.example.tinder.service.PreferenceService;
+import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,16 +16,16 @@ public class PreferenceController {
 
 
     @PutMapping("/update")
-    public ApiResponse<?> updatePreference(@RequestParam("userId") Long userId,
+    public ApiResponse<?> updatePreference(@CurrentUser User user,
                                            @RequestBody PreferenceDto.PreferenceUpdateDto dto) {
 
-        return preferenceService.update(userId, dto);
+        return preferenceService.update(user.getId(), dto);
     }
 
 
     @GetMapping("/getByUserId")
-    public ApiResponse<?> getPreference(@RequestParam("userId") Long userId) {
-        return preferenceService.getByUserId(userId);
+    public ApiResponse<?> getPreference(@CurrentUser User user) {
+        return preferenceService.getByUserId(user.getId());
     }
 
 }
