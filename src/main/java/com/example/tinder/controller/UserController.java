@@ -36,6 +36,7 @@ public class UserController {
 
 
 
+
     @PostMapping("/checkUpdatedEmail")
     public ApiResponse<?> checkUpdatedEmail(@RequestParam("oldEmail") String oldEmail,
                                          @RequestParam("newEmail") String newEmail,
@@ -108,5 +109,13 @@ public class UserController {
     public ApiResponse<?> me(@CurrentUser User user) {
         return userService.me(user);
     }
+
+
+    @PutMapping("/updateUsername")
+    public ApiResponse<?> updateUsername(@CurrentUser User user,
+                                         @RequestBody String username) {
+        return userService.updateUsername(user, username);
+    }
+
 
 }

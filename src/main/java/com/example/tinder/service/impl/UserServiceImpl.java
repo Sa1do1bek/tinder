@@ -305,4 +305,20 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
+    public ApiResponse<?> updateUsername(User user, String username) {
+        Optional<User> byId = userRepository.findById(user.getId());
+        if (byId.isEmpty()) throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+
+        Optional<User> byUsername = userRepository.findByUsername(username);
+        if (byUsername.isPresent()) throw RestException.restThrow(ErrorType.USERNAME_ALREADY_EXISTS);
+
+        user.setUsername(username);
+        userRepository.save(user);
+
+        return ApiResponse.success(userMapper.toDto(user), "USERNAME UPDATED SUCCESSFULLY");
+    }
+
+
+
 }
