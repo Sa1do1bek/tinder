@@ -312,7 +312,11 @@ public class AuthServiceImpl implements AuthService {
                         && c.getDevice().getUser().getId().equals(user.getId())) {
                     c.getDevice().setAddedAt(LocalDateTime.now());
                     c.getDevice().setDeviceName(deviceId);
-                    c.getDevice().setExpiredAt(LocalDateTime.now().plusDays(15));
+                    c.getDevice().setExpiredAt(LocalDateTime.now().plusDays(40));
+                    c.getDevice().setUpdatedAt(LocalDateTime.now());
+                    c.getDevice().setCreatedAt(LocalDateTime.now());
+                    c.getDevice().setVisibility(true);
+                    c.getDevice().setIsVerified(true);
                     this.deviceRepository.save(c.getDevice());
                 }
 
@@ -335,10 +339,10 @@ public class AuthServiceImpl implements AuthService {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
                 String currentToken = jwtUtil.generateToken(userDetails.getUsername());
-                map.put("user", this.userMapper.toDto(user));
                 map.put("token", currentToken);
+                map.put("user", this.userMapper.toDto(user));
 
-                return ApiResponse.success(this.userMapper.toDto(user), "SUCCESS");
+                return ApiResponse.success(map, "SUCCESS");
             }
         }
 
