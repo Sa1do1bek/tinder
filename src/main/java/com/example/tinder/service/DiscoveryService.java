@@ -7,5 +7,6 @@ import org.springframework.stereotype.Service;
 @Service
 public interface DiscoveryService {
     ApiResponse<?> getDiscoveryUsers(Long currentUserId, Pageable pageable);
+    ApiResponse<?> findAllUsersByUserInterests(Long currentUserId, Long categoryId, Pageable pageable);
 
 }

@@ -58,7 +58,9 @@ public enum ErrorType {
     INTEREST_NOT_FOUND("interest.not.found", HttpStatus.NOT_FOUND ),
     INVALID_CATEGORY_TYPE("invalid.category.type", HttpStatus.BAD_REQUEST ),
     USER_LOCATION_NOT_FOUND("user.location.not.found",  HttpStatus.NOT_FOUND ),
-    PREFERENCE_NOT_FOUND("preference.not.found",  HttpStatus.NOT_FOUND ),;
+    PREFERENCE_NOT_FOUND("preference.not.found",  HttpStatus.NOT_FOUND ),
+    LOCATION_NOT_FOUND("location.not.found",  HttpStatus.NOT_FOUND ),;
+
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;

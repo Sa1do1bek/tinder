@@ -3,8 +3,10 @@ package com.example.tinder.controller;
 
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UserInterestDto;
+import com.example.tinder.entity.User;
 import com.example.tinder.enums.CategoryType;
 import com.example.tinder.service.UserInterestService;
+import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,23 +35,25 @@ public class UserInterestController {
    }
 
     @PostMapping("/addCategoryToUser")
-    public ApiResponse<?> addCategoryToUser(@RequestParam("userId") Long userId,
+    public ApiResponse<?> addCategoryToUser(@CurrentUser User user,
                                             @RequestParam("categoryIds") List<Long> categoryIds) {
-        return userInterestService.addCategoryToUser(userId, categoryIds);
+        return userInterestService.addCategoryToUser(user.getId(), categoryIds);
     }
 
     @GetMapping("/getUserCategories")
-    public ApiResponse<?> getUserCategories(@RequestParam("userId") Long userId) {
-        return userInterestService.getUserCategories(userId);
+    public ApiResponse<?> getUserCategories(@CurrentUser User user) {
+        return userInterestService.getUserCategories(user.getId());
     }
 
 
     @GetMapping("/getUserCategoriesByType")
-    public ApiResponse<?> getUserCategoriesByType(@RequestParam("userId") Long userId,
+    public ApiResponse<?> getUserCategoriesByType(@CurrentUser User user,
                                                   @RequestParam("type") CategoryType type) {
 
-        return userInterestService.getUserCategoriesByType(userId, type);
+        return userInterestService.getUserCategoriesByType(user.getId(), type);
     }
+
+
 
 
 

@@ -96,6 +96,11 @@ public class UserInterestServiceImpl implements UserInterestService {
             if (c.isEmpty()) {
                 throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
             }
+
+            if (user.getUserInterests().contains(c.get())) {
+                throw RestException.restThrow(ErrorType.USER_ALREADY_EXISTS);
+            }
+
             interest.add(c.get());
             userService.addInterest(user, c.get());
         }
@@ -127,6 +132,9 @@ public class UserInterestServiceImpl implements UserInterestService {
 
         return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
     }
+
+
+
 
 
 

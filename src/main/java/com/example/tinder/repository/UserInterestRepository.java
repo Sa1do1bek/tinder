@@ -54,6 +54,8 @@ public interface UserInterestRepository extends JpaRepository<UserInterest, Long
                 AND ui.visibility = true
             """)
     List<UserInterest> findByUserIdAndType(Long userId, CategoryType type);
+
+
 }
 
 
