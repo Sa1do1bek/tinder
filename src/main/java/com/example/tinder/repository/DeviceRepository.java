@@ -30,4 +30,13 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
                  AND d.isVerified = true
             """)
      Optional<Device> findByUserIdAndDeviceName(@Param("userId") Long userId, @Param("deviceName") String deviceName);
+
+
+
+    @Query(value = """
+            SELECT d FROM Device d\s
+            WHERE d.user.id = :userId\s
+            AND d.deviceName = :deviceName
+           \s""")
+    Optional<Device> findForVerifyFirstByUserIdAndDeviceName(@Param("userId") Long userId, @Param("deviceName") String deviceName);
 }

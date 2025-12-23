@@ -1,10 +1,10 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.dto.auth.LoginDto;
-import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
+import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.LoginResponse;
+import com.example.tinder.dto.auth.RegisterDto;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.Gender;
@@ -214,6 +214,7 @@ public class AuthServiceImpl implements AuthService {
 
         Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
                 .orElse(null);
+
         System.out.println("Trusted device: " + trustedDevice);
 
         String code = utils.getCode();
@@ -298,55 +299,51 @@ public class AuthServiceImpl implements AuthService {
             throw RestException.restThrow(ErrorType.USER_EMAIL_INVALID);
         }
 
-        User user = this.userRepository.findByEmail(email).orElse(null);
-        if (user != null) {
-            if (!user.isActive()) {
-                throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
-            }
-            Device device = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), deviceId)
-                    .orElse(null);
-            if (device != null) {
-                Code c = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
-
-                if (c != null && c.getDevice() != null && c.getDevice().getUser() != null
-                        && c.getDevice().getUser().getId().equals(user.getId())) {
-                    c.getDevice().setAddedAt(LocalDateTime.now());
-                    c.getDevice().setDeviceName(deviceId);
-                    c.getDevice().setExpiredAt(LocalDateTime.now().plusDays(40));
-                    c.getDevice().setUpdatedAt(LocalDateTime.now());
-                    c.getDevice().setCreatedAt(LocalDateTime.now());
-                    c.getDevice().setVisibility(true);
-                    c.getDevice().setIsVerified(true);
-                    this.deviceRepository.save(c.getDevice());
-                }
-
-                if (!this.utils.checkCode(email, code, device.getId())) {
-                    throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
-                }
-
-                Map<String, Object> map = new HashMap<>();
-                Device devices = this.deviceService.addTrustedDeviceByLogin(user.getId(), deviceId);
-                devices.setUser(user);
-                devices.setDeviceName(deviceId);
-                Device save = this.deviceRepository.save(devices);
-
-                Code cc = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
-                if (cc != null) {
-                    cc.setApprovedAt(LocalDateTime.now());
-                    cc.setDevice(save);
-                    this.codeRepository.save(cc);
-                }
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-                String currentToken = jwtUtil.generateToken(userDetails.getUsername());
-                map.put("token", currentToken);
-                map.put("user", this.userMapper.toDto(user));
-
-                return ApiResponse.success(map, "SUCCESS");
-            }
+        Optional<User> byEmail = this.userRepository.findByEmail(email);
+        if (byEmail.isEmpty()) {
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
 
-        throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+
+        if (!byEmail.get().isActive()) {
+            throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);
+        }
+        User user = byEmail.get();
+
+        Optional<Device> OptionalDevice = this.deviceRepository.findForVerifyFirstByUserIdAndDeviceName(user.getId(), deviceId);
+        if (OptionalDevice.isEmpty()) throw RestException.restThrow(ErrorType.DEVICE_NOT_FOUND);
+
+        Device device = OptionalDevice.get();
+
+
+        Code c = this.codeRepository.findByUserIdAndDeviceId(user.getId(), device.getId()).orElse(null);
+
+        if (c != null && c.getDevice() != null && c.getDevice().getUser() != null
+                && c.getDevice().getUser().getId().equals(user.getId())) {
+            c.getDevice().setAddedAt(LocalDateTime.now());
+            c.getDevice().setDeviceName(deviceId);
+            c.getDevice().setExpiredAt(LocalDateTime.now().plusDays(40));
+            c.getDevice().setUpdatedAt(LocalDateTime.now());
+            c.getDevice().setCreatedAt(LocalDateTime.now());
+            c.getDevice().setVisibility(true);
+            c.getDevice().setIsVerified(true);
+            this.deviceRepository.save(c.getDevice());
+
+
+            Map<String, Object> map = new HashMap<>();
+            UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+            String currentToken = jwtUtil.generateToken(userDetails.getUsername());
+            map.put("token", currentToken);
+            map.put("user", this.userMapper.toDto(user));
+
+            return ApiResponse.success(map, "SUCCESS");
+        }
+
+        if (!this.utils.checkCode(email, code, device.getId())) {
+            throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
+        }
+
+        throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
     }
 
     @Override
