@@ -14,11 +14,14 @@ import com.example.tinder.service.ConversationService;
 import com.example.tinder.service.SwipeService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SwipeServiceImpl implements SwipeService {
@@ -69,6 +72,7 @@ public class SwipeServiceImpl implements SwipeService {
 
         swipeRepository.save(swipe);
 
+
         if (status == SwipeStatus.ACCEPT) {
             boolean isMutual = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipe(swipedId, swiperId, SwipeStatus.ACCEPT);
 
@@ -104,6 +108,17 @@ public class SwipeServiceImpl implements SwipeService {
             }
         }
 
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(1000*5*60);
+                swipeRepository.delete(swipe);
+            } catch (InterruptedException e) {
+                log.error(e.getMessage());
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+
         return ApiResponse.success("Swipe recorded.");
     }
 
@@ -123,4 +138,13 @@ public class SwipeServiceImpl implements SwipeService {
 
         return ApiResponse.success(result, "SUCCESS");
     }
+
+
+
+    @Scheduled(fixedRate = 1000*60*2)
+    @Transactional
+    public void cleanupExpiredSwipes() {
+        swipeRepository.deleteExpiredRejects();
+    }
+
 }

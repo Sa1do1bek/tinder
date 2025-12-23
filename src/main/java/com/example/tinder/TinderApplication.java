@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -15,6 +16,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @SpringBootApplication
 @ComponentScan({"com.example.tinder", "com.example.parking"})
 @EntityScan({"com.example.tinder.entity", "com.example.parking.entity"})
+@EnableScheduling
 @EnableJpaRepositories({"com.example.tinder.repository", "com.example.parking.repository"})
 public class TinderApplication implements CommandLineRunner {
 
