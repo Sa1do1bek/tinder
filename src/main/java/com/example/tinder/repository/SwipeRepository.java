@@ -31,7 +31,8 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
 
     @Query("""
     SELECT s.swiped FROM Swipe s
-    WHERE s.swiper.id = :userId AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
+    WHERE s.swiper.id = :userId 
+    AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
 """)
     Page<User> findAllAcceptedUsers(@Param("userId") Long userId, Pageable pageable);
 
@@ -39,12 +40,18 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
   @Modifying
   @Transactional
   @Query(value = """
-        DELETE FROM swipe 
-        WHERE swipe = 'REJECT' 
+        DELETE FROM swipe
+        WHERE swipe = 'REJECT'
         AND created_at <= NOW() - INTERVAL '5 minutes'
         """, nativeQuery = true)
   void deleteExpiredRejects();
 
+  @Query("""
+    SELECT s.swiped FROM Swipe s
+    WHERE s.swiped.id = :userId
+    AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
+""")
+  Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
 
 
 }
