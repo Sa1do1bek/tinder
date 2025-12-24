@@ -221,7 +221,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             Pageable pageable);
 
 
-
     @Modifying
     @Transactional
     @Query(value = """
