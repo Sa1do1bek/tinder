@@ -36,10 +36,4 @@ public class Preference extends BaseEntity{
     @DecimalMin("2.0")
     @DecimalMax("160.0")
     private Double distance;
-
-    @OneToMany(mappedBy = "preference")
-    private List<PreferredLocation> preferredLocations;
-
-    @OneToMany(mappedBy = "preferenceLanguage")
-    private List<UserInterest> languages;
 }

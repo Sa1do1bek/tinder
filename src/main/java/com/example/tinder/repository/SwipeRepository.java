@@ -41,7 +41,7 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
   @Transactional
   @Query(value = """
         DELETE FROM swipe
-        WHERE swipe = com.example.tinder.enums.SwipeStatus.REJECT
+        WHERE swipe = 'REJECT'
         AND created_at <= NOW() - INTERVAL '5 minutes'
         """, nativeQuery = true)
   void deleteExpiredRejects();

@@ -101,65 +101,35 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query(value = """
-    SELECT DISTINCT u.*, 
-    (SELECT COUNT(*) FROM users_user_interests uui
-     WHERE uui.user_id = u.id AND uui.user_interests_id IN 
-     (SELECT user_interests_id FROM users_user_interests WHERE user_id = :currentUserId)
-    ) as match_score,
-    (6371 * acos(
-        least(1.0, greatest(-1.0, 
-            cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-            cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-            sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-        ))
-    )) as distance_val,
-    COALESCE((
-        SELECT COUNT(*) FROM users_user_interests uui2
-        JOIN user_interest ui ON uui2.user_interests_id = ui.id
-        WHERE uui2.user_id = u.id 
-        AND ui.category_type = 'LANGUAGES'
-        AND (:languageCodes IS NULL OR ui.code IN (:languageCodes))
-    ), 0) as language_match_score
-    FROM users u
-    JOIN users_location ul ON u.id = ul.user_id
-    WHERE u.id != :currentUserId
-    AND u.active = true
-    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-    AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-    AND (6371 * acos(
-        least(1.0, greatest(-1.0, 
-            cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-            cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-            sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-        ))
-    )) <= :maxDistance
-    AND (
-        :checkPreferredLocations = false
-        OR EXISTS (
-            SELECT 1 FROM preferred_location ploc
-            WHERE ploc.preference_id = :preferenceId
-            AND ploc.latitude IS NOT NULL 
-            AND ploc.longitude IS NOT NULL
-            AND (6371 * acos(
-                least(1.0, greatest(-1.0,
-                    cos(radians(CAST(ploc.latitude AS double precision))) * 
-                    cos(radians(CAST(ul.latitude AS double precision))) *
-                    cos(radians(CAST(ul.longitude AS double precision)) - 
-                        radians(CAST(ploc.longitude AS double precision))) +
-                    sin(radians(CAST(ploc.latitude AS double precision))) * 
-                    sin(radians(CAST(ul.latitude AS double precision)))
-                ))
-            )) <= :maxDistance
-        )
-    )
-    ORDER BY language_match_score DESC, match_score DESC, distance_val ASC
-    """,
-            countQuery = """
-        SELECT count(DISTINCT u.id) FROM users u 
-        JOIN users_location ul ON u.id = ul.user_id 
-        WHERE u.id != :currentUserId AND u.active = true
-    """,
+SELECT u.*, 
+(SELECT COUNT(*) FROM users_user_interests uui
+ WHERE uui.user_id = u.id AND uui.user_interests_id IN 
+ (SELECT user_interests_id FROM users_user_interests WHERE user_id = :currentUserId)
+) as match_score,
+(6371 * acos(
+    least(1.0, greatest(-1.0, 
+        cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+        cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+        sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+    ))
+)) as distance_val
+FROM users u
+JOIN users_location ul ON u.id = ul.user_id
+WHERE u.id != :currentUserId
+AND u.active = true
+AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+AND (6371 * acos(
+    least(1.0, greatest(-1.0, 
+        cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+        cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+        sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+    ))
+)) <= :maxDistance
+ORDER BY match_score DESC, distance_val ASC
+""",
+            countQuery = "SELECT count(*) FROM users u JOIN users_location ul ON u.id = ul.user_id WHERE u.id != :currentUserId AND u.active = true",
             nativeQuery = true)
     Page<User> findDiscoveryUsersWithSmartMatching(
             @Param("currentUserId") Long currentUserId,
@@ -169,49 +139,39 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("maxDistance") Double maxDistance,
             @Param("lat") Double lat,
             @Param("lon") Double lon,
-            @Param("languageCodes") List<String> languageCodes,
-            @Param("preferenceId") Long preferenceId,
-            @Param("checkPreferredLocations") Boolean checkPreferredLocations,
             Pageable pageable);
 
 
+
+
     @Query(value = """
-    SELECT DISTINCT u.*, 
-    (SELECT COUNT(*) FROM users_user_interests uui 
-     WHERE uui.user_id = u.id AND uui.user_interests_id IN 
-     (SELECT user_interests_id FROM users_user_interests WHERE user_id = :currentUserId)
-    ) as match_score,
-    COALESCE((
-        SELECT COUNT(*) FROM users_user_interests uui2
-        JOIN user_interest ui ON uui2.user_interests_id = ui.id
-        WHERE uui2.user_id = u.id 
-        AND ui.category_type = 'LANGUAGES'
-        AND (:languageCodes IS NULL OR ui.code IN (:languageCodes))
-    ), 0) as language_match_score
-    FROM users u
-    WHERE u.id != :currentUserId 
-    AND u.active = true 
-    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-    AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-    ORDER BY language_match_score DESC, match_score DESC, u.fullname ASC
-    """,
+SELECT u.*, 
+(SELECT COUNT(*) FROM users_user_interests uui 
+ WHERE uui.user_id = u.id AND uui.user_interests_id IN 
+ (SELECT user_interests_id FROM users_user_interests WHERE user_id = :currentUserId)
+) as match_score
+FROM users u
+WHERE u.id != :currentUserId 
+AND u.active = true 
+AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+ORDER BY match_score DESC, u.fullname ASC
+""",
             countQuery = """
-        SELECT count(DISTINCT u.id) FROM users u 
-        WHERE u.id != :currentUserId AND u.active = true
-        AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-        AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-    """,
+SELECT count(*) FROM users u 
+WHERE u.id != :currentUserId AND u.active = true
+AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+""",
             nativeQuery = true)
     Page<User> findDiscoveryUsersWithoutLocation(
             @Param("currentUserId") Long currentUserId,
             @Param("preferredGender") String preferredGender,
             @Param("minAge") Integer minAge,
             @Param("maxAge") Integer maxAge,
-            @Param("languageCodes") List<String> languageCodes,
             Pageable pageable);
-
 
 
 

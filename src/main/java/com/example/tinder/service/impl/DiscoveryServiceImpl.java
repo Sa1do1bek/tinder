@@ -47,19 +47,6 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         Page<User> usersPage;
 
         if (myLoc != null && myLoc.getLatitude() != null) {
-            // Extract preferred language codes
-            List<String> preferredLanguageCodes = pref.getLanguages() != null && !pref.getLanguages().isEmpty()
-                    ? pref.getLanguages().stream()
-                    .map(UserInterest::getCode)
-                    .collect(Collectors.toList())
-                    : null;
-
-            // Check if preferred locations exist
-            boolean hasPreferredLocations = pref.getPreferredLocations() != null
-                    && !pref.getPreferredLocations().isEmpty()
-                    && pref.getPreferredLocations().stream()
-                    .anyMatch(loc -> loc.getLatitude() != null && loc.getLongitude() != null);
-
             usersPage = userRepository.findDiscoveryUsersWithSmartMatching(
                     currentUserId,
                     pref.getPreferredGender().name(),
@@ -68,26 +55,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                     pref.getDistance(),
                     Double.parseDouble(myLoc.getLatitude()),
                     Double.parseDouble(myLoc.getLongitude()),
-                    preferredLanguageCodes,
-                    pref.getId(),
-                    hasPreferredLocations,
                     pageable
             );
         } else {
-            // Extract preferred language codes for without location query
-            List<String> preferredLanguageCodes = pref.getLanguages() != null && !pref.getLanguages().isEmpty()
-                    ? pref.getLanguages().stream()
-                    .map(UserInterest::getCode)
-                    .collect(Collectors.toList())
-                    : null;
-
             usersPage = userRepository.findDiscoveryUsersWithoutLocation(
-                    currentUserId,
-                    pref.getPreferredGender().name(),
-                    pref.getMinAge(),
-                    pref.getMaxAge(),
-                    preferredLanguageCodes,
-                    pageable);
+                    currentUserId, pref.getPreferredGender().name(),
+                    pref.getMinAge(), pref.getMaxAge(), pageable);
         }
 
         List<DiscoveryResponseDTO> responseList = usersPage.getContent().stream()
@@ -96,7 +69,6 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
         return ApiResponse.success(responseList, "SUCCESSFULLY DISCOVERED USERS");
     }
-
 
 
     @Override
@@ -138,6 +110,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             age = Period.between(birthDate, LocalDate.now()).getYears();
         }
 
+
         double distance = 0;
         Optional<UserLocation> targetLoc = locationRepository.findByUserId(targetUser.getId());
         if (currentLoc.isPresent() && targetLoc.isPresent()) {
@@ -149,36 +122,25 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             );
         }
 
-        List<String> images = targetUser.getProfilePictures() != null
-                ? targetUser.getProfilePictures().stream()
+        List<String> images = targetUser.getProfilePictures().stream()
                 .map(ProfilePicture::getCloudPath)
-                .collect(Collectors.toList())
-                : Collections.emptyList();
+                .collect(Collectors.toList());
 
-        List<UserInterestDto> interests = targetUser.getUserInterests() != null
-                ? targetUser.getUserInterests().stream()
-                .map(i -> new UserInterestDto(
-                        i.getId(),
-                        targetUser.getId(),
-                        i.getCategoryType(),
-                        i.getCode(),
-                        i.getName()
-                ))
-                .collect(Collectors.toList())
-                : Collections.emptyList();
+        List<UserInterestDto> interests = targetUser.getUserInterests().stream()
+                .map(i -> new UserInterestDto(i.getId(), targetUser.getId(), i.getCategoryType(), i.getCode(), i.getName()))
+                .collect(Collectors.toList());
 
         return DiscoveryResponseDTO.builder()
                 .id(targetUser.getId())
                 .fullname(targetUser.getFullname())
                 .bio(targetUser.getBio())
-                .gender(targetUser.getGender() != null ? targetUser.getGender().name() : null)
+                .gender(targetUser.getGender().name())
                 .age(age)
                 .distanceKm(Math.round(distance * 10.0) / 10.0)
                 .profilePictures(images)
                 .interests(interests)
                 .build();
     }
-
 
     private double calculateHaversine(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371;

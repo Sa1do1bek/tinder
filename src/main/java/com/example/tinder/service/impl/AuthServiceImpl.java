@@ -174,16 +174,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void savePreference(User user) {
-
-        PreferredLocation PrefferedLocation = PreferredLocation.builder()
-                .latitude("41.2773123")
-                .longitude("69.3570236")
-                .build();
-
-        Optional<UserInterest> UZ = userInterestRepository.findById(37L);
-        Optional<UserInterest> RUS = userInterestRepository.findById(38L);
-
-
         Preference preference = new Preference();
         preference.setUser(user);
         preference.setPreferredGender(Gender.EVERYONE);
@@ -191,8 +181,7 @@ public class AuthServiceImpl implements AuthService {
         preference.setMinAge(18);
         preference.setMaxAge(50);
         preference.setVisibility(true);
-        preference.setPreferredLocations(Arrays.asList(PrefferedLocation));
-        preference.setLanguages(List.of(UZ.get(), RUS.get()));
+
         preferenceRepository.save(preference);
     }
 
