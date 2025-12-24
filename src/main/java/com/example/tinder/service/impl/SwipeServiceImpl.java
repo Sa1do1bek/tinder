@@ -108,17 +108,6 @@ public class SwipeServiceImpl implements SwipeService {
             }
         }
 
-        Thread thread = new Thread(() -> {
-            try {
-                Thread.sleep(1000*5*60);
-                swipeRepository.delete(swipe);
-            } catch (InterruptedException e) {
-                log.error(e.getMessage());
-            }
-        });
-        thread.setDaemon(true);
-        thread.start();
-
         return ApiResponse.success("Swipe recorded.");
     }
 
