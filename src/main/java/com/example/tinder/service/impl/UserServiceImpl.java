@@ -314,9 +314,17 @@ public class UserServiceImpl implements UserService {
         if (byUsername.isPresent()) throw RestException.restThrow(ErrorType.USERNAME_ALREADY_EXISTS);
 
         user.setUsername(username);
-        userRepository.save(user);
+        User save = userRepository.save(user);
 
-        return ApiResponse.success(userMapper.toDto(user), "USERNAME UPDATED SUCCESSFULLY");
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(save.getUsername());
+        String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
+
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("token", jwtToken);
+        userInfo.put("user", userMapper.toDto(save));
+
+        return ApiResponse.success(userInfo, "USERNAME UPDATED SUCCESSFULLY");
     }
 
 
