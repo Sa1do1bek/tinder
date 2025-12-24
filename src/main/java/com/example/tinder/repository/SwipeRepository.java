@@ -52,6 +52,4 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
     AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
 """)
   Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
-
-
 }
