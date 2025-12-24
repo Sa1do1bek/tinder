@@ -94,11 +94,11 @@ public class UserInterestServiceImpl implements UserInterestService {
         for (Long id : categoryIds) {
             Optional<UserInterest> c = repository.findById(id);
             if (c.isEmpty()) {
-                throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+                throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
             }
 
             if (user.getUserInterests().contains(c.get())) {
-                throw RestException.restThrow(ErrorType.USER_ALREADY_EXISTS);
+                throw RestException.restThrow(ErrorType.INTEREST_ALREADY_EXISTS);
             }
 
             interest.add(c.get());
