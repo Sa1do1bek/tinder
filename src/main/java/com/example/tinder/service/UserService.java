@@ -35,10 +35,6 @@ public interface UserService {
 
     ApiResponse<?> updateUserGBI(Long userId, UpdateUserGBIDto dto);
 
-    ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId);
-
-    ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId);
-
     ApiResponse<?> deleteUser(String userId);
 
     ApiResponse<?> me(User user);

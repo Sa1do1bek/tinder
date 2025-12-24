@@ -262,26 +262,6 @@ public class UserServiceImpl implements UserService {
         return ApiResponse.success("User updated successfully");
     }
 
-    @Override
-    public ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId) {
-        Page<User> rejectedUsers = swipeRepository.findAllRejectedUsers(userId, pageRequest);
-
-        if (!rejectedUsers.isEmpty()) {
-            return ApiResponse.success(userMapper.dtoList(rejectedUsers.getContent()), "SUCCESS");
-        }
-
-        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
-    }
-    @Override
-    public ApiResponse<?> getAllAcceptUsers(PageRequest pageRequest, Long userId) {
-        Page<User> rejectedUsers = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
-
-        if (!rejectedUsers.isEmpty()) {
-            return ApiResponse.success(userMapper.dtoList(rejectedUsers.getContent()), "SUCCESS");
-        }
-
-        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
-    }
 
     @Override
     public ApiResponse<?> deleteUser(String userId) {

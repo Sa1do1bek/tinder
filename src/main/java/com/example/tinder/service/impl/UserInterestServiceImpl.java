@@ -90,7 +90,7 @@ public class UserInterestServiceImpl implements UserInterestService {
 
 
         if (categoryIds.isEmpty()){
-            return ApiResponse.success("INTEREST_FETCHED_SUCCESSFULLY");
+            return ApiResponse.success(new ArrayList<>(), "INTEREST_FETCHED_SUCCESSFULLY");
         }
 
         List<UserInterest> interest = new ArrayList<>();

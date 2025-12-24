@@ -67,18 +67,6 @@ public class UserController {
                                         @RequestParam(defaultValue = "20") int size) {
         return this.userService.getAllActiveUser(PageRequest.of(page, size), user.getId());
     }
-    @GetMapping("/getRejectedUsers")
-    public ApiResponse<?> getAllRejectedUsers(@CurrentUser User user,
-                                           @RequestParam(defaultValue = "0")int page,
-                                           @RequestParam(defaultValue = "5") int size){
-        return userService.getAllRejectUsers(PageRequest.of(page,size),user.getId());
-    }
-    @GetMapping("/getAcceptedUsers")
-    public ApiResponse<?> getAllAcceptedUsers(@CurrentUser User user,
-                                           @RequestParam(defaultValue = "0")int page,
-                                           @RequestParam(defaultValue = "5") int size){
-        return userService.getAllAcceptUsers(PageRequest.of(page,size),user.getId());
-    }
 
 
     @PostMapping("/googleAuth")
