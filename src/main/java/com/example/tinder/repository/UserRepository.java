@@ -223,7 +223,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Modifying
     @Transactional
-    @Query(countQuery = """
+    @Query(value = """
             DELETE FROM users_user_interests
             WHERE user_id = :userId
             """, nativeQuery = true)
