@@ -34,10 +34,10 @@ public class UserInterestController {
        return userInterestService.getAllCategoriesByType(type);
    }
 
-    @PostMapping("/addCategoryToUser")
-    public ApiResponse<?> addCategoryToUser(@CurrentUser User user,
+    @PutMapping("/updateUserCategory")
+    public ApiResponse<?> updateUserCategory(@CurrentUser User user,
                                             @RequestParam("categoryIds") List<Long> categoryIds) {
-        return userInterestService.addCategoryToUser(user.getId(), categoryIds);
+        return userInterestService.updateUserCategory(user.getId(), categoryIds);
     }
 
     @GetMapping("/getUserCategories")
