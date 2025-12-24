@@ -41,13 +41,13 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
   @Transactional
   @Query(value = """
         DELETE FROM swipe
-        WHERE swipe = 'REJECT'
+        WHERE swipe = com.example.tinder.enums.SwipeStatus.REJECT
         AND created_at <= NOW() - INTERVAL '5 minutes'
         """, nativeQuery = true)
   void deleteExpiredRejects();
 
   @Query("""
-    SELECT s.swiped FROM Swipe s
+    SELECT s.swiper FROM Swipe s
     WHERE s.swiped.id = :userId
     AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
 """)

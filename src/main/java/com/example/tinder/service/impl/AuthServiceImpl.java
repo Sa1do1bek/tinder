@@ -28,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -50,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
     private final PendingUserRepository pendingUserRepository;
     private final UserLocationRepository userLocationRepository;
     private final PreferenceRepository preferenceRepository;
+    private final UserInterestRepository userInterestRepository;
 
     @Override
     public ApiResponse<?> registerByEmail(RegisterDto dto) {
@@ -176,6 +174,16 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void savePreference(User user) {
+
+        PreferredLocation PrefferedLocation = PreferredLocation.builder()
+                .latitude("41.2773123")
+                .longitude("69.3570236")
+                .build();
+
+        Optional<UserInterest> UZ = userInterestRepository.findById(37L);
+        Optional<UserInterest> RUS = userInterestRepository.findById(38L);
+
+
         Preference preference = new Preference();
         preference.setUser(user);
         preference.setPreferredGender(Gender.EVERYONE);
@@ -183,9 +191,8 @@ public class AuthServiceImpl implements AuthService {
         preference.setMinAge(18);
         preference.setMaxAge(50);
         preference.setVisibility(true);
-        preference.setCreatedAt(LocalDateTime.now());
-        preference.setUpdatedAt(LocalDateTime.now());
-
+        preference.setPreferredLocations(Arrays.asList(PrefferedLocation));
+        preference.setLanguages(List.of(UZ.get(), RUS.get()));
         preferenceRepository.save(preference);
     }
 
