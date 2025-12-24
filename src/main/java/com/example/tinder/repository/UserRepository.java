@@ -1,7 +1,6 @@
 package com.example.tinder.repository;
 
 import com.example.tinder.entity.User;
-import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.Gender;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Email;
@@ -222,4 +221,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
             Pageable pageable);
 
 
+    @Modifying
+    @Transactional
+    @Query(countQuery = """
+            DELETE FROM users_user_interests
+            WHERE user_id = :userId
+            """, nativeQuery = true)
+    void deleteUserInterests(@Param("userId") Long userId);
 }

@@ -18,7 +18,7 @@ public interface UserInterestService {
 
     ApiResponse<?> getAllCategoriesByType(CategoryType type);
 
-    ApiResponse<?> addCategoryToUser(Long userId, List<Long> categoryIds);
+    ApiResponse<?> updateUserCategory(Long userId, List<Long> categoryIds);
 
     ApiResponse<?> getUserCategories(Long userId);
 

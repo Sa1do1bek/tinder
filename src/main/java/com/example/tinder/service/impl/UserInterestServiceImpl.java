@@ -78,7 +78,7 @@ public class UserInterestServiceImpl implements UserInterestService {
     }
 
     @Override
-    public ApiResponse<?> addCategoryToUser(Long userId, List<Long> categoryIds) {
+    public ApiResponse<?> updateUserCategory(Long userId, List<Long> categoryIds) {
 
         Optional<User> byId = userRepository.findById(userId);
         if (byId.isEmpty()) {
@@ -86,8 +86,11 @@ public class UserInterestServiceImpl implements UserInterestService {
         }
         User user = byId.get();
 
+        userRepository.deleteUserInterests(user.getId());
+
+
         if (categoryIds.isEmpty()){
-            throw RestException.restThrow(ErrorType.NULL_REQUEST_BODY);
+            return ApiResponse.success("INTEREST_FETCHED_SUCCESSFULLY");
         }
 
         List<UserInterest> interest = new ArrayList<>();
