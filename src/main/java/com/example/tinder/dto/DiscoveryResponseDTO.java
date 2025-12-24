@@ -14,15 +14,13 @@ import java.util.List;
 public class DiscoveryResponseDTO {
     private Long id;
     private String fullname;
-    private int age; // birthDate dan hisoblanadi
+    private int age;
     private String bio;
     private String gender;
     
-    // Essential qismi
-    private Double distanceKm; // Masofa (hisoblab chiqariladi)
-    private Double height; // Agar User entityda bo'lsa
+    private Double distanceKm;
+    private Double height;
     
-    // Ro'yxatlar
     private List<String> profilePictures; // Faqat cloudPath'lar
-    private List<UserInterestDto> interests; // Qiziqishlar nomi va kodi
+    private List<UserInterestDto> interests;
 }

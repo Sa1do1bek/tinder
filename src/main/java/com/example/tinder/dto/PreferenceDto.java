@@ -1,9 +1,12 @@
 package com.example.tinder.dto;
 
+import com.example.tinder.entity.PreferredLocation;
 import com.example.tinder.enums.Gender;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -17,6 +20,8 @@ public class PreferenceDto {
     private Integer minAge;
     private Integer maxAge;
     private Double distance;
+    private List<PreferredLocationDto> preferredLocations;
+    private List<UserInterestDto> languages;
 
 
 
@@ -31,6 +36,8 @@ public class PreferenceDto {
         private Integer minAge;
         private Integer maxAge;
         private Double distance;
+        private List<PreferredLocationDto.PreferredLocationCreateDto> preferredLocations;
+        private List<UserInterestDto.UserInterestCreateDto> languages;
     }
 
 

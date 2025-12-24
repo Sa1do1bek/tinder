@@ -50,6 +50,13 @@ public class UserInterestMapper {
             return list.stream().map(this::toDto).toList();
         }
         return new ArrayList<>();
-
+    }
+    public List<UserInterest> toListEntity(List<UserInterestDto> list) {
+        if(list.isEmpty()) return new ArrayList<>();
+        return list.stream().map(this::toEntity).toList();
+    }
+    public List<UserInterest> fromCreateListDto(List<UserInterestDto.UserInterestCreateDto> createDto) {
+        if (createDto == null || createDto.isEmpty()) return new ArrayList<>();
+        return createDto.stream().map(this::toCreateEntity).toList();
     }
 }
