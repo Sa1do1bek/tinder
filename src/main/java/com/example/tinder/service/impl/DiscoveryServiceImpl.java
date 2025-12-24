@@ -103,7 +103,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
 
-    private DiscoveryResponseDTO convertToCardResponse(User targetUser, Optional<UserLocation> currentLoc) {
+    DiscoveryResponseDTO convertToCardResponse(User targetUser, Optional<UserLocation> currentLoc) {
         int age = 0;
         if (targetUser.getBirthDate() != null) {
             LocalDate birthDate = targetUser.getBirthDate().toInstant()
