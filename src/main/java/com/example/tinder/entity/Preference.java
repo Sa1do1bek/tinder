@@ -29,7 +29,7 @@ public class Preference extends BaseEntity{
     private Integer minAge;
 
     @Column(name = "max_age")
-    @Min(23)
+    @Min(19)
     @Max(100)
     private Integer maxAge;
 
