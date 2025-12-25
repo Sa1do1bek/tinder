@@ -86,7 +86,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
         Page<User> usersPage = userRepository.findUsersBySpecificInterest(
                 currentUserId,
-                interestId,
+                interestId,  // Bu yerda interestId bo'lishi kerak
                 pref.getPreferredGender().name(),
                 pref.getMinAge(),
                 pref.getMaxAge(),
