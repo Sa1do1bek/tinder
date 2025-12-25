@@ -169,28 +169,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query(value = """
-            SELECT DISTINCT u.* FROM users u
-            JOIN users_location ul ON u.id = ul.user_id
-            JOIN users_user_interests uui ON u.id = uui.user_id
-            WHERE u.id != :currentUserId
-            AND u.active = true
-            AND uui.user_interests_id = :interestId
-            AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-            AND (u.birth_date IS NOT NULL AND EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-            AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-            AND (6371 * acos(
-                least(1.0, greatest(-1.0, 
-                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-                ))
-            )) <= :maxDistance
-            """,
+    SELECT DISTINCT u.* FROM users u
+    JOIN users_location ul ON u.id = ul.user_id
+    JOIN users_user_interests uui ON u.id = uui.user_id
+    WHERE u.id != :currentUserId
+    AND u.active = true
+    AND uui.user_interests_id = :interestId
+    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+    AND (u.birth_date IS NOT NULL AND EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+    AND (6371 * acos(
+        least(1.0, greatest(-1.0,
+            cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+            cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+            sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+        ))
+    )) <= :maxDistance
+    """,
             countQuery = """
-                        SELECT count(DISTINCT u.id) FROM users u 
-                        JOIN users_user_interests uui ON u.id = uui.user_id 
-                        WHERE u.id != :currentUserId AND uui.user_interests_id = :interestId
-                    """,
+        SELECT count(DISTINCT u.id) FROM users u
+        JOIN users_user_interests uui ON u.id = uui.user_id
+        WHERE u.id != :currentUserId AND uui.user_interests_id = :interestId
+    """,
             nativeQuery = true)
     Page<User> findUsersBySpecificInterest(
             @Param("currentUserId") Long currentUserId,
@@ -202,6 +202,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("lat") Double lat,
             @Param("lon") Double lon,
             Pageable pageable);
+
 
 
     @Modifying

@@ -70,7 +70,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
 
     @Override
-    public ApiResponse<?> findAllUsersByUserInterests(Long currentUserId, Long categoryId, Pageable pageable) {
+    public ApiResponse<?> findAllUsersByUserInterests(Long currentUserId, Long interestId, Pageable pageable) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
@@ -80,9 +80,13 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         UserLocation myLoc = locationRepository.findByUserId(currentUserId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.LOCATION_NOT_FOUND));
 
+        if (myLoc.getLatitude() == null || myLoc.getLongitude() == null) {
+            throw RestException.restThrow(ErrorType.LOCATION_NOT_FOUND);
+        }
+
         Page<User> usersPage = userRepository.findUsersBySpecificInterest(
                 currentUserId,
-                categoryId,
+                interestId,
                 pref.getPreferredGender().name(),
                 pref.getMinAge(),
                 pref.getMaxAge(),
@@ -96,7 +100,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .map(user -> convertToCardResponse(user, Optional.of(myLoc)))
                 .collect(Collectors.toList());
 
-        return ApiResponse.success(dtoList, "USERS FOUND BY CATEGORY: " + categoryId);
+        return ApiResponse.success(dtoList, "USERS FOUND BY INTEREST ID: " + interestId);
+
     }
 
 
