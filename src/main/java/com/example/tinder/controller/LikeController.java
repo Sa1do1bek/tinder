@@ -3,7 +3,6 @@ package com.example.tinder.controller;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.service.LikeService;
-import com.example.tinder.service.UserService;
 import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +38,14 @@ public class LikeController{
                                           @RequestParam(defaultValue = "5") int size){
         return userService.getMyLovers(PageRequest.of(page,size),user.getId());
     }
+
+
+    @GetMapping("/getTopLikedUsers")
+    public ApiResponse<?> getTopLikedUsers(@CurrentUser User user){
+        return userService.getTopLikedUsers(user.getId());
+    }
+
+
 
 
 

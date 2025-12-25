@@ -1,7 +1,6 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.DiscoveryResponseDTO;
-import com.example.tinder.dto.LocationCoordinate;
 import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.*;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

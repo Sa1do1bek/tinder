@@ -2,11 +2,13 @@ package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.DiscoveryResponseDTO;
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.entity.Preference;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserLocation;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
+import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserLocationRepository;
 import com.example.tinder.repository.UserRepository;
@@ -28,6 +30,8 @@ public class LikeServiceImpl implements LikeService {
     private final SwipeRepository swipeRepository;
     private final DiscoveryServiceImpl discoveryService;
     private final UserLocationRepository locationRepository;
+    private final UserRepository userRepository;
+    private final PreferenceRepository preferenceRepository;
 
     @Override
     public ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId) {
@@ -68,5 +72,43 @@ public class LikeServiceImpl implements LikeService {
 
         return getApiResponse(userId, users);
     }
+
+
+    @Override
+    public ApiResponse<?> getTopLikedUsers(Long currentUserId) {
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        Preference pref = preferenceRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND));
+
+        UserLocation myLoc = locationRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.LOCATION_NOT_FOUND));
+
+        if (myLoc.getLatitude() == null || myLoc.getLongitude() == null) {
+            throw RestException.restThrow(ErrorType.LOCATION_NOT_FOUND);
+        }
+
+        List<User> topLikedUsers = userRepository.findTopLikedUsersNearby(
+                currentUserId,
+                pref.getPreferredGender().name(),
+                pref.getMinAge(),
+                pref.getMaxAge(),
+                pref.getDistance(),
+                Double.parseDouble(myLoc.getLatitude()),
+                Double.parseDouble(myLoc.getLongitude())
+        );
+
+        List<DiscoveryResponseDTO> responseList = topLikedUsers.stream()
+                .map(user -> discoveryService.convertToCardResponse(user, Optional.of(myLoc)))
+                .collect(Collectors.toList());
+
+        return ApiResponse.success(responseList, "TOP LIKED USERS FETCHED SUCCESSFULLY");
+    }
+
+
+
+
 
 }

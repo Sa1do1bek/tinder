@@ -10,4 +10,7 @@ public interface LikeService {
     ApiResponse<?> getMyLikedUsers(PageRequest pageRequest, Long userId);
 
     ApiResponse<?> getMyLovers(PageRequest pageRequest, Long userId);
+
+    ApiResponse<?> getTopLikedUsers(Long currentUserId);
+
 }
