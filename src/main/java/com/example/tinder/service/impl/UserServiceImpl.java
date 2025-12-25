@@ -79,7 +79,12 @@ public class UserServiceImpl implements UserService {
 
             return ApiResponse.success(responseMap, "SUCCESS");
         }
-        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
+
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", new ArrayList<>());
+        responseMap.put("currentPage", 0);
+        responseMap.put("totalPages", 0);
+        return ApiResponse.success(responseMap, "SUCCESS");
     }
 
 

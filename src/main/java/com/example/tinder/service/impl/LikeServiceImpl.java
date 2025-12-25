@@ -63,7 +63,13 @@ public class LikeServiceImpl implements LikeService {
             return ApiResponse.success(responseMap, "SUCCESS");
         }
 
-        return ApiResponse.success(new ArrayList<>(), "SUCCESS");
+
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", new ArrayList<>());
+        responseMap.put("currentPage", pageRequest.getPageNumber());
+        responseMap.put("totalPages", pageRequest.getPageSize());
+
+        return ApiResponse.success(responseMap, "SUCCESS");
     }
 
     @Override
