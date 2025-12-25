@@ -7,7 +7,6 @@ import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserLocation;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.exception.RestException;
-import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserLocationRepository;
@@ -19,9 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,13 +33,20 @@ public class LikeServiceImpl implements LikeService {
     @Override
     public ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId) {
         Page<User> users = swipeRepository.findAllRejectedUsers(userId, pageRequest);
-
-        return getApiResponse(userId, users);
+        return getApiResponse(pageRequest, userId, users);
     }
 
 
+
+    @Override
+    public ApiResponse<?> getMyLikedUsers(PageRequest pageRequest, Long userId) {
+        Page<User> users = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
+
+        return getApiResponse(pageRequest, userId, users);
+    }
+
     @NotNull
-    private ApiResponse<?> getApiResponse(Long userId, Page<User> users) {
+    private ApiResponse<?> getApiResponse(PageRequest pageRequest, Long userId, Page<User> users) {
         if (!users.isEmpty()) {
             UserLocation myLoc = locationRepository.findByUserId(userId)
                     .orElse(null);
@@ -51,18 +55,15 @@ public class LikeServiceImpl implements LikeService {
                     .map(user -> discoveryService.convertToCardResponse(user, Optional.ofNullable(myLoc)))
                     .collect(Collectors.toList());
 
-            return ApiResponse.success(responseList, "SUCCESS");
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("users", responseList);
+            responseMap.put("currentPage", pageRequest.getPageNumber());
+            responseMap.put("totalPages", pageRequest.getPageSize()+1);
+
+            return ApiResponse.success(responseMap, "SUCCESS");
         }
 
         return ApiResponse.success(new ArrayList<>(), "SUCCESS");
-    }
-
-
-    @Override
-    public ApiResponse<?> getMyLikedUsers(PageRequest pageRequest, Long userId) {
-        Page<User> users = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
-
-        return getApiResponse(userId, users);
     }
 
     @Override
@@ -70,14 +71,14 @@ public class LikeServiceImpl implements LikeService {
 
         Page<User> users = swipeRepository.findAllUsersWhoLikeMe(userId, pageRequest);
 
-        return getApiResponse(userId, users);
+        return getApiResponse(pageRequest, userId, users);
     }
 
 
     @Override
     public ApiResponse<?> getTopLikedUsers(Long currentUserId) {
 
-        User currentUser = userRepository.findById(currentUserId)
+        userRepository.findById(currentUserId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         Preference pref = preferenceRepository.findByUserId(currentUserId)

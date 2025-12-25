@@ -1,5 +1,6 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.dto.auth.LoginResponse;
@@ -70,8 +71,15 @@ public class UserServiceImpl implements UserService {
     public ApiResponse<?> getAllActiveUser(Pageable pageable, Long currentUserId) {
         Page<User> page = this.userRepository.getAllUnswipedActiveUsers(currentUserId, pageable);
         if (page != null && !page.isEmpty()) {
+            List<UserDto> list = this.userMapper.dtoList(page.getContent());
 
-            return ApiResponse.success(this.userMapper.dtoList(page.getContent()), "SUCCESS");
+
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("users", list);
+            responseMap.put("currentPage", page.getNumber());
+            responseMap.put("totalPages", page.getSize()+1);
+
+            return ApiResponse.success(responseMap, "SUCCESS");
         }
         return ApiResponse.success(new ArrayList<>(), "SUCCESS");
     }

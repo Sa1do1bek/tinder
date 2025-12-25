@@ -244,7 +244,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             )) <= :maxDistance
             GROUP BY u.id, ul.latitude, ul.longitude
             ORDER BY like_count DESC, distance_val ASC
-            LIMIT 5
+            LIMIT 10
             """,
             nativeQuery = true)
     List<User> findTopLikedUsersNearby(

@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -65,7 +67,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .map(user -> convertToCardResponse(user, Optional.ofNullable(myLoc)))
                 .collect(Collectors.toList());
 
-        return ApiResponse.success(responseList, "SUCCESSFULLY DISCOVERED USERS");
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", responseList);
+        responseMap.put("currentPage", usersPage.getNumber());
+        responseMap.put("totalPages", usersPage.getTotalPages()+1);
+
+        return ApiResponse.success(responseMap, "SUCCESSFULLY DISCOVERED USERS");
     }
 
 
@@ -100,7 +107,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .map(user -> convertToCardResponse(user, Optional.of(myLoc)))
                 .collect(Collectors.toList());
 
-        return ApiResponse.success(dtoList, "USERS FOUND BY INTEREST ID: " + interestId);
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", dtoList);
+        responseMap.put("currentPage", usersPage.getNumber());
+        responseMap.put("totalPages", usersPage.getTotalPages()+1);
+
+        return ApiResponse.success(responseMap, "USERS FOUND BY INTEREST ID: " + interestId);
 
     }
 
