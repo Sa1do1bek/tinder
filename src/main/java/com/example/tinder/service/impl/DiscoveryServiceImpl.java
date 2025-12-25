@@ -70,7 +70,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("users", responseList);
         responseMap.put("currentPage", usersPage.getNumber());
-        responseMap.put("totalPages", usersPage.getTotalPages()+1);
+        responseMap.put("totalPages", (usersPage.getTotalPages()+1) / 2);
 
         return ApiResponse.success(responseMap, "SUCCESSFULLY DISCOVERED USERS");
     }
@@ -110,7 +110,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("users", dtoList);
         responseMap.put("currentPage", usersPage.getNumber());
-        responseMap.put("totalPages", usersPage.getTotalPages()+1);
+        responseMap.put("totalPages", (usersPage.getTotalPages()+1) / 2);
 
         return ApiResponse.success(responseMap, "USERS FOUND BY INTEREST ID: " + interestId);
 

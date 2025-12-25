@@ -39,8 +39,6 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final Utils utils;
-    private final UserInterestRepository userInterestRepository;
-    private final SwipeRepository  swipeRepository;
 
     @Override
     public ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname) {
@@ -77,7 +75,7 @@ public class UserServiceImpl implements UserService {
             Map<String, Object> responseMap = new HashMap<>();
             responseMap.put("users", list);
             responseMap.put("currentPage", page.getNumber());
-            responseMap.put("totalPages", page.getSize()+1);
+            responseMap.put("totalPages", (page.getSize()+1) / 2);
 
             return ApiResponse.success(responseMap, "SUCCESS");
         }
