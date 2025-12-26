@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public interface MessageService {
 
-    ApiResponse<?> sendMessage(MessageDto.MessageCreateDto chatMessageDto);
+    void sendMessage(MessageDto.MessageCreateDto chatMessageDto);
 
     Page<MessageDto> getMessagesByConversationId(Long conversationId, User currentUser, Pageable pageable);
 

@@ -23,6 +23,7 @@ public class MessageMapper {
         dto.setDeletedForSender(message.getDeletedForSender());
         dto.setDeletedForRecipient(message.getDeletedForRecipient());
         dto.setIsRead(message.getIsRead());
+        dto.setCreatedAt(message.getCreatedAt());
         dto.setSenderName(message.getSender().getFullname());
         return dto;
     }

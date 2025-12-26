@@ -7,26 +7,22 @@ import com.example.tinder.service.MessageService;
 import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Pageable;
-import java.util.List;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 @RequestMapping("/chat")
 public class MessageController {
     private final MessageService messageService;
 
     @PostMapping("/sendMessage")
-    @MessageMapping("/chat/send")
-    @SendToUser("/queue/messages")
-    public ApiResponse<?> sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
-        return messageService.sendMessage(chatMessageDto);
+    public void sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
+        messageService.sendMessage(chatMessageDto);
     }
 
     @GetMapping("/messages")
@@ -48,4 +44,9 @@ public class MessageController {
         return ApiResponse.success(messageService.deleteMessageForMe(messageId, currentUser), "SUCCESS");
     }
 
+    @MessageMapping("/chat/send")
+    @SendToUser("/queue/messages")
+    public void sendWithWebsocket(@Payload MessageDto.MessageCreateDto  chatMessageDto) {
+        messageService.sendMessage(chatMessageDto);
+    }
 }
