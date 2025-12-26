@@ -1,18 +1,18 @@
 package com.example.tinder.controller;
 
-import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/messages")
+@RequestMapping("/chat")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class MessageRestController {
     private final MessageService messageService;
-    private final UserRepository userRepository;
+
+
+
 
 //    // Conversation bo'yicha barcha xabarlarni olish
 //    @GetMapping("/conversation/{username}")
