@@ -15,8 +15,10 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @Query("""
                 SELECT c FROM Conversation c 
-                WHERE (c.user1.id = :user1Id AND c.user2.id = :user2Id AND c.deletedForUser1 = false)  
-                   OR (c.user1.id = :user2Id AND c.user2.id = :user1Id AND c.deletedForUser2 = false)
+                WHERE (
+                       (c.user1.id = :user1Id AND c.user2.id = :user2Id AND c.deletedForUser1 = false)  
+                    OR (c.user1.id = :user2Id AND c.user2.id = :user1Id AND c.deletedForUser2 = false)
+                      )
                 AND c.visibility = true
             """)
     Optional<Conversation> findBetweenUsers(

@@ -47,117 +47,190 @@ public class MessageServiceImpl implements MessageService {
 
         if (!receiver.isActive()) {
             throw RestException.restThrow(ErrorType.RECEIVER_ACCOUNT_INACTIVE);
-
         }
 
-        boolean matchExists = conversationService.isMatchExists(sender.getId(), receiver.getId());
-        if (!matchExists) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
+        Conversation conversation = conversationRepository
+                .findByUsers(sender.getId(), receiver.getId())
+                .orElseThrow(() ->
+                        RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
-        Conversation conversation = conversationRepository.findByUsers(sender.getId(), receiver.getId()).orElseThrow(
-                () -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
+        // 1️⃣ Message yaratish (HECH QANDAY DELETE YO‘Q)
+        Message message = messageMapper.fromCreateDto(req, sender, receiver, conversation);
+        message.setDeletedForSender(false);
+        message.setDeletedForRecipient(false);
+        message.setVisibility(true);
 
+        Message savedMessage = messageRepository.save(message);
 
-        Message message = messageRepository.save(messageMapper.fromCreateDto(req, sender, receiver, conversation));
-
-
-
-        //LastMessage ni o'rnatish
-        if (message.getSender().getId().equals(sender.getId())) {
-            message.setDeletedForSender(true);
-        }else {
-            message.setDeletedForRecipient(true);
+        // 2️⃣ LastMessage — sender uchun
+        if (conversation.getUser1().getId().equals(sender.getId())) {
+            conversation.setLastMessageForUser1(savedMessage.getMessage());
+        } else {
+            conversation.setLastMessageForUser2(savedMessage.getMessage());
         }
 
-        Message save = messageRepository.save(message);
-
-        Optional<Message> senderLastMessage = messageRepository.findLastMessageByConversationIdForSender(message.getConversation().getId(), sender.getId());
-        Optional<Message> recipientLastMessage = messageRepository.findLastMessageByConversationIdForSender(message.getConversation().getId(), sender.getId());
-
-        if (senderLastMessage.isPresent() && recipientLastMessage.isPresent()) {
-            if (conversation.getUser1().getId().equals(sender.getId())){
-                conversation.setLastMessageForUser1(senderLastMessage.get().getMessage());
-            }else {
-                conversation.setLastMessageForUser2(recipientLastMessage.get().getMessage());
-            }
-
-            if (conversation.getUser2().getId().equals(sender.getId())){
-                conversation.setLastMessageForUser2(senderLastMessage.get().getMessage());
-            }else {
-                conversation.setLastMessageForUser1(recipientLastMessage.get().getMessage());
-            }
+        // 3️⃣ LastMessage — receiver uchun
+        if (conversation.getUser1().getId().equals(receiver.getId())) {
+            conversation.setLastMessageForUser1(savedMessage.getMessage());
+        } else {
+            conversation.setLastMessageForUser2(savedMessage.getMessage());
         }
+
+        // (ixtiyoriy) unread count
+        conversation.setUnreadCount(conversation.getUnreadCount() + 1);
+
         conversationRepository.save(conversation);
 
+        // 4️⃣ WebSocket orqali yuborish
+        sendToWebSocket(
+                conversation.getId(),
+                sender.getId(),
+                receiver.getId(),
+                messageMapper.toDto(savedMessage)
+        );
 
-        // Sending Websocket
-        sendToWebSocket(conversation.getId(), sender.getId(), receiver.getId(), messageMapper.toDto(save));
-
-        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_SENT_SUCCESSFULLY");
+        return ApiResponse.success(
+                messageMapper.toDto(savedMessage),
+                "MESSAGE_SENT_SUCCESSFULLY"
+        );
     }
 
 
     @Override
     public Page<MessageDto> getMessagesByConversationId(Long conversationId, User currentUser, Pageable pageable) {
-        conversationRepository.findById(conversationId)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() ->
+                        RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
+        // optional: user conversationga tegishli ekanini tekshirish
+        if (!conversation.getUser1().getId().equals(currentUser.getId())
+                && !conversation.getUser2().getId().equals(currentUser.getId())) {
+            throw RestException.restThrow(ErrorType.ACCESS_DENIED);
+        }
+
+        // faqat recipient bo‘lgan message lar read bo‘ladi
         messageRepository.markAsRead(conversationId, currentUser.getId());
 
-        Page<Message> page = messageRepository.findByConversationId(conversationId, pageable);
+        Page<Message> page =
+                messageRepository.findMessagesForUserInConversation(
+                        conversationId,
+                        currentUser.getId(),
+                        pageable
+                );
 
         return page.map(messageMapper::toDto);
+
     }
 
 
     @Override
     public ApiResponse<?> deleteMessageForMe(Long messageId, User currentUser) {
 
-        Optional<Message> optionalMessage = messageRepository.findById(messageId);
-        if (optionalMessage.isEmpty()) {
-            throw RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND);
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() ->
+                        RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
+
+        // Security check
+        if (!message.getSender().getId().equals(currentUser.getId())
+                && !message.getRecipient().getId().equals(currentUser.getId())) {
+            throw RestException.restThrow(ErrorType.ACCESS_DENIED);
         }
 
-        Optional<User> optionalUser = userRepository.findById(currentUser.getId());
-        if (optionalUser.isEmpty()) {
-            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
-        }
-
-
-        User user = optionalUser.get();
-        Message message = optionalMessage.get();
-
-        Optional<Conversation> betweenUsers = conversationRepository.findBetweenUsers(message.getRecipient().getId(), message.getSender().getId());
-        if (betweenUsers.isEmpty()) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
-
-        Conversation conversation = betweenUsers.get();
-
-        //lastMessage ni o'rnatish
-        if (message.getSender().getId().equals(user.getId())) {
-           message.setDeletedForSender(true);
-        }else {
+        // Delete for me
+        if (message.getSender().getId().equals(currentUser.getId())) {
+            message.setDeletedForSender(true);
+        } else {
             message.setDeletedForRecipient(true);
         }
 
-        Message save = messageRepository.save(message);
+        messageRepository.save(message);
 
-        Optional<Message> lastMessage = messageRepository.findLastMessageByConversationIdForSender(message.getConversation().getId(), user.getId());
-        if (lastMessage.isPresent()) {
-            if (conversation.getUser1().getId().equals(user.getId())){
-                conversation.setLastMessageForUser1(lastMessage.get().getMessage());
-            }else {
-                conversation.setLastMessageForUser2(lastMessage.get().getMessage());
-            }
+        Conversation conversation = message.getConversation();
+
+        Optional<Message> lastMessage =
+                messageRepository.findLastVisibleMessageForUser(
+                        conversation.getId(),
+                        currentUser.getId()
+                );
+
+        if (conversation.getUser1().getId().equals(currentUser.getId())) {
+            conversation.setLastMessageForUser1(
+                    lastMessage.map(Message::getMessage).orElse(null)
+            );
+        } else {
+            conversation.setLastMessageForUser2(
+                    lastMessage.map(Message::getMessage).orElse(null)
+            );
         }
+
         conversationRepository.save(conversation);
 
-        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_DELETED_SUCCESSFULLY");
+        return ApiResponse.success(
+                messageMapper.toDto(message),
+                "MESSAGE_DELETED_SUCCESSFULLY"
+        );
     }
+
+
+
+    @Transactional
+    @Override
+    public ApiResponse<?> deleteMessageForAll(Long messageId, User currentUser) {
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() ->
+                        RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
+
+        // ❗ Faqat sender delete for all qila oladi
+        if (!message.getSender().getId().equals(currentUser.getId())) {
+            throw RestException.restThrow(ErrorType.ACCESS_DENIED);
+        }
+
+        int updated = messageRepository.deleteForAll(
+                messageId,
+                currentUser.getId()
+        );
+
+        if (updated == 0) {
+            throw RestException.restThrow(ErrorType.OPERATION_FAILED);
+        }
+
+        Conversation conversation = message.getConversation();
+
+        // Sender uchun lastMessage
+        messageRepository.findLastVisibleMessageForUser(
+                conversation.getId(),
+                conversation.getUser1().getId()
+        ).ifPresentOrElse(
+                m -> conversation.setLastMessageForUser1(m.getMessage()),
+                () -> conversation.setLastMessageForUser1(null)
+        );
+
+        // Recipient uchun lastMessage
+        messageRepository.findLastVisibleMessageForUser(
+                conversation.getId(),
+                conversation.getUser2().getId()
+        ).ifPresentOrElse(
+                m -> conversation.setLastMessageForUser2(m.getMessage()),
+                () -> conversation.setLastMessageForUser2(null)
+        );
+
+        conversationRepository.save(conversation);
+
+        return ApiResponse.success(
+                null,
+                "MESSAGE_DELETED_FOR_ALL_SUCCESSFULLY"
+        );
+    }
+
+
+
 
 
     private User getUserOrThrow(Long userId) {
         return userRepository.findByIdCustom(userId).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
     }
-
 
 
     private void sendToWebSocket(Long conversationId, Long senderId, Long receiverId, MessageDto messageData) {
@@ -168,5 +241,5 @@ public class MessageServiceImpl implements MessageService {
     }
     //https://api-tinder/ws
 
-   // /topic/chat/" + conversationId
+    // /topic/chat/" + conversationId
 }

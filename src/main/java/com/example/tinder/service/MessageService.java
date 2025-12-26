@@ -14,5 +14,7 @@ public interface MessageService {
 
     Page<MessageDto> getMessagesByConversationId(Long conversationId, User currentUser, Pageable pageable);
 
+    ApiResponse<?> deleteMessageForAll(Long messageId, User currentUser);
+
     ApiResponse<?> deleteMessageForMe(Long messageId, User currentUser);
 }
