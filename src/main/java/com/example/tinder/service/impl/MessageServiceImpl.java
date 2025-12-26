@@ -37,8 +37,10 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public ApiResponse<?> sendMessage(MessageDto.MessageCreateDto req) {
+
         User sender = getUserOrThrow(req.getSenderId());
         User receiver = getUserOrThrow(req.getReceiverId());
+
         if (!sender.isActive()) {
             throw RestException.restThrow(ErrorType.SENDER_ACCOUNT_INACTIVE);
         }
@@ -155,8 +157,7 @@ public class MessageServiceImpl implements MessageService {
 
 
     private User getUserOrThrow(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        return userRepository.findByIdCustom(userId).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
     }
 
 

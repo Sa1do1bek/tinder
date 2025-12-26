@@ -22,10 +22,10 @@ import java.util.List;
 public class MessageController {
     private final MessageService messageService;
 
-    @PostMapping("sendMessage")
+    @PostMapping("/sendMessage")
     @MessageMapping("/chat/send")
     @SendToUser("/queue/messages")
-    public ApiResponse<?> sendMessage(@Payload MessageDto.MessageCreateDto  chatMessageDto) {
+    public ApiResponse<?> sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
         return messageService.sendMessage(chatMessageDto);
     }
 
