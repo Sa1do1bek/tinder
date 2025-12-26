@@ -1,21 +1,22 @@
 package com.example.tinder.mapper;
 
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.message.ConversationDTO;
 import com.example.tinder.entity.Conversation;
+import com.example.tinder.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class ConversationMapper {
+    private final UserMapper userMapper;
 
-    public ConversationDTO toDto(Conversation conversation) {
+    public ConversationDTO toDto(Conversation conversation, User user) {
         return ConversationDTO.builder()
                 .id(conversation.getId())
-                .user1Id(conversation.getUser1().getId())
-                .user1Name(conversation.getUser1().getFullname())
-                .user2Id(conversation.getUser2().getId())
-                .user2Name(conversation.getUser2().getFullname())
+                .user(userMapper.toDto(user))
+                .unreadCount(conversation.getUnreadCount())
                 .build();
     }
 

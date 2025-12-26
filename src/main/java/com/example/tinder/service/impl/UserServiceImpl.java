@@ -1,5 +1,6 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.config.WebSocketEventListener;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final Utils utils;
+    private final WebSocketEventListener webSocketEventListener;
 
     @Override
     public ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname) {
@@ -318,6 +320,15 @@ public class UserServiceImpl implements UserService {
         return ApiResponse.success(userInfo, "USERNAME UPDATED SUCCESSFULLY");
     }
 
+    @Override
+    public ApiResponse<?> getOnlineUsers() {
+        Set<String> onlineUsernames = webSocketEventListener.getOnlineUsers();
+        List<User> users = userRepository.findByUsernameIn(onlineUsernames);
+        List<UserDto> response = users.stream()
+                .map(userMapper::toDto)
+                .toList();
+        return ApiResponse.success(response, "SUCCESS");
+    }
 
 
 }

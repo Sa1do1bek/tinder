@@ -1,5 +1,6 @@
 package com.example.tinder.dto.message;
 
+import com.example.tinder.dto.UserDto;
 import lombok.*;
 
 
@@ -10,8 +11,18 @@ import lombok.*;
 @NoArgsConstructor
 public class ConversationDTO {
     private Long id;
-    private Long user1Id;
-    private String user1Name;
-    private Long user2Id;
-    private String user2Name;
+    private UserDto user;
+    private Integer unreadCount;
+
+
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ConversationalCreateDto {
+        private Long id;
+        private Long user1Id;
+        private Long user2Id;
+    }
 }

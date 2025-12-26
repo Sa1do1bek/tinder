@@ -1,5 +1,7 @@
 package com.example.tinder.controller;
 
+import com.example.tinder.config.WebSocketEventListener;
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.User;
@@ -9,6 +11,9 @@ import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -104,6 +109,12 @@ public class UserController {
                                          @RequestBody String username) {
         return userService.updateUsername(user, username);
     }
+
+    @GetMapping("/online")
+    public ApiResponse<?> getOnlineUsers() {
+       return userService.getOnlineUsers();
+    }
+
 
 
 }

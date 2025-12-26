@@ -42,4 +42,6 @@ public interface UserService {
     ApiResponse<?> addInterest(User user, UserInterest userInterest);
 
     ApiResponse<?> updateUsername(User user, String username);
+
+    ApiResponse<?> getOnlineUsers();
 }

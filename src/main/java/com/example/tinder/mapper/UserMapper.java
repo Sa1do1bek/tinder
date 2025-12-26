@@ -1,6 +1,5 @@
 package com.example.tinder.mapper;
 
-import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserLocation;
@@ -33,6 +32,8 @@ public class UserMapper {
                 .latitude(location.map(UserLocation::getLatitude).orElse(null))
                 .gender(user.getGender())
                 .bio(user.getBio())
+                .isOnline(user.getIsOnline())
+                .lastSeen(user.getLastSeen())
                 .build();
     }
 

@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -49,6 +50,10 @@ public class User extends BaseEntity implements UserDetails {
     private String jobTitle; // Kasbi
     private String company; // Ish joyi
     private String school; // O'qish joyi
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean isOnline = false;
+    private LocalDateTime lastSeen;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProfilePicture> profilePictures;

@@ -14,6 +14,7 @@ import com.example.tinder.service.ConversationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,85 +28,125 @@ public class ConversationServiceImpl implements ConversationService {
     private final ConversationMapper conversationMapper;
 
 
+    // Done
     @Override
-    public ApiResponse<?> getOrCreateConversation(Long user1Id, Long user2Id) {
+    public ApiResponse<?> createConversation(Long user1Id, Long user2Id) {
         System.out.println("❗ getOrCreateConversation called with: " + user1Id + " and " + user2Id);
 
         Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
+
         if (optional.isPresent()) {
             System.out.println("✅ Conversation already exists");
 
-            return ApiResponse.success(toDto(optional.get()), "Conversation already exists");
+            return ApiResponse.success("Conversation already exists Between User1Id = " + user1Id + " and " + user2Id);
         }
 
         User user1 = userRepository.findById(user1Id)
-                .orElseThrow(() -> new IllegalArgumentException("User1 not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         User user2 = userRepository.findById(user2Id)
-                .orElseThrow(() -> new IllegalArgumentException("User2 not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         Conversation conversation = Conversation.builder()
                 .user1(user1)
                 .user2(user2)
-                .isActive(true)
+                .deletedForUser1(false)
+                .deletedForUser2(false)
+                .messages(new ArrayList<>())
                 .build();
 
         Conversation saved = conversationRepository.save(conversation);
+        return ApiResponse.success("Conversation created successfully with id: " + saved.getId());
+    }
 
-        System.out.println("✅ Conversation created with id: " + saved.getId());
 
-        return ApiResponse.success(toDto(saved), "Conversation created successfully");
+    //DONE
+    @Override
+    public ApiResponse<?> findConversationBetweenUsers(Long currentUserId, Long user2Id) {
+
+        Optional<Conversation> optional = findConversationBetween(currentUserId, user2Id);
+
+        if (optional.isEmpty()) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
+
+        Conversation conversation = optional.get();
+        if (currentUserId.equals(conversation.getUser1().getId())) {
+            return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser2()), "SUCCESS");
+        }
+
+        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1()), "SUCCESS");
+    }
+
+    @Override
+    public ApiResponse<?> deleteConversationForMe(Long currentUserId, Long user2Id) {
+
+        Optional<Conversation> optional = findConversationBetween(currentUserId, user2Id);
+        if (optional.isEmpty()) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
+        Conversation conversation = optional.get();
+
+        if (conversation.getUser1().getId().equals(currentUserId)) {
+            conversation.setDeletedForUser1(true);
+        } else {
+            conversation.setDeletedForUser1(true);
+        }
+        conversationRepository.save(conversation);
+
+        return ApiResponse.success("Successfully deleted conversation FOR YOU");
     }
 
 
     @Override
-    public ApiResponse<?> findConversationBetweenUsers(Long user1Id, Long user2Id) {
-        Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
+    public ApiResponse<?> deleteConversation(Long currentUserId, Long user2Id) {
 
-        return optional.map(conversation ->
-                ApiResponse.success(toDto(conversation) , "Conversation found")
-        ).orElseThrow( () -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
-//
+        Optional<Conversation> optional = findConversationBetween(currentUserId, user2Id);
+
+        if (optional.isEmpty()) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
+        Conversation conversation = optional.get();
+
+        conversation.setDeletedForUser1(true);
+        conversation.setDeletedForUser1(true);
+        conversation.setVisibility(false);
+        conversationRepository.save(conversation);
+
+        return ApiResponse.success("Successfully deleted conversation FOR ALL");
+    }
+
+    @Override
+    public ApiResponse<?> getUserAllUnreadCounts(Long currentUserId) {
+
+        Optional<User> user = userRepository.findById(currentUserId);
+        if (user.isEmpty()) throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+
+        ApiResponse<?> userConversations = getUserConversations(currentUserId);
+        if (userConversations.getData() == null) return ApiResponse.success(0, "No conversations found");
+        if (((List<?>) userConversations.getData()).isEmpty()) return ApiResponse.success(0, "No conversations found");
+
+        List<ConversationDTO> dtos = (List<ConversationDTO>) userConversations.getData();
+        Integer result = 0;
+        for (ConversationDTO dto : dtos) {
+            result += dto.getUnreadCount();
+        }
+
+        return ApiResponse.success(result, "Successfully conversations found");
     }
 
 
+    //DONE
     @Override
     public ApiResponse<?> getUserConversations(Long userId) {
         List<Conversation> conversations = conversationRepository.findByUserId(userId);
 
-        List<ConversationDTO> dtoList = conversations.stream()
-                .map(conversationMapper::toDto)
-                .toList();
-
-        return ApiResponse.success(dtoList, "Conversations retrieved successfully");
+        List<ConversationDTO> dtos = new ArrayList<>();
+        for (Conversation conversation : conversations) {
+            if (conversation.getUser1().getId().equals(userId)) {
+                dtos.add(conversationMapper.toDto(conversation, conversation.getUser2()));
+            } else {
+                dtos.add(conversationMapper.toDto(conversation, conversation.getUser1()));
+            }
+        }
+        return ApiResponse.success(dtos, "Conversations retrieved successfully");
     }
 
 
-    @Override
-    public Optional<Conversation> getOrCreateConversationEntity(Long user1Id, Long user2Id) {
-        User user1 = userRepository.findById(user1Id)
-                .orElseThrow(() -> new IllegalArgumentException("User1 not found"));
-        User user2 = userRepository.findById(user2Id)
-                .orElseThrow(() -> new IllegalArgumentException("User2 not found"));
-
-
-        if (!user1.isActive() || !user2.isActive()) return Optional.empty();
-
-
-        return findConversationBetween(user1Id, user2Id).or(() -> {
-
-            if (user1 == null || user2 == null) return Optional.empty();
-
-            Conversation conversation = Conversation.builder()
-                    .user1(user1)
-                    .user2(user2)
-                    .isActive(true)
-                    .build();
-
-            return Optional.of(conversationRepository.save(conversation));
-        });
-    }
-
-
+    //DONE
     @Override
     public boolean isMatchExists(Long user1Id, Long user2Id) {
         User user1 = userRepository.findById(user1Id).orElse(null);
@@ -119,18 +160,4 @@ public class ConversationServiceImpl implements ConversationService {
         return conversationRepository.findBetweenUsers(user1Id, user2Id);
     }
 
-
-    private ConversationDTO toDto(Conversation conversation) {
-        return ConversationDTO.builder()
-                .id(conversation.getId())
-                .user1Id(conversation.getUser1().getId())
-                .user1Name(conversation.getUser1().getFullname())
-                .user2Id(conversation.getUser2().getId())
-                .user2Name(conversation.getUser2().getFullname())
-                .build();
-    }
-
-    private ApiResponse<?> isOnlineChatPartner(Long conversationId) {
-        return null;
-    }
 }

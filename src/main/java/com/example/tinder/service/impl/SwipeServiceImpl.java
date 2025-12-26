@@ -86,8 +86,10 @@ public class SwipeServiceImpl implements SwipeService {
                             .build();
                     matchRepository.save(match);
 
-                    conversationService.getOrCreateConversation(swiperId, swipedId);
                 }
+
+                // todo bu joyni yaxshilab tekshirish kerak.
+                conversationService.createConversation(swiperId, swipedId);
 
                 Map<String, Object> matchNotification = new HashMap<>();
                 matchNotification.put("type", "MATCH");
@@ -104,6 +106,7 @@ public class SwipeServiceImpl implements SwipeService {
                         "/topic/notification/" + swiperOpt.get().getId(),
                         matchNotification
                 );
+
                 return ApiResponse.success("Match found! You can now start chatting.");
             }
         }

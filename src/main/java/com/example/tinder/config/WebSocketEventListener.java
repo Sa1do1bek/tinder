@@ -1,5 +1,7 @@
 package com.example.tinder.config;
 
+import io.swagger.v3.oas.models.links.Link;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -15,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class WebSocketEventListener {
     private final SimpMessagingTemplate messagingTemplate;
+    @Getter
     private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
 
     @EventListener
@@ -44,6 +47,4 @@ public class WebSocketEventListener {
     public void isOnline(String username) {
         messagingTemplate.convertAndSend("/topic/chat/online" + username, onlineUsers.contains(username));
     }
-
-
 }

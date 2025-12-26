@@ -35,4 +35,6 @@ public class Message extends BaseEntity {
     @Column(name = "is_read", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isRead = false;
 
+    @Column(name = "is_liked", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isLiked = false;
 }

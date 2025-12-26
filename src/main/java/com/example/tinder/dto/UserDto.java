@@ -29,6 +29,8 @@ public class UserDto {
     private Date birthDate;
     private PreferenceDto preference;
     private String bio;
+    private Boolean isOnline = false;
+    private LocalDateTime lastSeen;
     private String latitude;
     private String longitude;
 

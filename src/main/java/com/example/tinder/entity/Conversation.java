@@ -24,6 +24,12 @@ public class Conversation extends BaseEntity {
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Message> messages;
 
-    @Column(name = "is_active", columnDefinition = "BOOLEAN DEFAULT TRUE")
-    private Boolean isActive = true;
+    @Column(name = "unread_count", columnDefinition = "INT DEFAULT 0")
+    private Integer unreadCount = 0;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean deletedForUser1 = false;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean deletedForUser2 = false;
 }

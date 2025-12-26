@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,9 +46,25 @@ public class MessageServiceImpl implements MessageService {
                 throw RestException.restThrow(ErrorType.RECEIVER_ACCOUNT_INACTIVE);
 
             }
-            Conversation conversation = conversationService
-                    .getOrCreateConversationEntity(sender.getId(), receiver.getId())
-                    .orElseThrow(() -> new RuntimeException("Conversation not found or could not be created"));
+            boolean matchExists = conversationService.isMatchExists(sender.getId(), receiver.getId());
+            Conversation conversation;
+            if (matchExists) {
+               conversation = conversationRepository.findByUsers(sender.getId(), receiver.getId()).get();
+            }else {
+                Conversation temp = new Conversation();
+                temp.setUser1(sender);
+                temp.setUser2(receiver);
+                temp.setDeletedForUser1(false);
+                temp.setDeletedForUser2(false);
+                temp.setUnreadCount(0);
+                temp.setMessages(new ArrayList<>());
+                temp.setCreatedAt(LocalDateTime.now());
+                temp.setUpdatedAt(LocalDateTime.now());
+                temp.setVisibility(true);
+                conversation = conversationRepository.save(temp);
+            }
+
+
 
             Message message = Message.builder()
                     .sender(sender)
