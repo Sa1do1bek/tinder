@@ -20,11 +20,14 @@ import org.springframework.web.bind.annotation.*;
 public class MessageController {
     private final MessageService messageService;
 
+    @ResponseBody
     @PostMapping("/sendMessage")
     public void sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
         messageService.sendMessage(chatMessageDto);
     }
 
+
+    @ResponseBody
     @GetMapping("/messages")
     public ApiResponse<?> getMessagesByConversation(
             @CurrentUser User currentUser,
@@ -37,6 +40,7 @@ public class MessageController {
     }
 
 
+    @ResponseBody
     @DeleteMapping("/deleteForMe")
     public ApiResponse<?> getConversations(
             @RequestParam Long messageId,
