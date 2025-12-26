@@ -1,6 +1,7 @@
 package com.example.tinder.dto.message;
 
 import com.example.tinder.dto.UserDto;
+import jakarta.persistence.Column;
 import lombok.*;
 
 
@@ -12,6 +13,7 @@ import lombok.*;
 public class ConversationDTO {
     private Long id;
     private UserDto user;
+    private String lastMessage;
     private Integer unreadCount;
 
 

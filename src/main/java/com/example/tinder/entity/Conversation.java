@@ -27,6 +27,13 @@ public class Conversation extends BaseEntity {
     @Column(name = "unread_count", columnDefinition = "INT DEFAULT 0")
     private Integer unreadCount = 0;
 
+    @Column(columnDefinition = "TEXT")
+    private String lastMessageForUser1;
+
+    @Column(columnDefinition = "TEXT")
+    private String lastMessageForUser2;
+
+
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean deletedForUser1 = false;
 

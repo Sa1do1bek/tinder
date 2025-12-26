@@ -69,10 +69,10 @@ public class ConversationServiceImpl implements ConversationService {
 
         Conversation conversation = optional.get();
         if (currentUserId.equals(conversation.getUser1().getId())) {
-            return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser2()), "SUCCESS");
+            return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser2(), conversation.getLastMessageForUser1()), "SUCCESS");
         }
 
-        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1()), "SUCCESS");
+        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1(), conversation.getLastMessageForUser2()), "SUCCESS");
     }
 
     @Override
@@ -137,9 +137,9 @@ public class ConversationServiceImpl implements ConversationService {
         List<ConversationDTO> dtos = new ArrayList<>();
         for (Conversation conversation : conversations) {
             if (conversation.getUser1().getId().equals(userId)) {
-                dtos.add(conversationMapper.toDto(conversation, conversation.getUser2()));
+                dtos.add(conversationMapper.toDto(conversation, conversation.getUser2(), conversation.getLastMessageForUser1()));
             } else {
-                dtos.add(conversationMapper.toDto(conversation, conversation.getUser1()));
+                dtos.add(conversationMapper.toDto(conversation, conversation.getUser1(), conversation.getLastMessageForUser2()));
             }
         }
         return ApiResponse.success(dtos, "Conversations retrieved successfully");
