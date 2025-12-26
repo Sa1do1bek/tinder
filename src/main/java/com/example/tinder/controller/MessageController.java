@@ -39,14 +39,24 @@ public class MessageController {
         return ApiResponse.success(messageService.getMessagesByConversationId(conversationId, currentUser, pageable), "SUCCESS");
     }
 
-
     @ResponseBody
     @DeleteMapping("/deleteForMe")
-    public ApiResponse<?> getConversations(
+    public ApiResponse<?> deleteForMe(
             @RequestParam Long messageId,
             @CurrentUser User currentUser) {
         return ApiResponse.success(messageService.deleteMessageForMe(messageId, currentUser), "SUCCESS");
     }
+
+
+
+    @ResponseBody
+    @DeleteMapping("/deleteForAll")
+    public ApiResponse<?> deleteForAll(
+            @RequestParam Long messageId,
+            @CurrentUser User currentUser) {
+        return ApiResponse.success(messageService.deleteMessageForAll(messageId, currentUser), "SUCCESS");
+    }
+
 
     @MessageMapping("/chat/send")
     @SendToUser("/queue/messages")

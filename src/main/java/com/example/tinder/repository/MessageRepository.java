@@ -25,11 +25,17 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @NotNull Optional<Message> findById(@Param("id") @NotNull Long id);
 
     @Query("""
-                SELECT m FROM Message m
-                WHERE m.conversation.id = :conversationId
-                ORDER BY m.createdAt DESC
+                  SELECT m FROM Message m
+                   WHERE m.conversation.id = :conversationId
+                     AND m.visibility = true
+                     AND (
+                           (m.sender.id = :currentUserId AND m.deletedForSender = false)
+                        OR (m.recipient.id = :currentUserId AND m.deletedForRecipient = false)
+                     )
+                   ORDER BY m.createdAt DESC
             """)
-    Page<Message> findByConversationId(
+    Page<Message> findMessagesForUserInConversation(
+            @Param("currentUserId") Long currentUserId,
             @Param("conversationId") Long conversationId,
             Pageable pageable
     );
@@ -49,29 +55,34 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     );
 
 
-    @Query(value = """
-                SELECT *
-                FROM message
-                WHERE conversation_id = :conversationId
-                  AND recipient_id = :recipientId
-                  AND deleted_for_recipient = false
-                ORDER BY created_at DESC
-                LIMIT 1
-            """, nativeQuery = true)
-    Optional<Message> findLastMessageByConversationIdForRecipient(
-            @Param("conversationId") Long conversationId,
-            @Param("recipientId") Long recipientId
+    @Transactional
+    @Modifying
+    @Query("""
+    UPDATE Message m
+    SET m.deletedForSender = true,
+        m.deletedForRecipient = true
+    WHERE m.id = :messageId
+      AND m.sender.id = :senderId
+""")
+    int deleteForAll(
+            @Param("messageId") Long messageId,
+            @Param("senderId") Long senderId
     );
+
+
 
 
     @Query(value = """
                 SELECT * FROM message
                 WHERE conversation_id = :conversationId
-                  AND sender_id = :senderId
-                  AND deleted_for_recipient = false
+                  AND visibility = true            
+                  AND  (
+                           (sender_id = :userId AND deleted_for_sender = false)
+                        OR (recipient_id = :userId AND deleted_for_recipient = false)
+                       )
                 ORDER BY created_at DESC
                 LIMIT 1
             """, nativeQuery = true)
-    Optional<Message> findLastMessageByConversationIdForSender(@Param("conversationId") Long conversationId,
-                                                               @Param("senderId") Long senderId);
+    Optional<Message> findLastVisibleMessageForUser(@Param("conversationId") Long conversationId,
+                                                               @Param("userId") Long userId);
 }
