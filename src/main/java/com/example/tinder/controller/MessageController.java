@@ -22,8 +22,8 @@ public class MessageController {
 
     @ResponseBody
     @PostMapping("/sendMessage")
-    public void sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
-        messageService.sendMessage(chatMessageDto);
+    public ApiResponse<?> sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
+       return messageService.sendMessage(chatMessageDto);
     }
 
 
