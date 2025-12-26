@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ser.Serializers;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,4 +39,13 @@ public class Message extends BaseEntity {
 
     @Column(name = "is_liked", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isLiked = false;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean deletedForSender = false;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean deletedForRecipient = false;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean edited = false;
 }

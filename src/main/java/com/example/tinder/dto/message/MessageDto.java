@@ -13,8 +13,37 @@ import java.time.LocalDateTime;
 public class MessageDto {
     private Long id;
     private Long senderId;
-    private String senderName;
+    private Long receiverId;
+    private Long conversationId;
+    private String SenderName;
     private String message;
-    private LocalDateTime timestamp;
     private Boolean isRead;
+    private Boolean isLiked;
+    private Boolean edited;
+    private Boolean deletedForSender;
+    private Boolean deletedForRecipient;
+
+
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MessageUpdateDto {
+        private Long id;
+        private String message;
+    }
+
+
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MessageCreateDto {
+        private Long senderId;
+        private Long receiverId;
+        private Long conversationId;
+        private String message;
+    }
 }

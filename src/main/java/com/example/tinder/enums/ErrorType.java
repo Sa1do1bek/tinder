@@ -60,7 +60,8 @@ public enum ErrorType {
     USER_LOCATION_NOT_FOUND("user.location.not.found",  HttpStatus.NOT_FOUND ),
     PREFERENCE_NOT_FOUND("preference.not.found",  HttpStatus.NOT_FOUND ),
     LOCATION_NOT_FOUND("location.not.found",  HttpStatus.NOT_FOUND ),
-    USERNAME_ALREADY_EXISTS("username.already.exists",  HttpStatus.BAD_REQUEST ),;
+    USERNAME_ALREADY_EXISTS("username.already.exists",  HttpStatus.BAD_REQUEST ),
+    MESSAGE_NOT_FOUND("message.not.found", HttpStatus.NOT_FOUND ),;
 
 
     private final String msg;

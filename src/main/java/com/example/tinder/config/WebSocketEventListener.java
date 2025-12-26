@@ -1,6 +1,5 @@
 package com.example.tinder.config;
 
-import io.swagger.v3.oas.models.links.Link;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;

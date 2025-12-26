@@ -12,10 +12,11 @@ import org.springframework.stereotype.Component;
 public class ConversationMapper {
     private final UserMapper userMapper;
 
-    public ConversationDTO toDto(Conversation conversation, User user) {
+    public ConversationDTO toDto(Conversation conversation, User user, String lastMessage) {
         return ConversationDTO.builder()
                 .id(conversation.getId())
                 .user(userMapper.toDto(user))
+                .lastMessage(lastMessage)
                 .unreadCount(conversation.getUnreadCount())
                 .build();
     }
