@@ -1,12 +1,10 @@
 package com.example.tinder.repository;
 
-import com.example.tinder.entity.Message;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,7 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE u.id = :id
         AND u.visibility = true
     """)
-    @NotNull Optional<User> findById(@Param("id")@NotNull Long id);
+    Optional<User> findByIdCustom(@Param("id")Long id);
 
     boolean existsByUsername(String username);
 
