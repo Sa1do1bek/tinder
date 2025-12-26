@@ -36,7 +36,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public ApiResponse<?> sendMessage(MessageDto.MessageCreateDto req) {
+    public void sendMessage(MessageDto.MessageCreateDto req) {
 
         User sender = getUserOrThrow(req.getSenderId());
         User receiver = getUserOrThrow(req.getReceiverId());
@@ -53,10 +53,9 @@ public class MessageServiceImpl implements MessageService {
         boolean matchExists = conversationService.isMatchExists(sender.getId(), receiver.getId());
         if (!matchExists) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
 
-        Conversation c = conversationRepository.findByUsers(sender.getId(), receiver.getId()).orElseThrow(
+        Conversation conversation = conversationRepository.findByUsers(sender.getId(), receiver.getId()).orElseThrow(
                 () -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
-        Conversation conversation = conversationRepository.save(c);
 
         Message message = messageRepository.save(messageMapper.fromCreateDto(req, sender, receiver, conversation));
 
@@ -90,11 +89,10 @@ public class MessageServiceImpl implements MessageService {
         conversationRepository.save(conversation);
 
 
-
         // Sending Websocket
         sendToWebSocket(conversation.getId(), sender.getId(), receiver.getId(), messageMapper.toDto(save));
 
-        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_SENT_SUCCESSFULLY");
+//        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_SENT_SUCCESSFULLY");
     }
 
 
@@ -166,5 +164,9 @@ public class MessageServiceImpl implements MessageService {
         messagingTemplate.convertAndSend("/topic/chat/" + conversationId, messageData);
         messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", messageData);
         messagingTemplate.convertAndSendToUser(receiverId.toString(), "/queue/messages", messageData);
+        System.out.println("Habar Socket orqali yuborildi ");
     }
+    //https://api-tinder/ws
+
+   // /topic/chat/" + conversationId
 }

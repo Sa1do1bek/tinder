@@ -20,6 +20,7 @@ public class MessageDto {
     private Boolean isRead;
     private Boolean isLiked;
     private Boolean edited;
+    private LocalDateTime createdAt;
     private Boolean deletedForSender;
     private Boolean deletedForRecipient;
 
