@@ -36,7 +36,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public void sendMessage(MessageDto.MessageCreateDto req) {
+    public ApiResponse<?> sendMessage(MessageDto.MessageCreateDto req) {
 
         User sender = getUserOrThrow(req.getSenderId());
         User receiver = getUserOrThrow(req.getReceiverId());
@@ -92,7 +92,7 @@ public class MessageServiceImpl implements MessageService {
         // Sending Websocket
         sendToWebSocket(conversation.getId(), sender.getId(), receiver.getId(), messageMapper.toDto(save));
 
-//        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_SENT_SUCCESSFULLY");
+        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_SENT_SUCCESSFULLY");
     }
 
 
