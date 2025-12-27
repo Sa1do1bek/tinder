@@ -23,6 +23,7 @@ public class MessageDto {
     private LocalDateTime createdAt;
     private Boolean deletedForSender;
     private Boolean deletedForRecipient;
+    private Long replyId;
 
 
     @Getter
@@ -42,6 +43,7 @@ public class MessageDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class MessageCreateDto {
+        private Long replyId;
         private Long senderId;
         private Long receiverId;
         private Long conversationId;

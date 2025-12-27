@@ -18,6 +18,7 @@ public class MessageMapper {
         dto.setSenderId(message.getSender().getId());
         dto.setReceiverId(message.getRecipient().getId());
         dto.setConversationId(message.getConversation().getId());
+        dto.setReplyId(message.getReplyId());
         dto.setEdited(message.getEdited());
         dto.setIsLiked(message.getIsLiked());
         dto.setDeletedForSender(message.getDeletedForSender());
@@ -25,6 +26,7 @@ public class MessageMapper {
         dto.setIsRead(message.getIsRead());
         dto.setCreatedAt(message.getCreatedAt());
         dto.setSenderName(message.getSender().getFullname());
+
         return dto;
     }
 
@@ -33,6 +35,7 @@ public class MessageMapper {
         message.setMessage(dto.getMessage());
         message.setSender(sender);
         message.setRecipient(recipient);
+        message.setReplyId(dto.getReplyId());
 
         message.setIsLiked(false);
         message.setEdited(false);

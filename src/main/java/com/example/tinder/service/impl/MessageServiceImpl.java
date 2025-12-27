@@ -62,9 +62,7 @@ public class MessageServiceImpl implements MessageService {
                         RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
         Message message = messageMapper.fromCreateDto(req, sender, receiver, conversation);
-        message.setDeletedForSender(false);
-        message.setDeletedForRecipient(false);
-        message.setVisibility(true);
+
 
         Message savedMessage = messageRepository.save(message);
 
