@@ -169,17 +169,29 @@ public class MessageServiceImpl implements MessageService {
         );
     }
 
+
+    @Transactional
     @Override
     public ApiResponse<?> markMessageAsRead(Long conversationId, User currentUser) {
 
-        conversationRepository.findById(conversationId)
+        Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
-        userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        // 🔐 Security check
+        if (!conversation.getUser1().getId().equals(currentUser.getId())
+                && !conversation.getUser2().getId().equals(currentUser.getId())) {
+            throw RestException.restThrow(ErrorType.ACCESS_DENIED);
+        }
 
         // faqat recipient bo‘lgan message lar read bo‘ladi
         messageRepository.markAsRead(conversationId, currentUser.getId());
+
+        if (conversation.getUser1().getId().equals(currentUser.getId())) {
+            conversation.setUnreadForUser1(0);
+        }else {
+            conversation.setUnreadForUser2(0);
+        }
+        conversationRepository.save(conversation);
         return ApiResponse.success("MESSAGE_MARKED_AS_READ_SUCCESSFULLY");
     }
 
@@ -237,19 +249,18 @@ public class MessageServiceImpl implements MessageService {
 
 
     private void updateConversationLastMessage(Conversation conv, User sender, User receiver, Message msg) {
-        if (conv.getUser1().getId().equals(sender.getId())) {
-            conv.setLastMessageForUser1(msg.getMessage());
-        } else {
+        Long senderId = sender.getId();
+        Long user1Id = conv.getUser1().getId();
+
+        // last message
+        if (senderId.equals(user1Id)) {
             conv.setLastMessageForUser2(msg.getMessage());
+            conv.setUnreadForUser2(conv.getUnreadForUser2() + 1);
+        } else {
+            conv.setLastMessageForUser1(msg.getMessage());
+            conv.setUnreadForUser1(conv.getUnreadForUser1() + 1);
         }
 
-        if (conv.getUser1().getId().equals(receiver.getId())) {
-            conv.setLastMessageForUser1(msg.getMessage());
-        } else {
-            conv.setLastMessageForUser2(msg.getMessage());
-        }
-
-        conv.setUnreadCount(conv.getUnreadCount() + 1);
         conversationRepository.save(conv);
     }
 

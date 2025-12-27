@@ -54,7 +54,8 @@ public class ConversationServiceImpl implements ConversationService {
                 .deletedForUser1(false)
                 .deletedForUser2(false)
                 .messages(new ArrayList<>())
-                .unreadCount(0)
+                .unreadForUser1(0)
+                .unreadForUser2(0)
                 .build();
 
         Conversation saved = conversationRepository.save(conversation);
@@ -72,10 +73,10 @@ public class ConversationServiceImpl implements ConversationService {
 
         Conversation conversation = optional.get();
         if (currentUserId.equals(conversation.getUser1().getId())) {
-            return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser2(), conversation.getLastMessageForUser1()), "SUCCESS");
+            return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser2(), conversation.getLastMessageForUser1(), conversation.getUnreadForUser1()), "SUCCESS");
         }
 
-        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1(), conversation.getLastMessageForUser2()), "SUCCESS");
+        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1(), conversation.getLastMessageForUser2(), conversation.getUnreadForUser2()), "SUCCESS");
     }
 
     @Override
@@ -144,9 +145,17 @@ public class ConversationServiceImpl implements ConversationService {
         List<ConversationDTO> dtos = new ArrayList<>();
         for (Conversation conversation : conversations) {
             if (conversation.getUser1().getId().equals(userId)) {
-                dtos.add(conversationMapper.toDto(conversation, conversation.getUser2(), conversation.getLastMessageForUser1()));
+                dtos.add(conversationMapper.toDto(
+                        conversation,
+                        conversation.getUser2(),
+                        conversation.getLastMessageForUser1(),
+                        conversation.getUnreadForUser1()));
             } else {
-                dtos.add(conversationMapper.toDto(conversation, conversation.getUser1(), conversation.getLastMessageForUser2()));
+                dtos.add(conversationMapper.toDto(
+                        conversation,
+                        conversation.getUser1(),
+                        conversation.getLastMessageForUser2(),
+                        conversation.getUnreadForUser2()));
             }
         }
         return ApiResponse.success(dtos, "Conversations retrieved successfully");

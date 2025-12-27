@@ -14,7 +14,7 @@ public class ConversationMapper {
     private final WebSocketEventListener webSocketEventListener;
     private final UserMapper userMapper;
 
-    public ConversationDTO toDto(Conversation conversation, User user, String lastMessage) {
+    public ConversationDTO toDto(Conversation conversation, User user, String lastMessage, Integer unreadCount) {
 
         User otherUser = conversation.getUser1().getId().equals(user.getId())
                 ? conversation.getUser2()
@@ -38,7 +38,7 @@ public class ConversationMapper {
                 .id(conversation.getId())
                 .user(userMapper.toDto(user))
                 .lastMessage(lastMessage)
-                .unreadCount(conversation.getUnreadCount())
+                .unreadCount(unreadCount)
                 .build();
     }
 
