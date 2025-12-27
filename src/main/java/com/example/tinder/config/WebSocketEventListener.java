@@ -1,5 +1,6 @@
 package com.example.tinder.config;
 
+import com.example.tinder.repository.UserRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class WebSocketEventListener {
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
     @Getter
     private final Map<String, String> onlineUsers = new ConcurrentHashMap<>(); // username -> sessionId
 
@@ -33,8 +36,11 @@ public class WebSocketEventListener {
             String sessionId = accessor.getSessionId();
 
             if (username != null && sessionId != null) {
+
                 onlineUsers.put(username, sessionId);
                 log.info("🟢 Online: username={}, sessionId={}", username, sessionId);
+
+                userRepository.updateOnlineStatus(username, true, null);
 
                 // Broadcast online status
                 messagingTemplate.convertAndSend("/topic/user/" + username + "/status",
@@ -58,6 +64,13 @@ public class WebSocketEventListener {
             if (username != null) {
                 onlineUsers.remove(username);
                 log.info("🔴 Offline: username={}", username);
+
+
+                userRepository.updateOnlineStatus(
+                        username,
+                        false,
+                        LocalDateTime.now()
+                );
 
                 // Broadcast offline status
                 messagingTemplate.convertAndSend("/topic/user/" + username + "/status",
