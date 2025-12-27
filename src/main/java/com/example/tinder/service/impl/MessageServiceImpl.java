@@ -1,5 +1,6 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.config.WebSocketEventListener;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.Conversation;
@@ -15,14 +16,18 @@ import com.example.tinder.service.ConversationService;
 import com.example.tinder.service.MessageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
@@ -33,10 +38,12 @@ public class MessageServiceImpl implements MessageService {
     private final ConversationRepository conversationRepository;
     private final ConversationService conversationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketEventListener eventListener;
 
     @Override
     @Transactional
     public ApiResponse<?> sendMessage(MessageDto.MessageCreateDto req) {
+
 
         User sender = getUserOrThrow(req.getSenderId());
         User receiver = getUserOrThrow(req.getReceiverId());
@@ -54,7 +61,6 @@ public class MessageServiceImpl implements MessageService {
                 .orElseThrow(() ->
                         RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
-        // 1️⃣ Message yaratish (HECH QANDAY DELETE YO‘Q)
         Message message = messageMapper.fromCreateDto(req, sender, receiver, conversation);
         message.setDeletedForSender(false);
         message.setDeletedForRecipient(false);
@@ -62,42 +68,25 @@ public class MessageServiceImpl implements MessageService {
 
         Message savedMessage = messageRepository.save(message);
 
-        // 2️⃣ LastMessage — sender uchun
-        if (conversation.getUser1().getId().equals(sender.getId())) {
-            conversation.setLastMessageForUser1(savedMessage.getMessage());
-        } else {
-            conversation.setLastMessageForUser2(savedMessage.getMessage());
-        }
+        // Update last messages
+        updateConversationLastMessage(conversation, sender, receiver, savedMessage);
 
-        // 3️⃣ LastMessage — receiver uchun
-        if (conversation.getUser1().getId().equals(receiver.getId())) {
-            conversation.setLastMessageForUser1(savedMessage.getMessage());
-        } else {
-            conversation.setLastMessageForUser2(savedMessage.getMessage());
-        }
-
-        // (ixtiyoriy) unread count
-        conversation.setUnreadCount(conversation.getUnreadCount() + 1);
-
-        conversationRepository.save(conversation);
-
-        // 4️⃣ WebSocket orqali yuborish
-        sendToWebSocket(
-                conversation.getId(),
-                sender.getId(),
-                receiver.getId(),
-                messageMapper.toDto(savedMessage)
+        // ✅ WebSocket orqali yuborish - faqat conversation topic'ga
+        MessageDto messageDto = messageMapper.toDto(savedMessage);
+        messagingTemplate.convertAndSend(
+                "/topic/conversation/" + conversation.getId(),
+                messageDto
         );
 
-        return ApiResponse.success(
-                messageMapper.toDto(savedMessage),
-                "MESSAGE_SENT_SUCCESSFULLY"
-        );
+        log.info("📤 Message sent: conversationId={}, from={}, to={}",
+                conversation.getId(), sender.getUsername(), receiver.getUsername());
+
+        return ApiResponse.success(messageDto, "MESSAGE_SENT_SUCCESSFULLY");
     }
 
 
     @Override
-    public Page<MessageDto> getMessagesByConversationId(Long conversationId, User currentUser, Pageable pageable) {
+    public ApiResponse<?> getMessagesByConversationId(Long conversationId, User currentUser, Pageable pageable) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() ->
                         RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
@@ -118,7 +107,13 @@ public class MessageServiceImpl implements MessageService {
                         pageable
                 );
 
-        return page.map(messageMapper::toDto);
+        Map<String, Object> result = new HashMap<>();
+        result.put("messages", page.map(messageMapper::toDto));
+        result.put("currentPage", page.getNumber());
+        result.put("totalPages", (page.getTotalPages()+1) / 2);
+
+
+        return ApiResponse.success(result, "MESSAGES_FETCHED_SUCCESSFULLY");
 
     }
 
@@ -223,6 +218,28 @@ public class MessageServiceImpl implements MessageService {
                 "MESSAGE_DELETED_FOR_ALL_SUCCESSFULLY"
         );
     }
+
+
+
+
+
+    private void updateConversationLastMessage(Conversation conv, User sender, User receiver, Message msg) {
+        if (conv.getUser1().getId().equals(sender.getId())) {
+            conv.setLastMessageForUser1(msg.getMessage());
+        } else {
+            conv.setLastMessageForUser2(msg.getMessage());
+        }
+
+        if (conv.getUser1().getId().equals(receiver.getId())) {
+            conv.setLastMessageForUser1(msg.getMessage());
+        } else {
+            conv.setLastMessageForUser2(msg.getMessage());
+        }
+
+        conv.setUnreadCount(conv.getUnreadCount() + 1);
+        conversationRepository.save(conv);
+    }
+
 
 
 

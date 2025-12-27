@@ -1,9 +1,8 @@
 package com.example.tinder.utils;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -21,86 +20,131 @@ public class JwtUtil {
     private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(KEY));
 
     public String generateToken(String username) {
-        System.out.println("JwtUtil.generateToken called with username: " + username);
+        log.debug("Generating token for username: {}", username);
+
+        if (username == null || username.trim().isEmpty()) {
+            log.error("Username is null or empty");
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
 
         try {
-            if (username == null || username.trim().isEmpty()) {
-                System.out.println("Username is null or empty - returning null");
-                return null;
-            }
-
             Map<String, Object> claims = new HashMap<>();
             String token = createToken(claims, username);
-
-            System.out.println("Token created: " + (token != null ? "SUCCESS" : "FAILED"));
-            if (token != null) {
-                System.out.println("Token length: " + token.length());
-                System.out.println("Token preview: " + token.substring(0, Math.min(50, token.length())) + "...");
-            }
-
+            log.info("✅ Token generated successfully for user: {}", username);
             return token;
         } catch (Exception e) {
-            System.out.println("Error in generateToken: " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("❌ Error generating token", e);
+            throw new RuntimeException("Failed to generate JWT token", e);
         }
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-        System.out.println("Creating token for subject: " + subject);
-
         try {
+            Date now = new Date();
+            Date expiration = new Date(now.getTime() + (1000L * 60 * 60 * 24 * 10)); // 10 days
+
             String token = Jwts.builder()
                     .setClaims(claims)
                     .setSubject(subject)
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10 * 24)) // 10 kun
+                    .setIssuedAt(now)
+                    .setExpiration(expiration)
                     .signWith(SECRET_KEY, SignatureAlgorithm.HS512)
                     .compact();
 
-            System.out.println("Token created successfully in createToken method");
+            log.debug("Token created: length={}, exp={}", token.length(), expiration);
             return token;
         } catch (Exception e) {
-            System.out.println("Error in createToken: " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("❌ Error creating token", e);
+            throw new RuntimeException("Token creation failed", e);
         }
     }
 
-
     public Boolean validateToken(String token, String username) {
+        if (token == null || username == null) {
+            log.warn("⚠️ Token or username is null");
+            return false;
+        }
+
         try {
-            final String extractedUsername = extractUsername(token);
-            return (extractedUsername.equals(username) && !isTokenExpired(token));
+            String extractedUsername = extractUsername(token);
+            boolean isValid = username.equals(extractedUsername) && !isTokenExpired(token);
+
+            if (!isValid) {
+                log.warn("⚠️ Token validation failed for user: {}", username);
+            }
+
+            return isValid;
         } catch (Exception e) {
-            log.error("Error validating token: ", e);
+            log.error("❌ Error validating token", e);
             return false;
         }
     }
 
     public String extractUsername(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            log.error("❌ Token is null or empty");
+            throw new IllegalArgumentException("Token cannot be null or empty");
+        }
+
         try {
-            return extractAllClaims(token).getSubject();
+            Claims claims = extractAllClaims(token);
+            String username = claims.getSubject();
+            log.debug("✅ Extracted username: {}", username);
+            return username;
+        } catch (ExpiredJwtException e) {
+            log.warn("⚠️ Token expired: {}", e.getMessage());
+            throw new RuntimeException("Token has expired", e);
         } catch (Exception e) {
-            log.error("Error extracting username: ", e);
-            return null;
+            log.error("❌ Error extracting username from token", e);
+            throw new RuntimeException("Failed to extract username from token", e);
         }
     }
 
     public Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
-                .setAllowedClockSkewSeconds(30)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        if (token == null || token.trim().isEmpty()) {
+            throw new IllegalArgumentException("Token cannot be null or empty");
+        }
+
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(SECRET_KEY)
+                    .setAllowedClockSkewSeconds(30)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            log.warn("⚠️ Token has expired");
+            throw e;
+        } catch (MalformedJwtException e) {
+            log.error("❌ Malformed JWT token", e);
+            throw new RuntimeException("Invalid token format", e);
+        } catch (SignatureException e) {
+            log.error("❌ Invalid JWT signature", e);
+            throw new RuntimeException("Invalid token signature", e);
+        } catch (Exception e) {
+            log.error("❌ Error parsing JWT token", e);
+            throw new RuntimeException("Token parsing failed", e);
+        }
     }
 
     public Boolean isTokenExpired(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return true;
+        }
+
         try {
-            return extractAllClaims(token).getExpiration().before(new Date());
+            Date expiration = extractAllClaims(token).getExpiration();
+            boolean expired = expiration.before(new Date());
+
+            if (expired) {
+                log.debug("Token expired at: {}", expiration);
+            }
+
+            return expired;
+        } catch (ExpiredJwtException e) {
+            return true;
         } catch (Exception e) {
-            log.error("Error checking token expiration: ", e);
+            log.error("❌ Error checking token expiration", e);
             return true;
         }
     }
