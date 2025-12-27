@@ -76,8 +76,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     @Query(value = """
                 SELECT * FROM message
-                WHERE conversation_id = :conversationId
-                  AND visibility = true            
+                WHERE conversation_id = :conversationId          
                   AND  (
                            (sender_id = :userId AND deleted_for_sender = false)
                         OR (recipient_id = :userId AND deleted_for_recipient = false)
