@@ -102,8 +102,8 @@ public class MessageServiceImpl implements MessageService {
 
         Page<Message> page =
                 messageRepository.findMessagesForUserInConversation(
-                        conversationId,
                         currentUser.getId(),
+                        conversationId,
                         pageable
                 );
 
@@ -111,7 +111,6 @@ public class MessageServiceImpl implements MessageService {
         result.put("messages", page.map(messageMapper::toDto));
         result.put("currentPage", page.getNumber());
         result.put("totalPages", (page.getTotalPages()+1) / 2);
-
 
         return ApiResponse.success(result, "MESSAGES_FETCHED_SUCCESSFULLY");
 
