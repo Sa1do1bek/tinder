@@ -10,7 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -70,5 +72,9 @@ public class WebSocketEventListener {
 
     public boolean isUserOnline(String username) {
         return onlineUsers.containsKey(username);
+    }
+
+    public Set<String> getOnlineUsernames() {
+        return new HashSet<>(onlineUsers.keySet());
     }
 }

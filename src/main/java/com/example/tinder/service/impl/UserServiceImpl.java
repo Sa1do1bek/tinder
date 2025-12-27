@@ -322,7 +322,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> getOnlineUsers() {
-        Set<String> onlineUsernames = webSocketEventListener.getOnlineUsers();
+        Set<String> onlineUsernames = webSocketEventListener.getOnlineUsernames();
         List<User> users = userRepository.findByUsernameIn(onlineUsernames);
         List<UserDto> response = users.stream()
                 .map(userMapper::toDto)
