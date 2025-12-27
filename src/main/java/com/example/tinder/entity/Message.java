@@ -48,4 +48,6 @@ public class Message extends BaseEntity {
 
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean edited = false;
+
+    private Long replyId;
 }

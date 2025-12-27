@@ -62,9 +62,7 @@ public class MessageServiceImpl implements MessageService {
                         RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
         Message message = messageMapper.fromCreateDto(req, sender, receiver, conversation);
-        message.setDeletedForSender(false);
-        message.setDeletedForRecipient(false);
-        message.setVisibility(true);
+
 
         Message savedMessage = messageRepository.save(message);
 
@@ -77,8 +75,6 @@ public class MessageServiceImpl implements MessageService {
                 "/topic/conversation/" + conversation.getId(),
                 messageDto
         );
-
-//         s
 
 
         log.info("📤 Message sent: conversationId={}, from={}, to={}",
@@ -252,15 +248,15 @@ public class MessageServiceImpl implements MessageService {
         Long senderId = sender.getId();
         Long user1Id = conv.getUser1().getId();
 
+        conv.setLastMessageForUser1(msg.getMessage());
+        conv.setLastMessageForUser2(msg.getMessage());
+
         // last message
         if (senderId.equals(user1Id)) {
-            conv.setLastMessageForUser2(msg.getMessage());
             conv.setUnreadForUser2(conv.getUnreadForUser2() + 1);
         } else {
-            conv.setLastMessageForUser1(msg.getMessage());
             conv.setUnreadForUser1(conv.getUnreadForUser1() + 1);
         }
-
         conversationRepository.save(conv);
     }
 
