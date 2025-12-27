@@ -1,5 +1,6 @@
 package com.example.tinder.controller;
 
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.User;
@@ -22,10 +23,17 @@ public class MessageController {
 
     @ResponseBody
     @PostMapping("/sendMessage")
-    public ApiResponse<?> sendMessage(@RequestBody MessageDto.MessageCreateDto  chatMessageDto) {
-       return messageService.sendMessage(chatMessageDto);
-    }
+    public ApiResponse<?> sendMessage(
+            @RequestBody MessageDto.MessageCreateDto chatMessageDto,
+            @CurrentUser User currentUser) {
 
+        // Optional: Security check
+        if (!chatMessageDto.getSenderId().equals(currentUser.getId())) {
+            throw new RuntimeException("UNAUTHORIZED, You are not allowed to send message to this user");
+        }
+
+        return messageService.sendMessage(chatMessageDto);
+    }
 
     @ResponseBody
     @GetMapping("/messages")
@@ -33,10 +41,11 @@ public class MessageController {
             @CurrentUser User currentUser,
             @RequestParam Long conversationId,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "20") int size
-    ) {
+            @RequestParam(required = false, defaultValue = "20") int size) {
+
         PageRequest pageable = PageRequest.of(page, size);
-        return ApiResponse.success(messageService.getMessagesByConversationId(conversationId, currentUser, pageable), "SUCCESS");
+        // ✅ To'g'ri - double wrapping yo'q
+        return messageService.getMessagesByConversationId(conversationId, currentUser, pageable);
     }
 
     @ResponseBody
@@ -44,23 +53,16 @@ public class MessageController {
     public ApiResponse<?> deleteForMe(
             @RequestParam Long messageId,
             @CurrentUser User currentUser) {
-        return ApiResponse.success(messageService.deleteMessageForMe(messageId, currentUser), "SUCCESS");
+        // ✅ To'g'ri
+        return messageService.deleteMessageForMe(messageId, currentUser);
     }
-
-
 
     @ResponseBody
     @DeleteMapping("/deleteForAll")
     public ApiResponse<?> deleteForAll(
             @RequestParam Long messageId,
             @CurrentUser User currentUser) {
-        return ApiResponse.success(messageService.deleteMessageForAll(messageId, currentUser), "SUCCESS");
-    }
-
-
-    @MessageMapping("/chat/send")
-    @SendToUser("/queue/messages")
-    public void sendWithWebsocket(@Payload MessageDto.MessageCreateDto  chatMessageDto) {
-        messageService.sendMessage(chatMessageDto);
+        // ✅ To'g'ri
+        return messageService.deleteMessageForAll(messageId, currentUser);
     }
 }
