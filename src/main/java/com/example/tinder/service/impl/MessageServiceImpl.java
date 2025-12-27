@@ -165,6 +165,24 @@ public class MessageServiceImpl implements MessageService {
         );
     }
 
+    @Override
+    public ApiResponse<?> updateMessage(MessageDto.MessageUpdateDto dto, User currentUser) {
+
+         Message message = messageRepository.findById(dto.getId())
+               .orElseThrow(() -> RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
+
+        // Security check
+        if (!message.getSender().getId().equals(currentUser.getId())) {
+            throw RestException.restThrow(ErrorType.ACCESS_DENIED);
+        }
+
+        message.setMessage(dto.getMessage());
+        message.setEdited(true);
+        Message save = messageRepository.save(message);
+
+        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_UPDATED_SUCCESSFULLY");
+    }
+
 
     @Transactional
     @Override
