@@ -79,6 +79,18 @@ public class MessageController {
     }
 
 
+
+
+    @ResponseBody
+    @PutMapping("/updateMessage")
+    public ApiResponse<?> updateMessage(
+            MessageDto.MessageUpdateDto dto,
+            @CurrentUser User currentUser) {
+        return messageService.updateMessage(dto, currentUser);
+    }
+
+
+
     @MessageMapping("/chat/send")
     public void sendViaWebSocket(@Payload MessageDto.MessageCreateDto chatMessageDto,
                                  @Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
@@ -97,7 +109,6 @@ public class MessageController {
                     username, chatMessageDto.getSenderId());
             return;
         }
-
         messageService.sendMessage(chatMessageDto);
         log.info("📤 Message sent via WebSocket: from={}", username);
     }

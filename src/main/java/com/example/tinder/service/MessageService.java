@@ -18,5 +18,7 @@ public interface MessageService {
 
     ApiResponse<?> deleteMessageForMe(Long messageId, User currentUser);
 
+    ApiResponse<?> updateMessage(MessageDto.MessageUpdateDto chatMessageDto, User currentUser);
+
     ApiResponse<?> markMessageAsRead(Long conversationId, User currentUser);
 }
