@@ -78,6 +78,9 @@ public class MessageServiceImpl implements MessageService {
                 messageDto
         );
 
+//         s
+
+
         log.info("📤 Message sent: conversationId={}, from={}, to={}",
                 conversation.getId(), sender.getUsername(), receiver.getUsername());
 
@@ -166,6 +169,19 @@ public class MessageServiceImpl implements MessageService {
         );
     }
 
+    @Override
+    public ApiResponse<?> markMessageAsRead(Long conversationId, User currentUser) {
+
+        conversationRepository.findById(conversationId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
+
+        userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        // faqat recipient bo‘lgan message lar read bo‘ladi
+        messageRepository.markAsRead(conversationId, currentUser.getId());
+        return ApiResponse.success("MESSAGE_MARKED_AS_READ_SUCCESSFULLY");
+    }
 
 
     @Transactional
@@ -217,8 +233,6 @@ public class MessageServiceImpl implements MessageService {
                 "MESSAGE_DELETED_FOR_ALL_SUCCESSFULLY"
         );
     }
-
-
 
 
 

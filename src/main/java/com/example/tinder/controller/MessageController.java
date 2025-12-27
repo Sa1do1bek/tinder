@@ -33,7 +33,7 @@ public class MessageController {
             @RequestBody MessageDto.MessageCreateDto chatMessageDto,
             @CurrentUser User currentUser) {
 
-        // Optional: Security check
+        // Security check
         if (!chatMessageDto.getSenderId().equals(currentUser.getId())) {
             throw new RuntimeException("UNAUTHORIZED, You are not allowed to send message to this user");
         }
@@ -50,7 +50,6 @@ public class MessageController {
             @RequestParam(required = false, defaultValue = "20") int size) {
 
         PageRequest pageable = PageRequest.of(page, size);
-        // ✅ To'g'ri - double wrapping yo'q
         return messageService.getMessagesByConversationId(conversationId, currentUser, pageable);
     }
 
@@ -59,7 +58,6 @@ public class MessageController {
     public ApiResponse<?> deleteForMe(
             @RequestParam Long messageId,
             @CurrentUser User currentUser) {
-        // ✅ To'g'ri
         return messageService.deleteMessageForMe(messageId, currentUser);
     }
 
@@ -68,8 +66,16 @@ public class MessageController {
     public ApiResponse<?> deleteForAll(
             @RequestParam Long messageId,
             @CurrentUser User currentUser) {
-        // ✅ To'g'ri
         return messageService.deleteMessageForAll(messageId, currentUser);
+    }
+
+//    markMessageAsRead
+    @ResponseBody
+    @PostMapping("/markAsRead")
+    public ApiResponse<?> markAsRead(
+            @RequestParam Long conversationId,
+            @CurrentUser User currentUser) {
+        return messageService.markMessageAsRead(conversationId, currentUser);
     }
 
 

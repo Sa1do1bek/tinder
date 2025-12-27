@@ -11,9 +11,12 @@ import org.springframework.stereotype.Component;
 public interface MessageService {
 
     ApiResponse<?> sendMessage(MessageDto.MessageCreateDto chatMessageDto);
+
     ApiResponse<?>  getMessagesByConversationId(Long conversationId, User currentUser, Pageable pageable);
 
     ApiResponse<?> deleteMessageForAll(Long messageId, User currentUser);
 
     ApiResponse<?> deleteMessageForMe(Long messageId, User currentUser);
+
+    ApiResponse<?> markMessageAsRead(Long conversationId, User currentUser);
 }

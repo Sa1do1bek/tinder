@@ -24,6 +24,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             """)
     @NotNull Optional<Message> findById(@Param("id") @NotNull Long id);
 
+
     @Query("""
                   SELECT m FROM Message m
                    WHERE m.conversation.id = :conversationId
@@ -39,6 +40,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             @Param("conversationId") Long conversationId,
             Pageable pageable
     );
+
 
     @Transactional
     @Modifying
