@@ -78,8 +78,6 @@ public class MessageServiceImpl implements MessageService {
                 messageDto
         );
 
-//         s
-
 
         log.info("📤 Message sent: conversationId={}, from={}, to={}",
                 conversation.getId(), sender.getUsername(), receiver.getUsername());
@@ -252,15 +250,15 @@ public class MessageServiceImpl implements MessageService {
         Long senderId = sender.getId();
         Long user1Id = conv.getUser1().getId();
 
+        conv.setLastMessageForUser1(msg.getMessage());
+        conv.setLastMessageForUser2(msg.getMessage());
+
         // last message
         if (senderId.equals(user1Id)) {
-            conv.setLastMessageForUser2(msg.getMessage());
             conv.setUnreadForUser2(conv.getUnreadForUser2() + 1);
         } else {
-            conv.setLastMessageForUser1(msg.getMessage());
             conv.setUnreadForUser1(conv.getUnreadForUser1() + 1);
         }
-
         conversationRepository.save(conv);
     }
 
