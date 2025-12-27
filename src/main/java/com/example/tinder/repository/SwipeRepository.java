@@ -52,4 +52,15 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
     AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
 """)
   Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
+
+
+  @Modifying
+  @Transactional
+  @Query(value = """
+        DELETE FROM swipe s
+        WHERE (s.swiper = :user1 AND s.swiped = :user2)
+            OR (s.swiper = :user1 AND s.swiped = :user2)
+        """, nativeQuery = true)
+  void deleteByUsers(@Param("user1") Long user1,
+                     @Param("user2") Long user2);
 }

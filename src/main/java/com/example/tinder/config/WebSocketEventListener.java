@@ -2,48 +2,73 @@ package com.example.tinder.config;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectEvent;
+import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WebSocketEventListener {
     private final SimpMessagingTemplate messagingTemplate;
     @Getter
-    private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
+    private final Map<String, String> onlineUsers = new ConcurrentHashMap<>(); // username -> sessionId
 
     @EventListener
-    public void handleConnect(SessionConnectEvent event) {
-        Map<String, Object> sessionAttributes = (Map<String, Object>) event.getMessage().getHeaders().get("simpSessionAttributes");
-        if (sessionAttributes != null) {
-            String username = (String) sessionAttributes.get("user");
-            if (username != null) {
-                onlineUsers.add(username);
-                System.out.println("Online: " + username);
+    public void handleConnect(SessionConnectedEvent event) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+
+        if (attributes != null) {
+            String username = (String) attributes.get("username");
+            String sessionId = accessor.getSessionId();
+
+            if (username != null && sessionId != null) {
+                onlineUsers.put(username, sessionId);
+                log.info("🟢 Online: username={}, sessionId={}", username, sessionId);
+
+                // Broadcast online status
+                messagingTemplate.convertAndSend("/topic/user/" + username + "/status",
+                        Map.of(
+                                "username", username,
+                                "online", true,
+                                "timestamp", System.currentTimeMillis()
+                        ));
             }
         }
     }
 
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
-        Map<String, Object> sessionAttributes = (Map<String, Object>) event.getMessage().getHeaders().get("simpSessionAttributes");
-        if (sessionAttributes != null) {
-            String username = (String) sessionAttributes.get("user");
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+
+        if (attributes != null) {
+            String username = (String) attributes.get("username");
+
             if (username != null) {
                 onlineUsers.remove(username);
-                System.out.println("Offline: " + username);
+                log.info("🔴 Offline: username={}", username);
+
+                // Broadcast offline status
+                messagingTemplate.convertAndSend("/topic/user/" + username + "/status",
+                        Map.of(
+                                "username", username,
+                                "online", false,
+                                "timestamp", System.currentTimeMillis()
+                        ));
             }
         }
     }
 
-    public void isOnline(String username) {
-        messagingTemplate.convertAndSend("/topic/chat/online" + username, onlineUsers.contains(username));
+    public boolean isUserOnline(String username) {
+        return onlineUsers.containsKey(username);
     }
 }

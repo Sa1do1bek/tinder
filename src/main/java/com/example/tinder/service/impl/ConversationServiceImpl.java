@@ -9,6 +9,7 @@ import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.ConversationMapper;
 import com.example.tinder.repository.ConversationRepository;
 import com.example.tinder.repository.MatchRepository;
+import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ConversationService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class ConversationServiceImpl implements ConversationService {
     private final UserRepository userRepository;
     private final MatchRepository matchRepository;
     private final ConversationMapper conversationMapper;
+    private final SwipeRepository swipeRepository;
 
 
     // Done
@@ -52,6 +54,7 @@ public class ConversationServiceImpl implements ConversationService {
                 .deletedForUser1(false)
                 .deletedForUser2(false)
                 .messages(new ArrayList<>())
+                .unreadCount(0)
                 .build();
 
         Conversation saved = conversationRepository.save(conversation);
@@ -105,6 +108,9 @@ public class ConversationServiceImpl implements ConversationService {
         conversation.setDeletedForUser1(true);
         conversation.setVisibility(false);
         conversationRepository.save(conversation);
+
+        swipeRepository.deleteByUsers(conversation.getUser1().getId(), conversation.getUser2().getId());
+
 
 
         return ApiResponse.success("Successfully deleted conversation FOR ALL");
