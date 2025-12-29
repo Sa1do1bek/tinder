@@ -27,5 +27,4 @@ public class SwipeController {
     public ApiResponse<?> getSwipesByUser(@CurrentUser User user){
         return swipeService.getSwipesByUser(user.getId());
     }
-
 }
