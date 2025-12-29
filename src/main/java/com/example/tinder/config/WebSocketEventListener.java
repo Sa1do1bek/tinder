@@ -42,9 +42,8 @@ public class WebSocketEventListener {
                 log.info("🟢 Online: username={}, sessionId={}", username, sessionId);
 
                 // Broadcast online status
-                messagingTemplate.convertAndSendToUser(
-                        username,
-                        "/queue/status",
+                messagingTemplate.convertAndSend(
+                        "/queue/" + username + "/status",
                         Map.of(
                                 "username", username,
                                 "online", true,
