@@ -13,7 +13,18 @@ import java.util.Optional;
 public interface CodeRepository extends JpaRepository<Code,Long> {
     Optional<Code> findByUserIdAndDeviceId(Long id, Long deviceId);
 
-    Optional<Code> findByUserId(Long id);
+    @Query(
+            value = """
+        SELECT *
+        FROM codes
+        WHERE user_id = :userId
+        ORDER BY created_at DESC
+        LIMIT 1
+    """,
+            nativeQuery = true
+    )
+    Optional<Code> findByUserId(@Param("userId") Long userId);
+
     // User'ning barcha Code'larini olish
     List<Code> findByUserIdOrderByCreatedAtDesc(Long userId);
 

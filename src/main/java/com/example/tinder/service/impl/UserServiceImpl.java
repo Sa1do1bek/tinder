@@ -1,11 +1,13 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.config.WebSocketEventListener;
-import com.example.tinder.dto.UserDto;
-import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.UpdateUserGBIDto;
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.auth.LoginResponse;
-import com.example.tinder.entity.*;
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.entity.Code;
+import com.example.tinder.entity.User;
+import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
@@ -13,14 +15,14 @@ import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
-import com.example.tinder.repository.*;
+import com.example.tinder.repository.CodeRepository;
+import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.UserService;
 import com.example.tinder.utils.JwtUtil;
 import com.example.tinder.utils.Utils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -77,7 +79,7 @@ public class UserServiceImpl implements UserService {
             Map<String, Object> responseMap = new HashMap<>();
             responseMap.put("users", list);
             responseMap.put("currentPage", page.getNumber());
-            responseMap.put("totalPages", (page.getSize()+1) / 2);
+            responseMap.put("totalPages", (page.getSize() + 1) / 2);
 
             return ApiResponse.success(responseMap, "SUCCESS");
         }
@@ -93,26 +95,25 @@ public class UserServiceImpl implements UserService {
     @Override
     public ApiResponse<?> updateEmail(String email, String newEmail) {
         User user = this.userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
         Optional<User> optional = this.userRepository.findByEmail(newEmail);
         if (optional.isPresent()) {
-            throw RestException.restThrow(ErrorType.INVALID_EMAIL);
+            throw RestException.restThrow(ErrorType.EMAIL_ALREADY_TAKEN);
         }
 
         String code = utils.getCode();
         if (utils.sendCodeToMail(newEmail, code)) {
-            Optional<Code> codeOptional = this.codeRepository.findByUserId(user.getId());
-            if (codeOptional.isPresent()) {
-                Code c = codeOptional.get();
-                c.setCode(code);
-                c.setCreatedAt(LocalDateTime.now());
-                this.codeRepository.save(c);
-                this.userRepository.save(user);
-
-                return ApiResponse.success("Authentication code sent");
-            }
+            Code c = new Code();
+            c.setUser(user);
+            c.setCode(code);
+            c.setApprovedAt(LocalDateTime.now());
+            c.setCreatedAt(LocalDateTime.now());
+            c.setCounts(0);
+            this.codeRepository.save(c);
+            this.userRepository.save(user);
+            return ApiResponse.success("Authentication code sent");
         }
-
         throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
     }
 
@@ -122,14 +123,14 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         Code co = this.codeRepository.findByUserId(user.getId())
-                .orElseThrow(() -> RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.CODE_IS_INVALID));
 
         if (co.getCode().equals(code)) {
             user.setEmail(newEmail);
             co.setApprovedAt(LocalDateTime.now());
 
             this.userRepository.save(user);
-            this.codeRepository.save(co);
+            this.codeRepository.delete(co);
 
             return ApiResponse.success("User email updated successfully");
         }
@@ -196,10 +197,9 @@ public class UserServiceImpl implements UserService {
 
                 return ApiResponse.success(
                         LoginResponse.builder()
-                        .token(token)
-                        .user(this.userMapper.toDto(user))
-                        .build(), "SUCCESS");
-
+                                .token(token)
+                                .user(this.userMapper.toDto(user))
+                                .build(), "SUCCESS");
 
 
             } else {
@@ -221,9 +221,9 @@ public class UserServiceImpl implements UserService {
 
                 return ApiResponse.success(
                         LoginResponse.builder()
-                        .token(token)
-                        .user(this.userMapper.toDto(save))
-                        .build(), "GOOGLE AUTHORIZED SUCCESSFULLY"
+                                .token(token)
+                                .user(this.userMapper.toDto(save))
+                                .build(), "GOOGLE AUTHORIZED SUCCESSFULLY"
                 );
             }
         }
@@ -263,10 +263,10 @@ public class UserServiceImpl implements UserService {
         if (dto.getGender() != null)
             user.setGender(dto.getGender());
 
-        if (dto.getBio() != null){
+        if (dto.getBio() != null) {
             user.setBio(dto.getBio());
         }
-        if (dto.getFullName() != null){
+        if (dto.getFullName() != null) {
             user.setFullname(dto.getFullName());
         }
 
