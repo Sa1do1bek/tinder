@@ -91,6 +91,19 @@ public class MessageController {
 
 
 
+    @ResponseBody
+    @PutMapping("/likeMessage")
+    public ApiResponse<?> likeMessage(
+            @RequestParam Long messageId,
+            @RequestParam Boolean isLike,
+            @CurrentUser User currentUser) {
+        return messageService.likeMessage(messageId,isLike,currentUser);
+    }
+
+
+
+
+
     @MessageMapping("/chat/send")
     public void sendViaWebSocket(@Payload MessageDto.MessageCreateDto chatMessageDto,
                                  @Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {

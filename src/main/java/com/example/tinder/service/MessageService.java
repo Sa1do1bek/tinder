@@ -20,5 +20,7 @@ public interface MessageService {
 
     ApiResponse<?> updateMessage(MessageDto.MessageUpdateDto chatMessageDto, User currentUser);
 
+    ApiResponse<?> likeMessage(Long messageId, Boolean isLike, User currentUser);
+
     ApiResponse<?> markMessageAsRead(Long conversationId, User currentUser);
 }

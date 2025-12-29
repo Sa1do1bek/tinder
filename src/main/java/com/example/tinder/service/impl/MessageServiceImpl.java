@@ -198,6 +198,28 @@ public class MessageServiceImpl implements MessageService {
         return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_UPDATED_SUCCESSFULLY");
     }
 
+    @Override
+    public ApiResponse<?> likeMessage(Long messageId, Boolean isLike, User currentUser) {
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() ->
+                        RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
+
+        Conversation conversation = conversationRepository.findById(message.getConversation().getId())
+                .orElseThrow(() -> RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
+
+        // 🔐 Security check
+        if (!conversation.getUser1().getId().equals(currentUser.getId())
+                && !conversation.getUser2().getId().equals(currentUser.getId())) {
+            throw RestException.restThrow(ErrorType.ACCESS_DENIED);
+        }
+
+        message.setIsLiked(isLike);
+        Message save = messageRepository.save(message);
+
+        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_LIKED_SUCCESSFULLY");
+    }
+
 
     @Transactional
     @Override
