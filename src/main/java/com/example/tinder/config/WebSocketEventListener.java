@@ -75,7 +75,8 @@ public class WebSocketEventListener {
                 );
 
                 // Broadcast offline status
-                messagingTemplate.convertAndSend("/topic/user/" + username + "/status",
+                messagingTemplate.convertAndSend(
+                        "/queue/" + username + "/status",
                         Map.of(
                                 "username", username,
                                 "online", false,
