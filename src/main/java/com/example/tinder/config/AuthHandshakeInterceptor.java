@@ -29,14 +29,15 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
             return true; // SockJS fallback
         }
 
-        String uri = request.getURI().toString();
+
+//        String uri = request.getURI().toString();
 
         // SockJS fallback routes - token talab qilinmaydi
-        if (uri.contains("/info") || uri.contains("iframe.html") ||
-                uri.contains("xhr") || uri.contains("jsonp") ||
-                uri.contains("eventsource")) {
-            return true;
-        }
+//        if (uri.contains("/info") || uri.contains("iframe.html") ||
+//                uri.contains("xhr") || uri.contains("jsonp") ||
+//                uri.contains("eventsource")) {
+//            return true;
+//        }
 
         String token = servletRequest.getServletRequest().getParameter("token");
 

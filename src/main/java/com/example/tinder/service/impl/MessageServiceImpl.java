@@ -23,6 +23,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -96,8 +97,22 @@ public class MessageServiceImpl implements MessageService {
             throw RestException.restThrow(ErrorType.ACCESS_DENIED);
         }
 
+        // o'qilmaganlarni togridan togri socketdan yuborish uchun
+        List<Message> unreadMessages = messageRepository.findUnreadMessagesForUser(conversationId, currentUser.getId());
+        for (Message unreadMessage : unreadMessages) {
+            // ✅ WebSocket orqali yuborish - faqat conversation topic'ga
+            unreadMessage.setIsRead(true);
+            Message save = messageRepository.save(unreadMessage);
+            MessageDto messageDto = messageMapper.toDto(save);
+            messagingTemplate.convertAndSend(
+                    "/topic/conversation/" + conversation.getId(),
+                    messageDto
+            );
+        }
+
+
         // faqat recipient bo‘lgan message lar read bo‘ladi
-        messageRepository.markAsRead(conversationId, currentUser.getId());
+//        messageRepository.markAsRead(conversationId, currentUser.getId());
 
         Page<Message> page =
                 messageRepository.findMessagesForUserInConversation(

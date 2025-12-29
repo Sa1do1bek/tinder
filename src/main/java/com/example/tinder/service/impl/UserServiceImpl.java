@@ -152,9 +152,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public ApiResponse<?> checkUpdatedPassword(String email, String password, String code) {
         User user = this.userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         Code co = this.codeRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Code not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR));
         if (co.getCode().equals(code)) {
             user.setPassword(passwordEncoder.encode(password));
             this.userRepository.save(user);

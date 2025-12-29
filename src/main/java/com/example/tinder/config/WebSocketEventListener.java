@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,26 +30,28 @@ public class WebSocketEventListener {
     @EventListener
     public void handleConnect(SessionConnectedEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Map<String, Object> attributes = accessor.getSessionAttributes();
+        Principal principal = accessor.getUser();   // 👈 shu
 
-        if (attributes != null) {
-            String username = (String) attributes.get("username");
+        if (principal != null) {
+
+            String username = principal.getName();// 👈 username
             String sessionId = accessor.getSessionId();
-
             if (username != null && sessionId != null) {
 
                 onlineUsers.put(username, sessionId);
                 log.info("🟢 Online: username={}, sessionId={}", username, sessionId);
 
-                userRepository.updateOnlineStatus(username, true, null);
-
                 // Broadcast online status
-                messagingTemplate.convertAndSend("/topic/user/" + username + "/status",
+                messagingTemplate.convertAndSendToUser(
+                        username,
+                        "/queue/status",
                         Map.of(
                                 "username", username,
                                 "online", true,
                                 "timestamp", System.currentTimeMillis()
-                        ));
+                        )
+                );
+                userRepository.updateOnlineStatus(username, true, null);
             }
         }
     }
