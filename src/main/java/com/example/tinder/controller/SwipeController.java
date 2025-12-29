@@ -28,4 +28,6 @@ public class SwipeController {
         return swipeService.getSwipesByUser(user.getId());
     }
 
+
+
 }
