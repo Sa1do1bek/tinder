@@ -49,5 +49,4 @@ public class AuthController {
         return this.authService.checkEmail(email);
     }
 
-
 }

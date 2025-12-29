@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,6 +40,18 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             @Param("currentUserId") Long currentUserId,
             @Param("conversationId") Long conversationId,
             Pageable pageable
+    );
+
+
+    @Query("""
+                SELECT m FROM Message m
+                WHERE m.conversation.id = :conversationId
+                  AND m.recipient.id = :userId
+                  AND m.isRead = false
+            """)
+    List<Message> findUnreadMessagesForUser(
+            @Param("conversationId") Long conversationId,
+            @Param("userId") Long userId
     );
 
 
