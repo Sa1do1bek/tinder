@@ -65,6 +65,8 @@ public class User extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "boolean default false")
     private Boolean isVerified = false;
 
+    @Column(columnDefinition = "boolean default true")
+    private boolean showProfile = true;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
