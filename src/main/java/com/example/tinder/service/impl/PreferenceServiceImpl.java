@@ -28,7 +28,6 @@ public class PreferenceServiceImpl implements PreferenceService {
         Preference preference;
         if (byUserId.isPresent()) {
             Preference entity = byUserId.get();
-            entity.setPreferredGender(dto.getPreferredGender());
             entity.setDistance(dto.getDistance());
             entity.setMinAge(dto.getMinAge());
             entity.setMaxAge(dto.getMaxAge());

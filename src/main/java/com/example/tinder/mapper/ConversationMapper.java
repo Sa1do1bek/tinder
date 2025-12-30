@@ -5,6 +5,7 @@ import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.message.ConversationDTO;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.User;
+import com.example.tinder.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +14,13 @@ import org.springframework.stereotype.Component;
 public class ConversationMapper {
     private final WebSocketEventListener webSocketEventListener;
     private final UserMapper userMapper;
+    private final UserRepository userRepository;
 
-    public ConversationDTO toDto(Conversation conversation, User user, String lastMessage, Integer unreadCount) {
+    public ConversationDTO toDto(Conversation conversation,
+                                 User user,
+                                 String lastMessage,
+                                 Integer unreadCount,
+                                 Boolean isMatched) {
 
         User otherUser = conversation.getUser1().getId().equals(user.getId())
                 ? conversation.getUser2()
@@ -39,6 +45,7 @@ public class ConversationMapper {
                 .user(userMapper.toDto(user))
                 .lastMessage(lastMessage)
                 .unreadCount(unreadCount)
+                .isMatched(isMatched)
                 .build();
     }
 

@@ -1,6 +1,5 @@
 package com.example.tinder.config;
 
-
 import com.example.tinder.filter.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -54,7 +53,6 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-    //                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
     @Bean
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
         return http
@@ -81,7 +79,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:63342", "https://api-tinder.tenzorsoft.uz","http://localhost:3000","https://front-tinder.tenzorsoft.uz","https://front-tinder.tenzorsoft.uz/**"));
+        configuration.setAllowedOrigins(List.of("http://localhost:63342", 
+                "https://api-tinder.tenzorsoft.uz",
+                "http://localhost:3000",
+                "https://front-tinder.tenzorsoft.uz",
+                "https://front-tinder.tenzorsoft.uz/**"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
@@ -92,10 +94,8 @@ public class SecurityConfig {
     }
 
 
-
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
 }
-

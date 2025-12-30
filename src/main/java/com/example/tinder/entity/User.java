@@ -59,8 +59,12 @@ public class User extends BaseEntity implements UserDetails {
     private List<ProfilePicture> profilePictures;
     private String profilePic;
     private String bio;
-    @Column(nullable = false, columnDefinition = "boolean default false")
-    private boolean active = true;
+    @Column(columnDefinition = "boolean default false")
+    private boolean active = false;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean isVerified = false;
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role")

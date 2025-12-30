@@ -30,13 +30,7 @@ public class MessageController {
     @ResponseBody
     @PostMapping("/sendMessage")
     public ApiResponse<?> sendMessage(
-            @RequestBody MessageDto.MessageCreateDto chatMessageDto,
-            @CurrentUser User currentUser) {
-
-        // Security check
-        if (!chatMessageDto.getSenderId().equals(currentUser.getId())) {
-            throw new RuntimeException("UNAUTHORIZED, You are not allowed to send message to this user");
-        }
+            @RequestBody MessageDto.MessageCreateDto chatMessageDto) {
 
         return messageService.sendMessage(chatMessageDto);
     }
@@ -69,7 +63,6 @@ public class MessageController {
         return messageService.deleteMessageForAll(messageId, currentUser);
     }
 
-//    markMessageAsRead
     @ResponseBody
     @PostMapping("/markAsRead")
     public ApiResponse<?> markAsRead(
@@ -78,9 +71,6 @@ public class MessageController {
         return messageService.markMessageAsRead(conversationId, currentUser);
     }
 
-
-
-
     @ResponseBody
     @PutMapping("/updateMessage")
     public ApiResponse<?> updateMessage(
@@ -88,8 +78,6 @@ public class MessageController {
             @CurrentUser User currentUser) {
         return messageService.updateMessage(dto, currentUser);
     }
-
-
 
     @ResponseBody
     @PutMapping("/likeMessage")
@@ -100,29 +88,22 @@ public class MessageController {
         return messageService.likeMessage(messageId,isLike,currentUser);
     }
 
-
-
-
-
     @MessageMapping("/chat/send")
     public void sendViaWebSocket(@Payload MessageDto.MessageCreateDto chatMessageDto,
                                  @Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
-        // WebSocket session'dan username olish
+
         String username = (String) sessionAttributes.get("username");
         if (username == null) {
-            log.error("❌ WebSocket send failed: username not found in session");
             return;
         }
 
-        // Username orqali user topish
         User sender = userRepository.findByUsername(username)
                 .orElseThrow(() ->  RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
         if (!chatMessageDto.getSenderId().equals(sender.getId())) {
-            log.error("❌ Unauthorized WebSocket send: username={}, claimedSenderId={}",
-                    username, chatMessageDto.getSenderId());
             return;
         }
+
         messageService.sendMessage(chatMessageDto);
-        log.info("📤 Message sent via WebSocket: from={}", username);
     }
 }

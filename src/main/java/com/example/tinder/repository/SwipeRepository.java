@@ -18,7 +18,7 @@ import java.util.Optional;
 @Repository
 public interface SwipeRepository extends JpaRepository<Swipe, Long> {
 
-  boolean existsBySwiperIdAndSwipedIdAndSwipe(Long swipedId, Long swiperId, SwipeStatus swipe);
+  boolean existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(Long swipedId, Long swiperId, SwipeStatus swipe);
 
   List<Swipe> findAllBySwiper_Id(Long userId);
 
@@ -26,13 +26,15 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
     @Query("""
     SELECT s.swiped FROM Swipe s
     WHERE s.swiper.id = :userId AND s.swipe = com.example.tinder.enums.SwipeStatus.REJECT
+    AND s.visibility = true
 """)
     Page<User> findAllRejectedUsers(@Param("userId") Long userId, Pageable pageable);
 
     @Query("""
     SELECT s.swiped FROM Swipe s
-    WHERE s.swiper.id = :userId 
+    WHERE s.swiper.id = :userId
     AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
+    AND s.visibility = true
 """)
     Page<User> findAllAcceptedUsers(@Param("userId") Long userId, Pageable pageable);
 
@@ -50,17 +52,22 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
     SELECT s.swiper FROM Swipe s
     WHERE s.swiped.id = :userId
     AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
+    AND s.visibility = true
 """)
   Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
 
 
-  @Modifying
+
+
   @Transactional
-  @Query(value = """
-        DELETE FROM swipe s
-        WHERE (s.swiper = :user1 AND s.swiped = :user2)
-            OR (s.swiper = :user1 AND s.swiped = :user2)
-        """, nativeQuery = true)
-  void deleteByUsers(@Param("user1") Long user1,
-                     @Param("user2") Long user2);
+  @Modifying
+  @Query("""
+    UPDATE Swipe s
+    SET s.visibility = false
+    WHERE
+      (s.swiper.id = :u1 AND s.swiped.id = :u2)
+      OR
+      (s.swiper.id = :u2 AND s.swiped.id = :u1)
+""")
+  void hideSwipes(Long u1, Long u2);
 }

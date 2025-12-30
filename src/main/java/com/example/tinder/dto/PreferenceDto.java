@@ -12,8 +12,6 @@ import lombok.*;
 @NoArgsConstructor
 public class PreferenceDto {
     private Long id;
-    @Enumerated(EnumType.STRING)
-    private Gender preferredGender;
     private Integer minAge;
     private Integer maxAge;
     private Double distance;
@@ -26,8 +24,6 @@ public class PreferenceDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class PreferenceUpdateDto {
-        @Enumerated(EnumType.STRING)
-        private Gender preferredGender;
         private Integer minAge;
         private Integer maxAge;
         private Double distance;

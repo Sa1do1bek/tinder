@@ -1,6 +1,8 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.message.ConversationDTO;
+import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
@@ -74,7 +76,7 @@ public class SwipeServiceImpl implements SwipeService {
 
 
         if (status == SwipeStatus.ACCEPT) {
-            boolean isMutual = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipe(swipedId, swiperId, SwipeStatus.ACCEPT);
+            boolean isMutual = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(swipedId, swiperId, SwipeStatus.ACCEPT);
 
             if (isMutual) {
                 boolean alreadyMatched = matchRepository.existsByUsers(swiperOpt.get(), swipedOpt.get());
