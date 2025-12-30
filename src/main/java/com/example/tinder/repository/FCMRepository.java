@@ -13,12 +13,12 @@ import java.util.Optional;
 @Repository
 public interface FCMRepository extends JpaRepository<FCM, Long> {
 
-    @Query(value = "select * from fcm as f where f.id = :id and f.is_visible = true", nativeQuery = true)
+    @Query(value = "select * from fcm as f where f.id = :id and f.visibility = true", nativeQuery = true)
     Optional<FCM> findByIdAndVisibilityTrue(@Param("id") Long id);
 
-    @Query(value = "select * from fcm as f where f.is_visible = true", nativeQuery = true)
+    @Query(value = "select * from fcm as f where f.visibility = true", nativeQuery = true)
     Page<FCM> findAllByVisibilityTrue(Pageable pageable);
 
-    @Query(value = "select * from fcm as f where f.user_id = :userId and f.is_visible = true", nativeQuery = true)
+    @Query(value = "select * from fcm as f where f.user_id = :userId and f.visibility = true", nativeQuery = true)
     Optional<FCM> findByUserIdAndVisibilityTrue(@Param("userId") Long userId);
 }

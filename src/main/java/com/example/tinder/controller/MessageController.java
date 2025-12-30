@@ -11,12 +11,16 @@ import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -105,5 +109,14 @@ public class MessageController {
         }
 
         messageService.sendMessage(chatMessageDto);
+    }
+
+    @ResponseBody
+    @PostMapping(value = "/uploadMediaMessage", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<?> uploadMediaMessage(
+            @RequestParam("files") List<MultipartFile> files,
+            @CurrentUser User user) {
+        return messageService.uploadMediaMessage(user, files);
     }
 }

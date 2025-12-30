@@ -1,21 +1,22 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.config.WebSocketEventListener;
-import com.example.tinder.dto.NotificationDto;
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.message.MediaMessageDto;
 import com.example.tinder.dto.message.MessageDto;
-import com.example.tinder.entity.Conversation;
-import com.example.tinder.entity.Message;
-import com.example.tinder.entity.User;
+import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.NotificationPathType;
 import com.example.tinder.exception.RestException;
+import com.example.tinder.mapper.MediaMessageMapper;
 import com.example.tinder.mapper.MessageMapper;
 import com.example.tinder.repository.ConversationRepository;
+import com.example.tinder.repository.MediaMessageRepository;
 import com.example.tinder.repository.MessageRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.MessageService;
 import com.example.tinder.service.NotificationService;
+import com.example.tinder.service.S3Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +24,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 
 @Slf4j
@@ -42,6 +41,9 @@ public class MessageServiceImpl implements MessageService {
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketEventListener eventListener;
     private final NotificationService notificationService;
+    private final S3Service s3Service;
+    private final MediaMessageRepository mediaMessageRepository;
+    private final MediaMessageMapper mediaMessageMapper;
 
     @Override
     @Transactional
@@ -63,20 +65,18 @@ public class MessageServiceImpl implements MessageService {
                 .orElseThrow(() ->
                         RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND));
 
+
         Message message = messageMapper.fromCreateDto(req, sender, receiver, conversation);
-
         Message savedMessage = messageRepository.save(message);
-
         updateConversationLastMessage(conversation, sender, receiver, savedMessage);
-
         MessageDto messageDto = messageMapper.toDto(savedMessage);
+
         messagingTemplate.convertAndSend(
                 "/topic/conversation/" + conversation.getId(),
                 messageDto
         );
 
         boolean isOnline = eventListener.isUserOnline(receiver.getUsername());
-
         if (!isOnline) {
             notificationService.sendNotification(
                     receiver.getId(),
@@ -85,8 +85,43 @@ public class MessageServiceImpl implements MessageService {
                     NotificationPathType.NEWS_MESSAGE
             );
         }
-
         return ApiResponse.success(messageDto, "MESSAGE_SENT_SUCCESSFULLY");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<?> uploadMediaMessage(User user, List<MultipartFile> files) {
+        if (!user.isActive()) {
+            throw RestException.restThrow(ErrorType.USER_INACTIVE);
+        }
+
+        if (files == null || files.isEmpty()) {
+            throw new RuntimeException("Hech qanday rasm tanlanmagan");
+        }
+
+        try {
+            List<String> cloudPaths = s3Service.uploadFiles(files);
+
+            List<MediaMessage> mediaMessages = new ArrayList<>();
+
+            for (String path : cloudPaths) {
+                MediaMessage media = new MediaMessage();
+                media.setCloudPath(path);
+                media.setUser(user);
+                mediaMessages.add(media);
+
+                if (user.getProfilePic() == null) {
+                    user.setProfilePic(path);
+                }
+            }
+
+            List<MediaMessage> list = mediaMessageRepository.saveAll(mediaMessages);
+            List<MediaMessageDto> listDto = mediaMessageMapper.toListDto(list);
+            return ApiResponse.success(listDto,"Rasmlar muvaffaqiyatli yuklandi. Soni: " + cloudPaths.size());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Rasmlarni yuklashda xatolik: " + e.getMessage());
+        }
     }
 
 
