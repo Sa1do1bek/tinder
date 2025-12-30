@@ -30,6 +30,7 @@ public class UserDto {
     private String latitude;
     private String longitude;
     private Boolean isVerified;
+    private boolean showProfile;
 
 
 }

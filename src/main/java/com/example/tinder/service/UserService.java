@@ -43,5 +43,7 @@ public interface UserService {
 
     ApiResponse<?> updateUsername(User user, String username);
 
+    ApiResponse<?> showProfileUpdate(User user, boolean status);
+
     ApiResponse<?> getOnlineUsers();
 }

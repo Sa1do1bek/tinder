@@ -35,6 +35,7 @@ public class UserMapper {
                 .isOnline(user.getIsOnline())
                 .lastSeen(user.getLastSeen())
                 .isVerified(user.getIsVerified())
+                .showProfile(user.isShowProfile())
                 .build();
     }
 

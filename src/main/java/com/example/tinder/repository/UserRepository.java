@@ -88,23 +88,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsernameAndActiveTrue(String username);
 
 
-    @Query("""
-            SELECT u FROM User u 
-            WHERE u.id != :currentUserId 
-            AND u.active = true 
-            AND (:preferredGender = 'EVERYONE' OR CAST(u.gender AS string) = :preferredGender)
-            AND (u.id NOT IN (SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :currentUserId))
-            AND (u.birthDate IS NOT NULL AND 
-                function('date_part', 'year', function('age', u.birthDate)) BETWEEN :minAge AND :maxAge)
-            """)
-    Page<User> findDiscoveryUsersJPQL(
-            @Param("currentUserId") Long currentUserId,
-            @Param("preferredGender") String preferredGender,
-            @Param("minAge") Integer minAge,
-            @Param("maxAge") Integer maxAge,
-            Pageable pageable);
-
-
     @Query(value = """
             SELECT u.*, 
             (SELECT COUNT(*) FROM users_user_interests uui
@@ -122,6 +105,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             JOIN users_location ul ON u.id = ul.user_id
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.showProfile = true   
                         AND u.id NOT IN (
                             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                             UNION
@@ -140,11 +124,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             ORDER BY match_score DESC, distance_val ASC
             """,
             countQuery = """
-                    SELECT count(*) FROM users u 
-                    JOIN users_location ul 
-                    ON u.id = ul.user_id 
-                    WHERE u.id != :currentUserId 
+                    SELECT count(*) FROM users u
+                    JOIN users_location ul
+                    ON u.id = ul.user_id
+                    WHERE u.id != :currentUserId
                     AND u.active = true
+                    AND u.showProfile = true
                     AND u.id NOT IN (
                         SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                         UNION
@@ -171,6 +156,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             ) as match_score
             FROM users u
             WHERE u.id != :currentUserId 
+            AND u.showProfile = true   
             AND u.active = true 
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
@@ -179,7 +165,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """,
             countQuery = """
                     SELECT count(*) FROM users u 
-                    WHERE u.id != :currentUserId AND u.active = true
+                    WHERE u.id != :currentUserId AND u.active = true AND u.showProfile = true   
                     AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
                     AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
                     AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -206,6 +192,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     JOIN users_user_interests uui ON u.id = uui.user_id
     WHERE u.id != :currentUserId
     AND u.active = true
+    AND u.showProfile = true   
         AND u.id NOT IN (
             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
             UNION
@@ -228,6 +215,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         JOIN users_user_interests uui ON u.id = uui.user_id 
         WHERE u.id != :currentUserId 
         AND u.active = true
+        AND u.showProfile = true   
             AND u.id NOT IN (
                 SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                 UNION
@@ -273,11 +261,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             LEFT JOIN swipe s ON u.id = s.swiped_id AND s.swipe = 'LIKE' AND s.swiper_id <> :currentUserId
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.showProfile = true           
                         AND u.id NOT IN (
                             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                             UNION
                             SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
                         )
+                                    
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)

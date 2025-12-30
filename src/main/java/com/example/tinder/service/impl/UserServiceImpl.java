@@ -321,6 +321,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ApiResponse<?> showProfileUpdate(User user, boolean status) {
+        User u = userRepository.findById(user.getId()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        u.setShowProfile(status);
+        User save = userRepository.save(u);
+        return ApiResponse.success(userMapper.toDto(save), "SUCCESS");
+    }
+
+    @Override
     public ApiResponse<?> getOnlineUsers() {
         Set<String> onlineUsernames = webSocketEventListener.getOnlineUsernames();
         List<User> users = userRepository.findByUsernameIn(onlineUsernames);
