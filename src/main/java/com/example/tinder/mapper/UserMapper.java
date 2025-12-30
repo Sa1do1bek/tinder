@@ -34,6 +34,7 @@ public class UserMapper {
                 .bio(user.getBio())
                 .isOnline(user.getIsOnline())
                 .lastSeen(user.getLastSeen())
+                .isVerified(user.getIsVerified())
                 .build();
     }
 

@@ -30,16 +30,15 @@ public class ConversationServiceImpl implements ConversationService {
     private final SwipeRepository swipeRepository;
 
 
-    // Done
     @Override
     public ApiResponse<?> createConversation(Long user1Id, Long user2Id) {
         System.out.println("❗ getOrCreateConversation called with: " + user1Id + " and " + user2Id);
 
         Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
-
-        if (optional.isPresent()) {
-            System.out.println("✅ Conversation already exists");
-
+        if (optional.isPresent() && optional.get().getVisibility()){
+            optional.get().setIsMatchedForUser1(true);
+            optional.get().setIsMatchedForUser2(true);
+            conversationRepository.save(optional.get());
             return ApiResponse.success("Conversation already exists Between User1Id = " + user1Id + " and " + user2Id);
         }
 
@@ -53,13 +52,78 @@ public class ConversationServiceImpl implements ConversationService {
                 .user2(user2)
                 .deletedForUser1(false)
                 .deletedForUser2(false)
+                .isMatchedForUser1(true)
+                .isMatchedForUser2(true)
                 .messages(new ArrayList<>())
                 .unreadForUser1(0)
                 .unreadForUser2(0)
                 .build();
 
         Conversation saved = conversationRepository.save(conversation);
-        return ApiResponse.success("Conversation created successfully with id: " + saved.getId());
+        return ApiResponse.success("CONVERSATION CREATED SUCCESSFULLY WITH ID: " + saved.getId());
+    }
+
+    @Override
+    public ApiResponse<?> createConversationDirectly(Long user1Id, Long user2Id) {
+
+        Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
+
+        User user1 = userRepository.findById(user1Id)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        User user2 = userRepository.findById(user2Id)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+
+        if (optional.isPresent()) {
+            Conversation c = optional.get();
+
+            if (c.getUser1().equals(user1)) {
+                return ApiResponse.success(conversationMapper.toDto(c,
+                        user2,
+                        c.getLastMessageForUser1(),
+                        c.getUnreadForUser1(),
+                        c.getIsMatchedForUser1()),
+                        "CONVERSATION  ALREADY EXISTS");
+            }else {
+                return ApiResponse.success(conversationMapper.toDto(c,
+                                user1,
+                                c.getLastMessageForUser2(),
+                                c.getUnreadForUser2(),
+                                c.getIsMatchedForUser2()),
+                        "CONVERSATION  ALREADY EXISTS");
+
+            }
+        }
+
+        Conversation conversation = Conversation.builder()
+                .user1(user1)
+                .user2(user2)
+                .deletedForUser1(false)
+                .deletedForUser2(false)
+                .isMatchedForUser1(true)
+                .isMatchedForUser2(false)
+                .messages(new ArrayList<>())
+                .unreadForUser1(0)
+                .unreadForUser2(0)
+                .build();
+
+        Conversation saved = conversationRepository.save(conversation);
+        return ApiResponse.success("CONVERSATION CREATED SUCCESSFULLY WITH ID: " + saved.getId());
+    }
+
+
+    @Override
+    public ApiResponse<?> markAsMatchConversation(Long conversationId) {
+
+        Optional<Conversation> optional = conversationRepository.findById(conversationId);
+        if (optional.isEmpty()) throw RestException.restThrow(ErrorType.CONVERSATION_NOT_FOUND);
+
+        Conversation conversation = optional.get();
+        conversation.setIsMatchedForUser1(true);
+        conversation.setIsMatchedForUser2(true);
+        conversationRepository.save(conversation);
+
+        return ApiResponse.success("SUCCESSFULLY MARKED CONVERSATION AS MATCH");
     }
 
 
@@ -73,10 +137,19 @@ public class ConversationServiceImpl implements ConversationService {
 
         Conversation conversation = optional.get();
         if (currentUserId.equals(conversation.getUser1().getId())) {
-            return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser2(), conversation.getLastMessageForUser1(), conversation.getUnreadForUser1()), "SUCCESS");
+            return ApiResponse.success(conversationMapper.toDto(conversation,
+                    conversation.getUser2(),
+                    conversation.getLastMessageForUser1(),
+                    conversation.getUnreadForUser1(),
+                    conversation.getIsMatchedForUser1()),
+                    "SUCCESS");
         }
 
-        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1(), conversation.getLastMessageForUser2(), conversation.getUnreadForUser2()), "SUCCESS");
+        return ApiResponse.success(conversationMapper.toDto(conversation, conversation.getUser1(),
+                conversation.getLastMessageForUser2(),
+                conversation.getUnreadForUser2(),
+                conversation.getIsMatchedForUser2()),
+                "SUCCESS");
     }
 
     @Override
@@ -110,7 +183,7 @@ public class ConversationServiceImpl implements ConversationService {
         conversation.setVisibility(false);
         conversationRepository.save(conversation);
 
-        swipeRepository.deleteByUsers(conversation.getUser1().getId(), conversation.getUser2().getId());
+        swipeRepository.hideSwipes(conversation.getUser1().getId(), conversation.getUser2().getId());
 
 
 
@@ -133,11 +206,10 @@ public class ConversationServiceImpl implements ConversationService {
             result += dto.getUnreadCount();
         }
 
-        return ApiResponse.success(result, "Successfully conversations found");
+        return ApiResponse.success(result, "SUCCESS");
     }
 
 
-    //DONE
     @Override
     public ApiResponse<?> getUserConversations(Long userId) {
         List<Conversation> conversations = conversationRepository.findByUserId(userId);
@@ -149,16 +221,18 @@ public class ConversationServiceImpl implements ConversationService {
                         conversation,
                         conversation.getUser2(),
                         conversation.getLastMessageForUser1(),
-                        conversation.getUnreadForUser1()));
+                        conversation.getUnreadForUser1(),
+                        conversation.getIsMatchedForUser1()));
             } else {
                 dtos.add(conversationMapper.toDto(
                         conversation,
                         conversation.getUser1(),
                         conversation.getLastMessageForUser2(),
-                        conversation.getUnreadForUser2()));
+                        conversation.getUnreadForUser2(),
+                        conversation.getIsMatchedForUser2()));
             }
         }
-        return ApiResponse.success(dtos, "Conversations retrieved successfully");
+        return ApiResponse.success(dtos, "SUCCESS");
     }
 
 

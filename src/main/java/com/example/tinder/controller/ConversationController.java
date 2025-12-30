@@ -25,6 +25,15 @@ public class ConversationController {
         return conversationService.createConversation(user.getId(), user2Id);
     }
 
+    @PostMapping("/createDirectly")
+    public ApiResponse<?> getOrCreateConversationDirectly(@CurrentUser User user, @RequestParam Long user2Id) {
+        return conversationService.createConversationDirectly(user.getId(), user2Id);
+    }
+
+    @PostMapping("/markAsMatch")
+    public ApiResponse<?> markAsMatchConversation(@RequestParam("conversationId") Long conversationId) {
+        return conversationService.markAsMatchConversation(conversationId);
+    }
 
     @DeleteMapping("/deleteForMe")
     public ApiResponse<?> deleteForMe(@CurrentUser User user,

@@ -58,19 +58,16 @@ public class WebSocketEventListener {
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Principal principal = accessor.getUser();   // 👈 shu
-
-//        Map<String, Object> attributes = accessor.getSessionAttributes();
+        Principal principal = accessor.getUser();
 
         if (principal != null) {
-            String username = principal.getName();// 👈 username
+            String username = principal.getName();
 
             if (username != null) {
 
                 onlineUsers.remove(username);
                 log.info("🔴 Offline: username={}", username);
 
-                // Broadcast offline status
                 messagingTemplate.convertAndSend(
                         "/queue/" + username + "/status",
                         Map.of(

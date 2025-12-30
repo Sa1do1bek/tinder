@@ -1,18 +1,18 @@
 package com.example.tinder.service;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.dto.message.ConversationDTO;
-import com.example.tinder.entity.Conversation;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
-@Component
+@Service
 public interface ConversationService {
 
     ApiResponse<?> getUserConversations(Long userId);
 
     ApiResponse<?> createConversation(Long currentUserId, Long user2Id);
+
+    ApiResponse<?> createConversationDirectly(Long user1Id, Long user2Id);
+
+    ApiResponse<?> markAsMatchConversation(Long conversationId);
 
     ApiResponse<?> findConversationBetweenUsers(Long currentUserId, Long user2Id);
 

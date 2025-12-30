@@ -21,10 +21,8 @@ public class PreferenceMapper {
         entity.setId(dto.getId());
         entity.setDistance(dto.getDistance());
         entity.setUser(user);
-        entity.setPreferredGender(dto.getPreferredGender());
         entity.setMinAge(dto.getMinAge());
         entity.setMaxAge(dto.getMaxAge());
-
 
         return entity;
     }
@@ -38,7 +36,6 @@ public class PreferenceMapper {
                 .id(entity.getId())
                 .maxAge(entity.getMaxAge())
                 .minAge(entity.getMinAge())
-                .preferredGender(entity.getPreferredGender())
                 .build();
     }
 }

@@ -15,6 +15,7 @@ public class ConversationDTO {
     private UserDto user;
     private String lastMessage;
     private Integer unreadCount;
+    private Boolean isMatched;
 
 
     @Getter

@@ -47,7 +47,6 @@ public class AuthServiceImpl implements AuthService {
     private final PendingUserRepository pendingUserRepository;
     private final UserLocationRepository userLocationRepository;
     private final PreferenceRepository preferenceRepository;
-    private final UserInterestRepository userInterestRepository;
 
     @Override
     public ApiResponse<?> registerByEmail(RegisterDto dto) {
@@ -94,9 +93,6 @@ public class AuthServiceImpl implements AuthService {
 
         PendingUser pending = optionalPending.get();
 
-        System.out.println("Pending code: " + pending.getCode());
-        System.out.println("Dto code: " + dto.getCode());
-
         if (!pending.getCode().equals(dto.getCode())) {
             throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
@@ -128,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
             user.setProfilePic(null);
             user.setRole(UserRole.USER);
             user.setActive(true);
+            user.setIsVerified(false);
             user.setUpdatedAt(LocalDateTime.now());
 
             userRepository.save(user);
@@ -136,6 +133,7 @@ public class AuthServiceImpl implements AuthService {
             preferenceRepository.findByUserId(user.getId()).ifPresent(preferenceRepository::delete);
 
         } else {
+
             user = User.builder()
                     .email(pending.getEmail())
                     .username(pending.getUsername())
@@ -174,9 +172,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void savePreference(User user) {
+
         Preference preference = new Preference();
         preference.setUser(user);
-        preference.setPreferredGender(Gender.EVERYONE);
+        if (user.getGender() == Gender.MALE){
+            preference.setPreferredGender(Gender.FEMALE);
+        }else {
+            preference.setPreferredGender(Gender.MALE);
+        }
         preference.setDistance(70.0);
         preference.setMinAge(18);
         preference.setMaxAge(50);
@@ -211,8 +214,6 @@ public class AuthServiceImpl implements AuthService {
         Device trustedDevice = this.deviceRepository.findFirstByUserIdAndDeviceName(user.getId(), dto.getDeviceId())
                 .orElse(null);
 
-        System.out.println("Trusted device: " + trustedDevice);
-
         String code = utils.getCode();
 
         if (trustedDevice == null) {
@@ -223,7 +224,6 @@ public class AuthServiceImpl implements AuthService {
                 device.setCreatedAt(LocalDateTime.now());
                 device.setUpdatedAt(LocalDateTime.now());
                 Device save = this.deviceRepository.save(device);
-                System.out.println("Device saved: " + save);
 
                 Code c = new Code();
                 c.setCreatedAt(LocalDateTime.now());

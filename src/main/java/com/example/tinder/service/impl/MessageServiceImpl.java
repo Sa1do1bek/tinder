@@ -1,19 +1,21 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.config.WebSocketEventListener;
+import com.example.tinder.dto.NotificationDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.Message;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.NotificationPathType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.MessageMapper;
 import com.example.tinder.repository.ConversationRepository;
 import com.example.tinder.repository.MessageRepository;
 import com.example.tinder.repository.UserRepository;
-import com.example.tinder.service.ConversationService;
 import com.example.tinder.service.MessageService;
+import com.example.tinder.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,14 +39,13 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
-    private final ConversationService conversationService;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketEventListener eventListener;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
     public ApiResponse<?> sendMessage(MessageDto.MessageCreateDto req) {
-
 
         User sender = getUserOrThrow(req.getSenderId());
         User receiver = getUserOrThrow(req.getReceiverId());
@@ -64,22 +65,26 @@ public class MessageServiceImpl implements MessageService {
 
         Message message = messageMapper.fromCreateDto(req, sender, receiver, conversation);
 
-
         Message savedMessage = messageRepository.save(message);
 
-        // Update last messages
         updateConversationLastMessage(conversation, sender, receiver, savedMessage);
 
-        // ✅ WebSocket orqali yuborish - faqat conversation topic'ga
         MessageDto messageDto = messageMapper.toDto(savedMessage);
         messagingTemplate.convertAndSend(
                 "/topic/conversation/" + conversation.getId(),
                 messageDto
         );
 
+        boolean isOnline = eventListener.isUserOnline(receiver.getUsername());
 
-        log.info("📤 Message sent: conversationId={}, from={}, to={}",
-                conversation.getId(), sender.getUsername(), receiver.getUsername());
+        if (!isOnline) {
+            notificationService.sendNotification(
+                    receiver.getId(),
+                    sender.getFullname() + "dan yangi xabar",
+                    messageDto.getMessage(),
+                    NotificationPathType.NEWS_MESSAGE
+            );
+        }
 
         return ApiResponse.success(messageDto, "MESSAGE_SENT_SUCCESSFULLY");
     }
@@ -110,10 +115,6 @@ public class MessageServiceImpl implements MessageService {
             );
         }
 
-
-        // faqat recipient bo‘lgan message lar read bo‘ladi
-//        messageRepository.markAsRead(conversationId, currentUser.getId());
-
         Page<Message> page =
                 messageRepository.findMessagesForUserInConversation(
                         currentUser.getId(),
@@ -124,7 +125,7 @@ public class MessageServiceImpl implements MessageService {
         Map<String, Object> result = new HashMap<>();
         result.put("messages", page.map(messageMapper::toDto));
         result.put("currentPage", page.getNumber());
-        result.put("totalPages", (page.getTotalPages()+1) / 2);
+        result.put("totalPages", (page.getTotalPages() + 1) / 2);
 
         return ApiResponse.success(result, "MESSAGES_FETCHED_SUCCESSFULLY");
 
@@ -183,8 +184,8 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public ApiResponse<?> updateMessage(MessageDto.MessageUpdateDto dto, User currentUser) {
 
-         Message message = messageRepository.findById(dto.getId())
-               .orElseThrow(() -> RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
+        Message message = messageRepository.findById(dto.getId())
+                .orElseThrow(() -> RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
 
         // Security check
         if (!message.getSender().getId().equals(currentUser.getId())) {
@@ -239,7 +240,7 @@ public class MessageServiceImpl implements MessageService {
 
         if (conversation.getUser1().getId().equals(currentUser.getId())) {
             conversation.setUnreadForUser1(0);
-        }else {
+        } else {
             conversation.setUnreadForUser2(0);
         }
         conversationRepository.save(conversation);
@@ -255,7 +256,7 @@ public class MessageServiceImpl implements MessageService {
                 .orElseThrow(() ->
                         RestException.restThrow(ErrorType.MESSAGE_NOT_FOUND));
 
-        // ❗ Faqat sender delete for all qila oladi
+        //  Faqat sender delete for all qila oladi
         if (!message.getSender().getId().equals(currentUser.getId())) {
             throw RestException.restThrow(ErrorType.ACCESS_DENIED);
         }
@@ -298,7 +299,6 @@ public class MessageServiceImpl implements MessageService {
     }
 
 
-
     private void updateConversationLastMessage(Conversation conv, User sender, User receiver, Message msg) {
         Long senderId = sender.getId();
         Long user1Id = conv.getUser1().getId();
@@ -316,22 +316,8 @@ public class MessageServiceImpl implements MessageService {
     }
 
 
-
-
-
-
     private User getUserOrThrow(Long userId) {
         return userRepository.findByIdCustom(userId).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
     }
 
-
-    private void sendToWebSocket(Long conversationId, Long senderId, Long receiverId, MessageDto messageData) {
-        messagingTemplate.convertAndSend("/topic/chat/" + conversationId, messageData);
-        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", messageData);
-        messagingTemplate.convertAndSendToUser(receiverId.toString(), "/queue/messages", messageData);
-        System.out.println("Habar Socket orqali yuborildi ");
-    }
-    //https://api-tinder/ws
-
-    // /topic/chat/" + conversationId
 }

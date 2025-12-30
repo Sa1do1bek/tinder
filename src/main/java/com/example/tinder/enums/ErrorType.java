@@ -63,7 +63,15 @@ public enum ErrorType {
     USERNAME_ALREADY_EXISTS("username.already.exists",  HttpStatus.BAD_REQUEST ),
     MESSAGE_NOT_FOUND("message.not.found", HttpStatus.NOT_FOUND ),
     ACCESS_DENIED("access.denied", HttpStatus.BAD_REQUEST ),
-    OPERATION_FAILED("operation.failed", HttpStatus.BAD_REQUEST );
+    OPERATION_FAILED("operation.failed", HttpStatus.BAD_REQUEST ),
+    FILE_NOT_FOUND("file.not.found", HttpStatus.NOT_FOUND ),
+    INVALID_OPERATION("invalid.operation", HttpStatus.BAD_REQUEST ),
+    ALREADY_BLOCKED("already.blocked", HttpStatus.BAD_REQUEST ),
+    FCM_TOKEN_NOT_FOUND("fcm.token.not.found", HttpStatus.NOT_FOUND ),
+    BLOCK_NOT_FOUND("block.not.found", HttpStatus.NOT_FOUND ),
+    FIREBASE_INITIALIZATION_ERROR("firebase.initialization.error", HttpStatus.BAD_REQUEST ),;
+
+
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;

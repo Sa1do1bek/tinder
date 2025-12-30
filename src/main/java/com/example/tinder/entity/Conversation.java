@@ -36,10 +36,15 @@ public class Conversation extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String lastMessageForUser2;
 
-
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean deletedForUser1 = false;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean deletedForUser2 = false;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isMatchedForUser1 = false;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isMatchedForUser2 = false;
 }

@@ -99,4 +99,17 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             """, nativeQuery = true)
     Optional<Message> findLastVisibleMessageForUser(@Param("conversationId") Long conversationId,
                                                                @Param("userId") Long userId);
+
+
+
+    @Modifying
+    @Query("""
+    UPDATE Message m
+    SET
+      m.visibility = false,
+      m.deletedForSender = true,
+      m.deletedForRecipient = true
+    WHERE m.conversation.id = :conversationId
+""")
+    void hideAllMessages(Long conversationId);
 }
