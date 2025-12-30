@@ -6,6 +6,9 @@ import com.example.tinder.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Component
 public interface MessageService {
@@ -23,4 +26,6 @@ public interface MessageService {
     ApiResponse<?> likeMessage(Long messageId, Boolean isLike, User currentUser);
 
     ApiResponse<?> markMessageAsRead(Long conversationId, User currentUser);
+
+    ApiResponse<?> uploadMediaMessage(User user, List<MultipartFile> files);
 }

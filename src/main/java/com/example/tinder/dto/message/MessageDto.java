@@ -1,5 +1,8 @@
 package com.example.tinder.dto.message;
 
+import com.example.tinder.enums.MessageType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -24,6 +27,7 @@ public class MessageDto {
     private Boolean deletedForSender;
     private Boolean deletedForRecipient;
     private Long replyId;
+    private MessageType messageType;
 
 
     @Getter
@@ -48,5 +52,6 @@ public class MessageDto {
         private Long receiverId;
         private Long conversationId;
         private String message;
+        private MessageType messageType;
     }
 }

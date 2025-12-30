@@ -4,6 +4,7 @@ import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.Message;
 import com.example.tinder.entity.User;
+import com.example.tinder.enums.MessageType;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class MessageMapper {
         dto.setIsRead(message.getIsRead());
         dto.setCreatedAt(message.getCreatedAt());
         dto.setSenderName(message.getSender().getFullname());
+        dto.setMessageType(message.getMessageType());
 
         return dto;
     }
@@ -36,6 +38,7 @@ public class MessageMapper {
         message.setSender(sender);
         message.setRecipient(recipient);
         message.setReplyId(dto.getReplyId());
+        message.setMessageType(dto.getMessageType());
 
         message.setIsLiked(false);
         message.setEdited(false);

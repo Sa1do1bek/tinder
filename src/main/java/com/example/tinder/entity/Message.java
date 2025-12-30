@@ -1,5 +1,6 @@
 package com.example.tinder.entity;
 
+import com.example.tinder.enums.MessageType;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import jakarta.persistence.*;
@@ -33,6 +34,10 @@ public class Message extends BaseEntity {
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id")
     private Conversation conversation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MessageType messageType;
 
     @Column(name = "is_read", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isRead = false;
