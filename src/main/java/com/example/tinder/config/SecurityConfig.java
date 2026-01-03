@@ -1,6 +1,9 @@
 package com.example.tinder.config;
 
+import com.example.tinder.config.handler.OAuth2AuthenticationFailureHandler;
+import com.example.tinder.config.handler.OAuth2AuthenticationSuccessHandler;
 import com.example.tinder.filter.JwtFilter;
+import com.example.tinder.service.impl.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +33,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     private final static String[] WHITE_LIST = {
             "/swagger-ui/**",
@@ -37,6 +43,7 @@ public class SecurityConfig {
             "/users/checkUsername/**",
             "/swagger-ui.html",
             "/auths/**",
+            "/oauth2/**",  // OAuth2 uchun qo'shing
             "/ws/**",
             "/conversation/**",
             "/chat/**",
@@ -44,8 +51,14 @@ public class SecurityConfig {
     };
 
     @Autowired
-    public SecurityConfig(JwtFilter jwtFilter) {
+    public SecurityConfig(JwtFilter jwtFilter,
+                         CustomOAuth2UserService customOAuth2UserService,
+                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                          OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) {
         this.jwtFilter = jwtFilter;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
     }
 
     @Bean
@@ -59,17 +72,24 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(a -> {
-                    a.requestMatchers(
-                                    WHITE_LIST
-                            ).permitAll()
+                    a.requestMatchers(WHITE_LIST).permitAll()
                             .anyRequest().authenticated();
                 })
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/oauth2/authorize"))
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/oauth2/callback/*"))
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .build();
     }
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -79,11 +99,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:63342", 
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:63342",
                 "https://api-tinder.tenzorsoft.uz",
                 "http://localhost:3000",
-                "https://front-tinder.tenzorsoft.uz",
-                "https://front-tinder.tenzorsoft.uz/**"));
+                "https://front-tinder.tenzorsoft.uz"
+        ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
@@ -92,7 +113,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 
     @Bean
     public RestTemplate restTemplate() {
