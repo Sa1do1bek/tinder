@@ -1,5 +1,6 @@
 package com.example.tinder.entity;
 
+import com.example.tinder.enums.AuthProvider;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
@@ -71,6 +72,12 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private UserRole role;
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean isApproved = false;
 
 
 
