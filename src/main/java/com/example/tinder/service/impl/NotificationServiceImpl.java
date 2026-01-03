@@ -53,12 +53,18 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
         notificationRepository.save(notification);
 
-        FCM fcm = fcmRepository.findByUserIdAndVisibilityTrue(recipientId).orElseThrow(
-                () -> RestException.restThrow(ErrorType.FCM_TOKEN_NOT_FOUND)
-        );
+        FCM fcm = fcmRepository.findByUserIdAndVisibilityTrue(recipientId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.FCM_TOKEN_NOT_FOUND));
+
+        String token = fcm.getFcmToken();
+
+        if (token == null || token.isBlank()) {
+            log.error("FCM token is NULL or EMPTY for userId={}", recipientId);
+            throw RestException.restThrow(ErrorType.INVALID_FCM_TOKEN);
+        }
 
         Message message = Message.builder()
-                .setToken(fcm.getFcmToken())
+                .setToken(token)
                 .setNotification(
                                 com.google.firebase.messaging.Notification.builder()
                                 .setTitle(title)
