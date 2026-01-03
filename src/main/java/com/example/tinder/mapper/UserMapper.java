@@ -36,6 +36,7 @@ public class UserMapper {
                 .lastSeen(user.getLastSeen())
                 .isVerified(user.getIsVerified())
                 .showProfile(user.isShowProfile())
+                .isApproved(user.getIsApproved())
                 .build();
     }
 

@@ -69,7 +69,9 @@ public enum ErrorType {
     ALREADY_BLOCKED("already.blocked", HttpStatus.BAD_REQUEST ),
     FCM_TOKEN_NOT_FOUND("fcm.token.not.found", HttpStatus.NOT_FOUND ),
     BLOCK_NOT_FOUND("block.not.found", HttpStatus.NOT_FOUND ),
-    FIREBASE_INITIALIZATION_ERROR("firebase.initialization.error", HttpStatus.BAD_REQUEST ),;
+    FIREBASE_INITIALIZATION_ERROR("firebase.initialization.error", HttpStatus.BAD_REQUEST ),
+    VERIFICATION_NOT_FOUND("verification.not.found", HttpStatus.NOT_FOUND ),
+    USER_ALREADY_APPROVED("user.already.approved", HttpStatus.BAD_REQUEST ),;
 
 
 

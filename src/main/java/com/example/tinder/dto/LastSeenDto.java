@@ -1,14 +1,12 @@
 package com.example.tinder.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Builder
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class LastSeenDto  {
     private Long userId;
     private Long lastSeen;

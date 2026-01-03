@@ -31,6 +31,7 @@ public class UserDto {
     private String longitude;
     private Boolean isVerified;
     private boolean showProfile;
+    private Boolean isApproved;
 
 
 }

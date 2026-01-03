@@ -47,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
     private final PendingUserRepository pendingUserRepository;
     private final UserLocationRepository userLocationRepository;
     private final PreferenceRepository preferenceRepository;
+    private final VerificationRepository verificationRepository;
 
     @Override
     public ApiResponse<?> registerByEmail(RegisterDto dto) {
@@ -154,6 +155,13 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
 
         savePreference(savedUser);
+
+        Verification verification = new Verification();
+        verification.setUser(savedUser);
+        verification.setCreatedAt(LocalDateTime.now());
+        verification.setUpdatedAt(LocalDateTime.now());
+        verificationRepository.save(verification);
+
 
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
