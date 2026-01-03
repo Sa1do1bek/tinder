@@ -43,11 +43,15 @@ public class SecurityConfig {
             "/users/checkUsername/**",
             "/swagger-ui.html",
             "/auths/**",
-            "/oauth2/**",  // OAuth2 uchun qo'shing
-            "/ws/**",
+            "/oauth2/**",
+            "/login/oauth2/**",  // Bu qo'shildi
+            "/ws/**",           // WebSocket uchun
+            "/ws",              // WebSocket uchun
             "/conversation/**",
             "/chat/**",
-            "/app"
+            "/app/**",          // STOMP destination
+            "/topic/**",        // STOMP topic
+            "/queue/**"         // STOMP queue
     };
 
     @Autowired
@@ -103,11 +107,15 @@ public class SecurityConfig {
                 "http://localhost:63342",
                 "https://api-tinder.tenzorsoft.uz",
                 "http://localhost:3000",
-                "https://front-tinder.tenzorsoft.uz"
+                "https://front-tinder.tenzorsoft.uz",
+                "ws://localhost:8081",      // WebSocket uchun
+                "ws://api-tinder.tenzorsoft.uz",
+                "wss://api-tinder.tenzorsoft.uz"
         ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

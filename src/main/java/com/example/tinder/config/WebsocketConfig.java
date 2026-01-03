@@ -25,6 +25,11 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
+                .setAllowedOrigins(
+                        "http://localhost:3000",
+                        "http://localhost:63342",
+                        "https://front-tinder.tenzorsoft.uz"
+                )
                 .addInterceptors(interceptor)
                 .withSockJS();
 
