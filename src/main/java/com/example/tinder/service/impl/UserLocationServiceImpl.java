@@ -35,8 +35,11 @@ public class UserLocationServiceImpl implements UserLocationService {
             throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
         User user = userOpt.get();
+        user.setLatitude(userLocationDto.getLatitude());
+        user.setLongitude(userLocationDto.getLongitude());
+        User save = userRepository.save(user);
 
-        UserLocation userLocation = userLocationRepository.findByUserId(userId).orElse(UserLocation.builder().user(user).build());
+        UserLocation userLocation = userLocationRepository.findByUserId(userId).orElse(UserLocation.builder().user(save).build());
         userLocation.setUser(user);
         userLocation.setLatitude(userLocationDto.getLatitude());
         userLocation.setLongitude(userLocationDto.getLongitude());

@@ -1,10 +1,12 @@
 package com.example.tinder.service.firebase;
 
-import com.example.tinder.entity.User;
+import com.example.tinder.entity.*;
 import com.example.tinder.enums.AuthProvider;
+import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
-import com.example.tinder.repository.UserRepository;
+import com.example.tinder.repository.*;
+import com.example.tinder.service.impl.AuthServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -13,6 +15,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,6 +25,11 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final CardRepository cardRepository;
+    private final UserLocationRepository userLocationRepository;
+    private final VerificationRepository verificationRepository;
+    private final PreferenceRepository preferenceRepository;
+
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -70,9 +78,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .isApproved(false)
                     .isOnline(false)
                     .showProfile(true)
+                    .latitude("41.1776056")
+                    .longitude("69.3562786")
                     .build();
-            
-            userRepository.save(newUser);
+
+            User save = userRepository.save(newUser);
+            saveCard(save);
+            savePreference(save);
+            saveVerification(save);
+            saveUserLocation(save);
             log.info("✅ New user created: {}", username);
         }
     }
@@ -91,5 +105,49 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
         
         return username;
+    }
+
+
+
+    public void saveUserLocation(User savedUser) {
+        UserLocation userLocation = new UserLocation();
+        userLocation.setUser(savedUser);
+        userLocation.setLatitude("41.1776056");
+        userLocation.setLongitude("69.3562786");
+        userLocation.setCreatedAt(LocalDateTime.now());
+        userLocation.setUpdatedAt(LocalDateTime.now());
+        userLocationRepository.save(userLocation);
+    }
+
+    public void saveVerification(User savedUser) {
+        Verification verification = new Verification();
+        verification.setUser(savedUser);
+        verification.setCreatedAt(LocalDateTime.now());
+        verification.setUpdatedAt(LocalDateTime.now());
+        verificationRepository.save(verification);
+    }
+
+    public void saveCard(User user) {
+        Card card = new Card();
+        card.setUserId(user.getId());
+        card.setBalance(0.0);
+        this.cardRepository.save(card);
+    }
+
+    public void savePreference(User user) {
+
+        Preference preference = new Preference();
+        preference.setUser(user);
+        if (user.getGender() == Gender.MALE){
+            preference.setPreferredGender(Gender.FEMALE);
+        }else {
+            preference.setPreferredGender(Gender.MALE);
+        }
+        preference.setDistance(70.0);
+        preference.setMinAge(18);
+        preference.setMaxAge(50);
+        preference.setVisibility(true);
+
+        preferenceRepository.save(preference);
     }
 }

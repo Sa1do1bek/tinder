@@ -70,6 +70,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "boolean default true")
     private boolean showProfile = true;
 
+    private String latitude;
+    private String longitude;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private UserRole role;

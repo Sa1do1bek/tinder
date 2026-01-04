@@ -154,6 +154,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .distanceKm(Math.round(distance * 10.0) / 10.0)
                 .profilePictures(images)
                 .interests(interests)
+                .latitude(targetUser.getLatitude())
+                .longitude(targetUser.getLongitude())
                 .build();
     }
 
