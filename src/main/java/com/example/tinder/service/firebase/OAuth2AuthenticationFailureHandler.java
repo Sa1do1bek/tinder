@@ -1,4 +1,4 @@
-package com.example.tinder.config.handler;
+package com.example.tinder.service.firebase;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +24,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                        HttpServletResponse response,
                                        AuthenticationException exception) throws IOException, ServletException {
         
-        log.error("❌ OAuth2 authentication failed: {}", exception.getMessage());
+        log.error("❌ OAuth2 failed: {}", exception.getMessage());
         
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri.split(",")[0])
                 .queryParam("error", exception.getLocalizedMessage())
