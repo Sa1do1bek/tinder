@@ -127,6 +127,8 @@ public class AuthServiceImpl implements AuthService {
             user.setActive(true);
             user.setIsVerified(true);
             user.setIsApproved(false);
+            user.setLatitude("41.1776056");
+            user.setLongitude("69.3562786");
             user.setProvider(AuthProvider.LOCAL);
             user.setUpdatedAt(LocalDateTime.now());
 
@@ -148,6 +150,8 @@ public class AuthServiceImpl implements AuthService {
                     .active(true)
                     .profilePictures(new ArrayList<>())
                     .userInterests(new ArrayList<>())
+                    .latitude("41.1776056")
+                    .longitude("69.3562786")
                     .isVerified(true)
                     .bio(null)
                     .build();
@@ -177,16 +181,17 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
-    private static void saveUserLocation(User savedUser) {
+    public void saveUserLocation(User savedUser) {
         UserLocation userLocation = new UserLocation();
         userLocation.setUser(savedUser);
         userLocation.setLatitude("41.1776056");
         userLocation.setLongitude("69.3562786");
         userLocation.setCreatedAt(LocalDateTime.now());
         userLocation.setUpdatedAt(LocalDateTime.now());
+        userLocationRepository.save(userLocation);
     }
 
-    private void saveVerification(User savedUser) {
+    public void saveVerification(User savedUser) {
         Verification verification = new Verification();
         verification.setUser(savedUser);
         verification.setCreatedAt(LocalDateTime.now());
@@ -194,14 +199,14 @@ public class AuthServiceImpl implements AuthService {
         verificationRepository.save(verification);
     }
 
-    private void saveCard(User user) {
+    public void saveCard(User user) {
         Card card = new Card();
         card.setUserId(user.getId());
         card.setBalance(0.0);
         this.cardRepository.save(card);
     }
 
-    private void savePreference(User user) {
+    public void savePreference(User user) {
 
         Preference preference = new Preference();
         preference.setUser(user);

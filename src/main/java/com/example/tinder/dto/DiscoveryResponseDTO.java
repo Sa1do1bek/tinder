@@ -1,14 +1,12 @@
 package com.example.tinder.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Builder
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiscoveryResponseDTO {
@@ -23,4 +21,7 @@ public class DiscoveryResponseDTO {
     
     private List<String> profilePictures; // Faqat cloudPath'lar
     private List<UserInterestDto> interests;
+
+    private String latitude;
+    private String longitude;
 }
