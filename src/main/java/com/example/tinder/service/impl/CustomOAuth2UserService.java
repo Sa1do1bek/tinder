@@ -13,6 +13,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,12 +40,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("Processing OAuth2 user - Email: {}, Name: {}", email, name);
         
         // User ni DB ga saqlash yoki yangilash
-        processUser(email, name, picture);
-        
+        try {
+            processUser(email, name, picture);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+
         return oauth2User;
     }
     
-    private void processUser(String email, String fullname, String profilePic) {
+    private void processUser(String email, String fullname, String profilePic) throws ParseException {
         Optional<User> userOptional = userRepository.findByEmail(email);
         
         if (userOptional.isPresent()) {

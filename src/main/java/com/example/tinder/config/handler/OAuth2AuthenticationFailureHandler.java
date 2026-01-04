@@ -16,7 +16,7 @@ import java.io.IOException;
 @Component
 public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-//    @Value("${app.oauth2.authorized-redirect-uris}")
+    @Value("${app.oauth2.authorized-redirect-uris}")
     private String redirectUri;
 
     @Override
