@@ -14,7 +14,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,7 +61,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userRepository.save(existingUser);
             
         } else {
-            // Yangi user yaratish
             log.info("Creating new user for email: {}", email);
             
             String username = generateUniqueUsername(email);

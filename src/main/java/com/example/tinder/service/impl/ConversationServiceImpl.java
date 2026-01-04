@@ -83,14 +83,14 @@ public class ConversationServiceImpl implements ConversationService {
                         c.getLastMessageForUser1(),
                         c.getUnreadForUser1(),
                         c.getIsMatchedForUser1()),
-                        "CONVERSATION  ALREADY EXISTS");
+                        "CONVERSATION  ALREADY EXISTS WITH ID: " + c.getId());
             }else {
                 return ApiResponse.success(conversationMapper.toDto(c,
                                 user1,
                                 c.getLastMessageForUser2(),
                                 c.getUnreadForUser2(),
                                 c.getIsMatchedForUser2()),
-                        "CONVERSATION  ALREADY EXISTS");
+                        "CONVERSATION  ALREADY EXISTS WITH ID: " + c.getId());
 
             }
         }
