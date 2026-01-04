@@ -1,10 +1,10 @@
 package com.example.tinder.config;
 
-import com.example.tinder.config.handler.OAuth2AuthenticationFailureHandler;
-import com.example.tinder.config.handler.OAuth2AuthenticationSuccessHandler;
 import com.example.tinder.filter.JwtFilter;
-import com.example.tinder.service.impl.CustomOAuth2UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.tinder.service.firebase.CustomOAuth2UserService;
+import com.example.tinder.service.firebase.OAuth2AuthenticationFailureHandler;
+import com.example.tinder.service.firebase.OAuth2AuthenticationSuccessHandler;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +30,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -43,27 +44,17 @@ public class SecurityConfig {
             "/users/checkUsername/**",
             "/swagger-ui.html",
             "/auths/**",
-            "/oauth2/**",
-            "/login/oauth2/**",  // Bu qo'shildi
-            "/ws/**",           // WebSocket uchun
-            "/ws",              // WebSocket uchun
+            "/api/v1/auth/**",      // Firebase auth uchun
+            "/oauth2/**",           // Google OAuth2 uchun
+            "/login/oauth2/**",     // OAuth2 login callback
+            "/ws/**",               // WebSocket endpoint
+            "/ws",                  // WebSocket root
             "/conversation/**",
             "/chat/**",
-            "/app/**",          // STOMP destination
-            "/topic/**",        // STOMP topic
-            "/queue/**"         // STOMP queue
+            "/app/**",              // STOMP destination prefix
+            "/topic/**",            // STOMP topic
+            "/queue/**"             // STOMP queue
     };
-
-    @Autowired
-    public SecurityConfig(JwtFilter jwtFilter,
-                         CustomOAuth2UserService customOAuth2UserService,
-                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
-                          OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) {
-        this.jwtFilter = jwtFilter;
-        this.customOAuth2UserService = customOAuth2UserService;
-        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
-        this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
-    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
@@ -72,13 +63,13 @@ public class SecurityConfig {
 
     @Bean
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
-        return http
+        http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(a -> {
-                    a.requestMatchers(WHITE_LIST).permitAll()
-                            .anyRequest().authenticated();
-                })
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(WHITE_LIST).permitAll()
+                        .anyRequest().authenticated()
+                )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/oauth2/authorize"))
@@ -89,10 +80,13 @@ public class SecurityConfig {
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                .build();
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
+
+        return http.build();
     }
 
     @Bean
@@ -103,22 +97,47 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // Allowed origins
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:63342",
-                "https://api-tinder.tenzorsoft.uz",
                 "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:8081",
+                "https://api.tinder.tenzorsoft.uz",
+                "https://api-tinder.tenzorsoft.uz",
                 "https://front-tinder.tenzorsoft.uz",
-                "ws://localhost:8081",      // WebSocket uchun
+                "ws://localhost:8080",
+                "ws://localhost:8081",
                 "ws://api-tinder.tenzorsoft.uz",
                 "wss://api-tinder.tenzorsoft.uz"
         ));
+
+        // Allow credentials
         configuration.setAllowCredentials(true);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+        // Allowed methods
+        configuration.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        ));
+
+        // Allowed headers
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+
+        // Exposed headers
+        configuration.setExposedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept"
+        ));
+
+        // Max age
+        configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 

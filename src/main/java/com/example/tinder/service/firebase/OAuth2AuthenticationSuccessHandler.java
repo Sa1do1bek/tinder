@@ -1,7 +1,6 @@
-package com.example.tinder.config.handler;
+package com.example.tinder.service.firebase;
 
 import com.example.tinder.entity.User;
-import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.utils.JwtUtil;
 import jakarta.servlet.ServletException;
@@ -25,7 +24,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
 
     @Value("${app.oauth2.authorized-redirect-uris}")
     private String redirectUri;
@@ -36,26 +34,25 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                        Authentication authentication) throws IOException, ServletException {
         
         if (response.isCommitted()) {
-            log.debug("Response has already been committed");
+            log.debug("Response already committed");
             return;
         }
 
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
         String email = oauth2User.getAttribute("email");
         
-        log.info("OAuth2 login success for email: {}", email);
+        log.info("OAuth2 login success for: {}", email);
         
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found after OAuth2 login"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
         
         String token = jwtUtil.generateToken(user.getUsername());
         
-        log.info("✅ Token generated for user: {}", user.getUsername());
+        log.info("✅ Token generated for: {}", user.getUsername());
         
-        // Frontend ga redirect qilish
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri.split(",")[0])
                 .queryParam("token", token)
-                .queryParam("user", userMapper.toDto(user))
+                .queryParam("username", user.getUsername())
                 .build().toUriString();
         
         log.info("Redirecting to: {}", targetUrl);

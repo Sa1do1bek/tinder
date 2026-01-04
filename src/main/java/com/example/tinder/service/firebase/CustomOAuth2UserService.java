@@ -1,4 +1,4 @@
-package com.example.tinder.service.impl;
+package com.example.tinder.service.firebase;
 
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.AuthProvider;
@@ -13,7 +13,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,7 +29,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         log.info("OAuth2 User attributes: {}", oauth2User.getAttributes());
         
-        // Google-dan kelgan ma'lumotlar
         Map<String, Object> attributes = oauth2User.getAttributes();
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
@@ -38,21 +36,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         log.info("Processing OAuth2 user - Email: {}, Name: {}", email, name);
         
-        // User ni DB ga saqlash yoki yangilash
-        try {
-            processUser(email, name, picture);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
+        processUser(email, name, picture);
+        
         return oauth2User;
     }
     
-    private void processUser(String email, String fullname, String profilePic) throws ParseException {
+    private void processUser(String email, String fullname, String profilePic) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         
         if (userOptional.isPresent()) {
-            // User mavjud - yangilash
             User existingUser = userOptional.get();
             log.info("Existing user found: {}", existingUser.getUsername());
             
@@ -74,7 +66,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .role(UserRole.USER)
                     .status(UserStatus.ACTIVE)
                     .active(true)
-                    .isVerified(true)  // Google-dan kelgan verified
+                    .isVerified(true)
                     .isApproved(false)
                     .isOnline(false)
                     .showProfile(true)
@@ -86,7 +78,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
     
     private String generateUniqueUsername(String email) {
-        String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
+        String baseUsername = email.split("@")[0]
+                .replaceAll("[^a-zA-Z0-9]", "")
+                .toLowerCase();
+        
         String username = baseUsername;
         int counter = 1;
         

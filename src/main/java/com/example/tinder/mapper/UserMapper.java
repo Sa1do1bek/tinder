@@ -37,6 +37,7 @@ public class UserMapper {
                 .isVerified(user.getIsVerified())
                 .showProfile(user.isShowProfile())
                 .isApproved(user.getIsApproved())
+                .firebaseUid(user.getFirebaseUid())
                 .build();
     }
 

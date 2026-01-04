@@ -311,4 +311,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("online") Boolean online,
             @Param("lastSeen") LocalDateTime lastSeen
     );
+
+
+    @Query(value = """
+            SELECT DISTINCT u FROM User u
+            WHERE u.active = true
+            AND (u.email = :firebaseUid OR u.email = :email)
+            AND u.visibility = true
+            """)
+    Optional<User> findByFirebaseUidOrEmail(@Param("firebaseUid") String firebaseUid,
+                                            @Param("email") String email);
 }

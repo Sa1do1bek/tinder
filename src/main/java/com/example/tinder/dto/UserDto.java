@@ -32,6 +32,8 @@ public class UserDto {
     private Boolean isVerified;
     private boolean showProfile;
     private Boolean isApproved;
+    private String firebaseUid;
+
 
 
 }

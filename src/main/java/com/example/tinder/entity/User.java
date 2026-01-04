@@ -80,6 +80,10 @@ public class User extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "boolean default false")
     private Boolean isApproved = false;
 
+    @Column(unique = true)
+    private String firebaseUid;
+
+
 
 
 
