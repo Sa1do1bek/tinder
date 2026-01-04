@@ -316,7 +316,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT DISTINCT u FROM User u
             WHERE u.active = true
-            AND (u.email = :firebaseUid OR u.email = :email)
+            AND (u.firebaseUid = :firebaseUid OR u.email = :email)
             AND u.visibility = true
             """)
     Optional<User> findByFirebaseUidOrEmail(@Param("firebaseUid") String firebaseUid,
