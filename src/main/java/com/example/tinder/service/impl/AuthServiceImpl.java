@@ -6,10 +6,7 @@ import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.*;
-import com.example.tinder.enums.ErrorType;
-import com.example.tinder.enums.Gender;
-import com.example.tinder.enums.UserRole;
-import com.example.tinder.enums.UserStatus;
+import com.example.tinder.enums.*;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.*;
@@ -48,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserLocationRepository userLocationRepository;
     private final PreferenceRepository preferenceRepository;
     private final VerificationRepository verificationRepository;
+    private final CardRepository cardRepository;
 
     @Override
     public ApiResponse<?> registerByEmail(RegisterDto dto) {
@@ -108,7 +106,9 @@ public class AuthServiceImpl implements AuthService {
 
         Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
 
-        User user;
+        User user = new User();
+        System.out.println("USER ID " +user.getId());
+
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
@@ -125,16 +125,16 @@ public class AuthServiceImpl implements AuthService {
             user.setProfilePic(null);
             user.setRole(UserRole.USER);
             user.setActive(true);
-            user.setIsVerified(false);
+            user.setIsVerified(true);
+            user.setIsApproved(false);
+            user.setProvider(AuthProvider.LOCAL);
             user.setUpdatedAt(LocalDateTime.now());
 
-            userRepository.save(user);
 
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
             preferenceRepository.findByUserId(user.getId()).ifPresent(preferenceRepository::delete);
 
         } else {
-
             user = User.builder()
                     .email(pending.getEmail())
                     .username(pending.getUsername())
@@ -144,23 +144,21 @@ public class AuthServiceImpl implements AuthService {
                     .birthDate(pending.getBirthDate())
                     .fullname(pending.getFullName())
                     .role(UserRole.USER)
+                    .provider(AuthProvider.LOCAL)
                     .active(true)
                     .profilePictures(new ArrayList<>())
                     .userInterests(new ArrayList<>())
+                    .isVerified(true)
                     .bio(null)
                     .build();
-
         }
 
         User savedUser = userRepository.save(user);
-
+        System.out.println("SAVED USER ID " +savedUser.getId());
         savePreference(savedUser);
-
-        Verification verification = new Verification();
-        verification.setUser(savedUser);
-        verification.setCreatedAt(LocalDateTime.now());
-        verification.setUpdatedAt(LocalDateTime.now());
-        verificationRepository.save(verification);
+        saveCard(user);
+        saveVerification(savedUser);
+        saveUserLocation(savedUser);
 
 
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
@@ -177,6 +175,30 @@ public class AuthServiceImpl implements AuthService {
                         "user", userMapper.toDto(savedUser))
                 , "USER_REGISTERED_SUCCESSFULLY"
         );
+    }
+
+    private static void saveUserLocation(User savedUser) {
+        UserLocation userLocation = new UserLocation();
+        userLocation.setUser(savedUser);
+        userLocation.setLatitude("41.1776056");
+        userLocation.setLongitude("69.3562786");
+        userLocation.setCreatedAt(LocalDateTime.now());
+        userLocation.setUpdatedAt(LocalDateTime.now());
+    }
+
+    private void saveVerification(User savedUser) {
+        Verification verification = new Verification();
+        verification.setUser(savedUser);
+        verification.setCreatedAt(LocalDateTime.now());
+        verification.setUpdatedAt(LocalDateTime.now());
+        verificationRepository.save(verification);
+    }
+
+    private void saveCard(User user) {
+        Card card = new Card();
+        card.setUserId(user.getId());
+        card.setBalance(0.0);
+        this.cardRepository.save(card);
     }
 
     private void savePreference(User user) {

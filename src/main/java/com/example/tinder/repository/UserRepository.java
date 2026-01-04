@@ -298,7 +298,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
     UPDATE User u
        SET u.isOnline = :online,
