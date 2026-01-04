@@ -1,6 +1,7 @@
 package com.example.tinder.config.handler;
 
 import com.example.tinder.entity.User;
+import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.utils.JwtUtil;
 import jakarta.servlet.ServletException;
@@ -24,8 +25,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-//    @Value("${app.oauth2.authorized-redirect-uris}")
+    @Value("${app.oauth2.authorized-redirect-uris}")
     private String redirectUri;
 
     @Override
@@ -43,11 +45,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         
         log.info("OAuth2 login success for email: {}", email);
         
-        // User ni topish va token yaratish
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found after OAuth2 login"));
         
-        // JWT token yaratish
         String token = jwtUtil.generateToken(user.getUsername());
         
         log.info("✅ Token generated for user: {}", user.getUsername());
@@ -55,7 +55,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // Frontend ga redirect qilish
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri.split(",")[0])
                 .queryParam("token", token)
-                .queryParam("username", user.getUsername())
+                .queryParam("user", userMapper.toDto(user))
                 .build().toUriString();
         
         log.info("Redirecting to: {}", targetUrl);
