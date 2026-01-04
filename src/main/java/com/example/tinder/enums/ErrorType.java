@@ -72,7 +72,8 @@ public enum ErrorType {
     FIREBASE_INITIALIZATION_ERROR("firebase.initialization.error", HttpStatus.BAD_REQUEST ),
     VERIFICATION_NOT_FOUND("verification.not.found", HttpStatus.NOT_FOUND ),
     USER_ALREADY_APPROVED("user.already.approved", HttpStatus.BAD_REQUEST ),
-    INVALID_FCM_TOKEN("invalid.fcm.token", HttpStatus.BAD_REQUEST ),;
+    INVALID_FCM_TOKEN("invalid.fcm.token", HttpStatus.BAD_REQUEST ),
+    CARD_NOT_FOUND("card.not.found", HttpStatus.NOT_FOUND ),;
 
 
 
