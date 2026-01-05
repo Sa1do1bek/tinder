@@ -14,69 +14,69 @@ import java.util.Map;
 @Component
 public class FirebaseAuthClient {
 
+    /**
+     * Firebase ID tokenni verify qilish
+     */
     public FirebaseToken verifyIdToken(String idToken) {
         try {
             log.info("🔐 Starting token verification...");
-            log.debug("Token (first 50 chars): {}", idToken.substring(0, Math.min(50, idToken.length())));
 
-            if (idToken == null || idToken.trim().isEmpty()) {
-                log.error("❌ Token is null or empty");
-                throw new IllegalArgumentException("ID token bo'sh");
-            }
+            // Token ni tozalash va validatsiya
+            idToken = cleanAndValidateToken(idToken);
 
-            // Check if Firebase is initialized
+            // Firebase initialized ekanligini tekshirish
             if (FirebaseAuth.getInstance() == null) {
                 log.error("❌ FirebaseAuth instance is null!");
                 throw new IllegalStateException("Firebase not initialized");
             }
 
-            log.info("✅ FirebaseAuth instance OK");
+            log.info("✅ FirebaseAuth instance OK, verifying token...");
 
-            // Verify token
+            // Token'ni verify qilish (bu yerda asosiy ishlov beriladi)
             FirebaseToken token = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
             log.info("✅ Token verified successfully!");
             log.info("   UID: {}", token.getUid());
             log.info("   Email: {}", token.getEmail());
+            log.info("   Name: {}", token.getName());
             log.info("   Issuer: {}", token.getIssuer());
+            log.info("   Email Verified: {}", token.isEmailVerified());
 
             return token;
 
         } catch (FirebaseAuthException e) {
-            log.error("❌ Firebase Auth Exception!");
-            log.error("   Error code: {}", e.getAuthErrorCode());
+            log.error("❌ Firebase Auth Exception occurred!");
+            log.error("   Error Code: {}", e.getAuthErrorCode());
             log.error("   Message: {}", e.getMessage());
-            log.error("   HTTP Response: {}", e.getHttpResponse());
 
-            // Specific error messages
-            switch (e.getAuthErrorCode().name()) {
-                case "EXPIRED_ID_TOKEN":
-                    throw new IllegalStateException("Token muddati o'tgan. Yangi token oling.", e);
-                case "INVALID_ID_TOKEN":
-                    throw new IllegalStateException("Token formati noto'g'ri.", e);
-                case "REVOKED_ID_TOKEN":
-                    throw new IllegalStateException("Token bekor qilingan.", e);
-                case "USER_DISABLED":
-                    throw new IllegalStateException("User o'chirilgan yoki disabled.", e);
-                default:
-                    throw new IllegalStateException("Firebase verification failed: " + e.getMessage(), e);
+            if (e.getHttpResponse() != null) {
+                log.error("   HTTP Status: {}", e.getHttpResponse().getStatusCode());
+                log.error("   HTTP Body: {}", e.getHttpResponse().getContent());
             }
 
+            // Aniq error messages
+            throw handleFirebaseAuthException(e);
+
         } catch (IllegalArgumentException e) {
-            log.error("❌ Invalid argument: {}", e.getMessage());
-            throw e;
+            log.error("❌ Invalid token format: {}", e.getMessage());
+            throw new IllegalArgumentException("Token formati noto'g'ri: " + e.getMessage(), e);
+
         } catch (Exception e) {
-            log.error("❌ Unexpected error during verification", e);
+            log.error("❌ Unexpected error during token verification", e);
             throw new IllegalStateException("Token verification failed: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Token'dan user ma'lumotlarini olish
+     */
     public FirebaseUserInfoResponse getUserInfo(String idToken) {
         try {
-            log.info("📝 Getting user info from token...");
+            log.info("📝 Extracting user info from token...");
 
             FirebaseToken decoded = verifyIdToken(idToken);
 
+            // Asosiy ma'lumotlar
             String uid = decoded.getUid();
             String email = decoded.getEmail();
             Boolean emailVerified = decoded.isEmailVerified();
@@ -84,47 +84,25 @@ public class FirebaseAuthClient {
             String picture = decoded.getPicture();
 
             Map<String, Object> claims = decoded.getClaims();
+            log.debug("📋 Available claims: {}", claims.keySet());
 
-            log.info("📋 Claims: {}", claims.keySet());
+            // Telefon raqami
+            String phoneNumber = extractPhoneNumber(claims);
 
-            // Phone number
-            String phoneNumber = null;
-            if (claims.containsKey("phone_number")) {
-                phoneNumber = String.valueOf(claims.get("phone_number"));
-            }
+            // Sign-in provider (google, phone, password, etc.)
+            String signInProvider = extractSignInProvider(claims);
 
-            // Sign-in provider
-            String signInProvider = "unknown";
-            Object firebaseObj = claims.get("firebase");
-            if (firebaseObj instanceof Map<?, ?> firebaseMap) {
-                Object providerObj = firebaseMap.get("sign_in_provider");
-                if (providerObj != null) {
-                    signInProvider = providerObj.toString();
-                }
-            }
-
-            // Issued at
-            Instant issuedAt = null;
-            if (claims.containsKey("iat")) {
-                Object iatObj = claims.get("iat");
-                if (iatObj instanceof Number num) {
-                    issuedAt = Instant.ofEpochSecond(num.longValue());
-                }
-            }
-
-            // Expires at
-            Instant expiresAt = null;
-            if (claims.containsKey("exp")) {
-                Object expObj = claims.get("exp");
-                if (expObj instanceof Number num) {
-                    expiresAt = Instant.ofEpochSecond(num.longValue());
-                }
-            }
+            // Token vaqtlari
+            Instant issuedAt = extractInstantFromClaim(claims, "iat");
+            Instant expiresAt = extractInstantFromClaim(claims, "exp");
 
             log.info("✅ User info extracted successfully");
             log.info("   UID: {}", uid);
             log.info("   Email: {}", email);
+            log.info("   Name: {}", fullName);
             log.info("   Provider: {}", signInProvider);
+            log.info("   Phone: {}", phoneNumber);
+            log.info("   Issued: {}", issuedAt);
             log.info("   Expires: {}", expiresAt);
 
             return FirebaseUserInfoResponse.builder()
@@ -141,8 +119,120 @@ public class FirebaseAuthClient {
                     .build();
 
         } catch (Exception e) {
-            log.error("❌ Error getting user info: {}", e.getMessage(), e);
-            throw new IllegalStateException("Firebase token verification failed", e);
+            log.error("❌ Error extracting user info: {}", e.getMessage(), e);
+            throw new IllegalStateException("Failed to extract user info from token", e);
         }
+    }
+
+    // ============== PRIVATE HELPER METHODS ==============
+
+    /**
+     * Token'ni tozalash va validatsiya qilish
+     */
+    private String cleanAndValidateToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            log.error("❌ Token is null or empty");
+            throw new IllegalArgumentException("ID token bo'sh bo'lishi mumkin emas");
+        }
+
+        // "Bearer " prefixni olib tashlash
+        if (token.startsWith("Bearer ")) {
+            log.debug("🧹 Removing 'Bearer ' prefix from token");
+            token = token.substring(7);
+        }
+
+        // Bo'sh joylarni olib tashlash
+        token = token.trim();
+
+        log.debug("📏 Token length: {} characters", token.length());
+        log.debug("🔍 Token preview: {}...", token.substring(0, Math.min(30, token.length())));
+
+        // Token uzunligini tekshirish (Firebase token odatda 500-2000 char)
+        if (token.length() < 100) {
+            log.warn("⚠️ Token suspiciously short: {} chars", token.length());
+        }
+
+        return token;
+    }
+
+    /**
+     * Firebase Auth Exception'ni handle qilish
+     */
+    private RuntimeException handleFirebaseAuthException(FirebaseAuthException e) {
+        String errorCode = e.getAuthErrorCode().name();
+        String message;
+
+        switch (errorCode) {
+            case "EXPIRED_ID_TOKEN":
+                message = "Token muddati tugagan. Iltimos qayta login qiling.";
+                break;
+            case "INVALID_ID_TOKEN":
+                message = "Token formati noto'g'ri yoki buzilgan.";
+                break;
+            case "REVOKED_ID_TOKEN":
+                message = "Token bekor qilingan. Iltimos qayta login qiling.";
+                break;
+            case "USER_DISABLED":
+                message = "Foydalanuvchi hisobi o'chirilgan yoki bloklangan.";
+                break;
+            case "USER_NOT_FOUND":
+                message = "Foydalanuvchi topilmadi.";
+                break;
+            case "INVALID_CREDENTIAL":
+                message = "Noto'g'ri autentifikatsiya ma'lumotlari.";
+                break;
+            default:
+                message = "Token verification xatolik: " + e.getMessage();
+        }
+
+        return new IllegalStateException(message, e);
+    }
+
+    /**
+     * Claims'dan telefon raqamini olish
+     */
+    private String extractPhoneNumber(Map<String, Object> claims) {
+        if (claims.containsKey("phone_number")) {
+            Object phoneObj = claims.get("phone_number");
+            if (phoneObj != null) {
+                return phoneObj.toString();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sign-in provider'ni olish (google, phone, password, etc.)
+     */
+    private String extractSignInProvider(Map<String, Object> claims) {
+        try {
+            Object firebaseObj = claims.get("firebase");
+            if (firebaseObj instanceof Map<?, ?> firebaseMap) {
+                Object providerObj = firebaseMap.get("sign_in_provider");
+                if (providerObj != null) {
+                    return providerObj.toString();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Could not extract sign-in provider: {}", e.getMessage());
+        }
+        return "unknown";
+    }
+
+    /**
+     * Claims'dan Instant vaqtni olish
+     */
+    private Instant extractInstantFromClaim(Map<String, Object> claims, String claimKey) {
+        try {
+            if (claims.containsKey(claimKey)) {
+                Object claimObj = claims.get(claimKey);
+                if (claimObj instanceof Number num) {
+                    return Instant.ofEpochSecond(num.longValue());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Could not extract {} from claims: {}", claimKey, e.getMessage());
+        }
+        return null;
     }
 }
