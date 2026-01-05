@@ -6,7 +6,6 @@ import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.repository.*;
-import com.example.tinder.service.impl.AuthServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
