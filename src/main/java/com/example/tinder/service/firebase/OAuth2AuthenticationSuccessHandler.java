@@ -47,16 +47,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         String token = jwtUtil.generateToken(user.getUsername());
-        
-        log.info("✅ Token generated for: {}", user.getUsername());
-        
+
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri.split(",")[0])
                 .queryParam("token", token)
                 .queryParam("username", user.getUsername())
                 .build().toUriString();
-        
-        log.info("Redirecting to: {}", targetUrl);
-        
+
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

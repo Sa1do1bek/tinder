@@ -34,14 +34,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
         
-        log.info("OAuth2 User attributes: {}", oauth2User.getAttributes());
-        
         Map<String, Object> attributes = oauth2User.getAttributes();
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
         String picture = (String) attributes.get("picture");
-        
-        log.info("Processing OAuth2 user - Email: {}, Name: {}", email, name);
         
         processUser(email, name, picture);
         
@@ -53,15 +49,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         if (userOptional.isPresent()) {
             User existingUser = userOptional.get();
-            log.info("Existing user found: {}", existingUser.getUsername());
-            
+
             existingUser.setFullname(fullname);
             existingUser.setProfilePic(profilePic);
             userRepository.save(existingUser);
             
         } else {
-            log.info("Creating new user for email: {}", email);
-            
             String username = generateUniqueUsername(email);
             
             User newUser = User.builder()
@@ -86,7 +79,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             savePreference(save);
             saveVerification(save);
             saveUserLocation(save);
-            log.info("✅ New user created: {}", username);
         }
     }
     
@@ -105,8 +97,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         return username;
     }
-
-
 
     public void saveUserLocation(User savedUser) {
         UserLocation userLocation = new UserLocation();

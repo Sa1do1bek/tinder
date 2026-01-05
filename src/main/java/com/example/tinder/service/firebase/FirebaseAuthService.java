@@ -36,7 +36,6 @@ public class FirebaseAuthService {
         String firebaseUid = firebaseUser.getUid();
         String email = firebaseUser.getEmail();
         String name = firebaseUser.getFullName();
-        String phoneNumber = firebaseUser.getPhoneNumber();
         Boolean emailVerified = firebaseUser.getEmailVerified();
         String picture = firebaseUser.getPicture();
 
@@ -47,8 +46,6 @@ public class FirebaseAuthService {
         if (email == null || email.isBlank()) {
             throw new IllegalStateException("Email topilmadi");
         }
-
-        log.info("Firebase login - UID: {}, Email: {}", firebaseUid, email);
 
         Optional<User> optionalUser = userRepository.findByFirebaseUidOrEmail(firebaseUid, email);
 
@@ -65,7 +62,7 @@ public class FirebaseAuthService {
             user = User.builder()
                     .firebaseUid(firebaseUid)
                     .email(email)
-                    .username(username)  // MUHIM!
+                    .username(username)
                     .fullname(name != null && !name.isBlank() ? name : "User")
                     .profilePic(picture)
                     .isVerified(emailVerified != null ? emailVerified : false)
@@ -79,12 +76,10 @@ public class FirebaseAuthService {
                     .build();
 
             user = userRepository.save(user);
-            log.info("✅ New user created: {} (ID: {})", username, user.getId());
 
         } else {
             // MAVJUD USER
             user = optionalUser.get();
-            log.info("Existing user found: {} (ID: {})", user.getUsername(), user.getId());
 
             boolean needsUpdate = false;
 
@@ -121,13 +116,10 @@ public class FirebaseAuthService {
 
             if (needsUpdate) {
                 user = userRepository.save(user);
-                log.info("✅ User updated: {}", user.getUsername());
             }
         }
 
-        // JWT token yaratish
         String token = jwtUtil.generateToken(user.getUsername());
-        log.info("✅ JWT token generated for: {}", user.getUsername());
 
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
