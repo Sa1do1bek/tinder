@@ -1,11 +1,11 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.DiscoveryResponseDTO;
+import com.example.tinder.dto.LikedUserDto;
+import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.entity.Preference;
-import com.example.tinder.entity.User;
-import com.example.tinder.entity.UserLocation;
+import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.repository.SwipeRepository;
@@ -18,6 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,7 +28,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LikeServiceImpl implements LikeService {
     private final SwipeRepository swipeRepository;
-    private final DiscoveryServiceImpl discoveryService;
     private final UserLocationRepository locationRepository;
     private final UserRepository userRepository;
     private final PreferenceRepository preferenceRepository;
@@ -33,57 +35,81 @@ public class LikeServiceImpl implements LikeService {
     @Override
     public ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId) {
         Page<User> users = swipeRepository.findAllRejectedUsers(userId, pageRequest);
-        return getApiResponse(pageRequest, userId, users);
+        return getApiResponse(pageRequest, userId, users, SwipeStatus.REJECT);
     }
-
-
 
     @Override
     public ApiResponse<?> getMyLikedUsers(PageRequest pageRequest, Long userId) {
-        Page<User> users = swipeRepository.findAllAcceptedUsers(userId, pageRequest);
+        // LIKE va SUPERLIKE aralash olamiz
+        Page<User> users = swipeRepository.findAllLikeUsers(userId, pageRequest);
+        return getApiResponseWithMixedSwipeTypes(pageRequest, userId, users);
+    }
 
-        return getApiResponse(pageRequest, userId, users);
+    @Override
+    public ApiResponse<?> getMyLovers(PageRequest pageRequest, Long userId) {
+        // Men like qilgan userlar
+        Page<User> users = swipeRepository.findAllUsersWhoLikeMe(userId, pageRequest);
+        return getApiResponseWithMixedSwipeTypes(pageRequest, userId, users);
     }
 
     @NotNull
-    private ApiResponse<?> getApiResponse(PageRequest pageRequest, Long userId, Page<User> users) {
+    private ApiResponse<?> getApiResponse(PageRequest pageRequest, Long userId, Page<User> users, SwipeStatus swipeStatus) {
         if (!users.isEmpty()) {
             UserLocation myLoc = locationRepository.findByUserId(userId)
                     .orElse(null);
 
-            List<DiscoveryResponseDTO> responseList = users.getContent().stream()
-                    .map(user -> discoveryService.convertToCardResponse(user, Optional.ofNullable(myLoc)))
+            List<LikedUserDto> responseList = users.getContent().stream()
+                    .map(user -> convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeStatus))
                     .collect(Collectors.toList());
 
             Map<String, Object> responseMap = new HashMap<>();
             responseMap.put("users", responseList);
             responseMap.put("currentPage", pageRequest.getPageNumber());
-            responseMap.put("totalPages", (pageRequest.getPageSize()+1) / 2);
+            responseMap.put("totalPages", users.getTotalPages());
 
             return ApiResponse.success(responseMap, "SUCCESS");
         }
 
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", new ArrayList<>());
+        responseMap.put("currentPage", pageRequest.getPageNumber());
+        responseMap.put("totalPages", 0);
+
+        return ApiResponse.success(responseMap, "SUCCESS");
+    }
+
+    @NotNull
+    private ApiResponse<?> getApiResponseWithMixedSwipeTypes(PageRequest pageRequest, Long userId, Page<User> users) {
+        if (!users.isEmpty()) {
+            UserLocation myLoc = locationRepository.findByUserId(userId)
+                    .orElse(null);
+
+            List<LikedUserDto> responseList = users.getContent().stream()
+                    .map(user -> {
+                        // Har bir user uchun uning swipe type ni topamiz
+                        SwipeStatus swipeType = getSwipeTypeForUser(userId, user.getId());
+                        return convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeType);
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("users", responseList);
+            responseMap.put("currentPage", pageRequest.getPageNumber());
+            responseMap.put("totalPages", users.getTotalPages());
+
+            return ApiResponse.success(responseMap, "SUCCESS");
+        }
 
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("users", new ArrayList<>());
         responseMap.put("currentPage", pageRequest.getPageNumber());
-        responseMap.put("totalPages", pageRequest.getPageSize());
+        responseMap.put("totalPages", 0);
 
         return ApiResponse.success(responseMap, "SUCCESS");
     }
 
     @Override
-    public ApiResponse<?> getMyLovers(PageRequest pageRequest, Long userId) {
-
-        Page<User> users = swipeRepository.findAllUsersWhoLikeMe(userId, pageRequest);
-
-        return getApiResponse(pageRequest, userId, users);
-    }
-
-
-    @Override
     public ApiResponse<?> getTopLikedUsers(Long currentUserId) {
-
         userRepository.findById(currentUserId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
@@ -107,15 +133,78 @@ public class LikeServiceImpl implements LikeService {
                 Double.parseDouble(myLoc.getLongitude())
         );
 
-        List<DiscoveryResponseDTO> responseList = topLikedUsers.stream()
-                .map(user -> discoveryService.convertToCardResponse(user, Optional.of(myLoc)))
+        List<LikedUserDto> responseList = topLikedUsers.stream()
+                .map(user -> {
+                    SwipeStatus swipeType = getSwipeTypeForUser(currentUserId, user.getId());
+                    return convertToLikedUserDto(user, Optional.of(myLoc), swipeType);
+                })
                 .collect(Collectors.toList());
 
         return ApiResponse.success(responseList, "TOP LIKED USERS FETCHED SUCCESSFULLY");
     }
 
+    /**
+     * Swiper va swiped userlar orasidagi swipe type ni topish
+     */
+    private SwipeStatus getSwipeTypeForUser(Long swiperId, Long swipedId) {
+        return swipeRepository.findSwipeTypeByUsers(swiperId, swipedId)
+                .orElse(SwipeStatus.LIKE); // default LIKE
+    }
 
+    /**
+     * User ni LikedUserDto ga convert qilish
+     */
+    private LikedUserDto convertToLikedUserDto(User targetUser, Optional<UserLocation> currentLoc, SwipeStatus swipeType) {
+        int age = 0;
+        if (targetUser.getBirthDate() != null) {
+            LocalDate birthDate = targetUser.getBirthDate().toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDate();
+            age = Period.between(birthDate, LocalDate.now()).getYears();
+        }
 
+        double distance = 0;
+        Optional<UserLocation> targetLoc = locationRepository.findByUserId(targetUser.getId());
+        if (currentLoc.isPresent() && targetLoc.isPresent()) {
+            distance = calculateHaversine(
+                    Double.parseDouble(currentLoc.get().getLatitude()),
+                    Double.parseDouble(currentLoc.get().getLongitude()),
+                    Double.parseDouble(targetLoc.get().getLatitude()),
+                    Double.parseDouble(targetLoc.get().getLongitude())
+            );
+        }
 
+        List<String> images = targetUser.getProfilePictures().stream()
+                .map(ProfilePicture::getCloudPath)
+                .collect(Collectors.toList());
 
+        List<UserInterestDto> interests = targetUser.getUserInterests().stream()
+                .map(i -> new UserInterestDto(i.getId(), targetUser.getId(), i.getCategoryType(), i.getCode(), i.getName()))
+                .collect(Collectors.toList());
+
+        return LikedUserDto.builder()
+                .id(targetUser.getId())
+                .fullname(targetUser.getFullname())
+                .bio(targetUser.getBio())
+                .gender(targetUser.getGender().name())
+                .age(age)
+                .distanceKm(Math.round(distance * 10.0) / 10.0)
+                .height(targetUser.getHeight())
+                .profilePictures(images)
+                .interests(interests)
+                .latitude(targetUser.getLatitude())
+                .longitude(targetUser.getLongitude())
+                .likeType(swipeType) // SwipeType qo'shamiz
+                .build();
+    }
+
+    private double calculateHaversine(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
 }

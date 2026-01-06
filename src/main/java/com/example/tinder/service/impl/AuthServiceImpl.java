@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -86,8 +87,6 @@ public class AuthServiceImpl implements AuthService {
 
         if (optionalPending.isEmpty()) {
             throw RestException.restThrow(ErrorType.INVALID_VERIFICATION_CODE_OR_EMAIL);
-
-
         }
 
         PendingUser pending = optionalPending.get();
@@ -202,7 +201,11 @@ public class AuthServiceImpl implements AuthService {
     public void saveCard(User user) {
         Card card = new Card();
         card.setUserId(user.getId());
-        card.setBalance(0.0);
+        card.setBalance(new BigDecimal("0.0"));
+        card.setCreatedAt(LocalDateTime.now());
+        card.setUpdatedAt(LocalDateTime.now());
+        card.setTotalSuperLikesEarned(0);
+        card.setSuperLikeCount(0);
         this.cardRepository.save(card);
     }
 
@@ -334,7 +337,6 @@ public class AuthServiceImpl implements AuthService {
         if (byEmail.isEmpty()) {
             throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
-
 
         if (!byEmail.get().isActive()) {
             throw RestException.restThrow(ErrorType.ACCOUNT_NOT_FOUND);

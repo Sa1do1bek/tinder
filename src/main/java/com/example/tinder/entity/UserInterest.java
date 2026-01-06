@@ -25,3 +25,5 @@ public class UserInterest extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Preference preferenceLanguage;
 }
+
+

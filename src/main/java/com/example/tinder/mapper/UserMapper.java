@@ -1,6 +1,7 @@
 package com.example.tinder.mapper;
 
 import com.example.tinder.dto.UserDto;
+import com.example.tinder.dto.superLike.UserBasicDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserLocation;
 import com.example.tinder.repository.UserLocationRepository;
@@ -46,5 +47,15 @@ public class UserMapper {
             return list.stream().map(this::toDto).toList();
         }
         return new ArrayList<>();
+    }
+
+
+    public UserBasicDto toBasicDto(User user) {
+        return UserBasicDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .fullname(user.getFullname())
+                .profilePic(user.getProfilePic())
+                .build();
     }
 }

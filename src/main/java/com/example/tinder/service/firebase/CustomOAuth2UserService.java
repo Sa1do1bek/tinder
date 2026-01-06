@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -119,7 +120,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public void saveCard(User user) {
         Card card = new Card();
         card.setUserId(user.getId());
-        card.setBalance(0.0);
+        card.setBalance(new BigDecimal("0.0"));
+        card.setCreatedAt(LocalDateTime.now());
+        card.setUpdatedAt(LocalDateTime.now());
+        card.setTotalSuperLikesEarned(0);
+        card.setSuperLikeCount(0);
         this.cardRepository.save(card);
     }
 
