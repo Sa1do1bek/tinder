@@ -14,6 +14,10 @@ public class CardMapper {
         card.setNumber(cardDto.getNumber());
         card.setUserId(cardDto.getUserId());
         card.setId(cardDto.getId());
+
+        card.setSuperLikeCount(cardDto.getSuperLikeCount());
+        card.setTotalEarnedUZS(cardDto.getTotalEarnedUZS());
+        card.setTotalSuperLikesEarned(cardDto.getTotalSuperLikesEarned());
         return card;
     }
     public CardDto toDto(Card card) {
@@ -23,6 +27,9 @@ public class CardMapper {
         cardDto.setNumber(card.getNumber());
         cardDto.setUserId(card.getUserId());
         cardDto.setId(card.getId());
+        cardDto.setTotalEarnedUZS(card.getTotalEarnedUZS());
+        cardDto.setSuperLikeCount(card.getSuperLikeCount());
+        cardDto.setTotalSuperLikesEarned(card.getTotalSuperLikesEarned());
         return cardDto;
     }
 }

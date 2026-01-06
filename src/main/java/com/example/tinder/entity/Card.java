@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -17,5 +18,8 @@ public class Card extends BaseEntity{
     private Long userId;
     @Column(nullable = false, unique = true)
     private String number = UUID.randomUUID().toString();
-    private Double balance;
+    private BigDecimal balance;
+    private Integer superLikeCount = 0;
+    private Integer totalSuperLikesEarned = 0;
+    private BigDecimal totalEarnedUZS;
 }

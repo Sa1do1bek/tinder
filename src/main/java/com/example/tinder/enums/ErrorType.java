@@ -73,7 +73,13 @@ public enum ErrorType {
     VERIFICATION_NOT_FOUND("verification.not.found", HttpStatus.NOT_FOUND ),
     USER_ALREADY_APPROVED("user.already.approved", HttpStatus.BAD_REQUEST ),
     INVALID_FCM_TOKEN("invalid.fcm.token", HttpStatus.BAD_REQUEST ),
-    CARD_NOT_FOUND("card.not.found", HttpStatus.NOT_FOUND ),;
+    CARD_NOT_FOUND("card.not.found", HttpStatus.NOT_FOUND ),
+    PACKAGE_NOT_FOUND("package.not.found", HttpStatus.NOT_FOUND ),
+    CANNOT_SUPERLIKE_YOURSELF("cannot.superlike.yourself", HttpStatus.BAD_REQUEST ),
+    INSUFFICIENT_SUPERLIKES("insufficient.superlikes", HttpStatus.BAD_REQUEST ),
+    SUPERLIKE_ALREADY_SENT("superlike.already.sent", HttpStatus.BAD_REQUEST ),
+    PAYMENT_FAILED("payment.failed", HttpStatus.BAD_REQUEST ),
+    INSUFFICIENT_BALANCE("insufficient.balance", HttpStatus.BAD_REQUEST ),;
 
 
 

@@ -23,21 +23,26 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
   List<Swipe> findAllBySwiper_Id(Long userId);
 
   Optional<Swipe> findBySwiperIdAndSwipedId(Long swiperId, Long swipedId);
-    @Query("""
-    SELECT s.swiped FROM Swipe s
-    WHERE s.swiper.id = :userId AND s.swipe = com.example.tinder.enums.SwipeStatus.REJECT
-    AND s.visibility = true
-""")
-    Page<User> findAllRejectedUsers(@Param("userId") Long userId, Pageable pageable);
 
-    @Query("""
-    SELECT s.swiped FROM Swipe s
-    WHERE s.swiper.id = :userId
-    AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
-    AND s.visibility = true
-""")
-    Page<User> findAllAcceptedUsers(@Param("userId") Long userId, Pageable pageable);
+  @Query("""
+        SELECT s.swiped FROM Swipe s
+        WHERE s.swiper.id = :userId AND s.swipe = com.example.tinder.enums.SwipeStatus.REJECT
+        AND s.visibility = true
+    """)
+  Page<User> findAllRejectedUsers(@Param("userId") Long userId, Pageable pageable);
 
+  /**
+   * LIKE va SUPERLIKE larni aralash olib kelish
+   */
+  @Query("""
+        SELECT s.swiped FROM Swipe s
+        WHERE s.swiper.id = :userId
+        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE 
+             OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
+        AND s.visibility = true
+        ORDER BY s.createdAt DESC
+    """)
+  Page<User> findAllLikeUsers(@Param("userId") Long userId, Pageable pageable);
 
   @Modifying
   @Transactional
@@ -48,26 +53,40 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
         """, nativeQuery = true)
   void deleteExpiredRejects();
 
+  /**
+   * Menga LIKE yoki SUPERLIKE bosgan userlarni topish
+   */
   @Query("""
-    SELECT s.swiper FROM Swipe s
-    WHERE s.swiped.id = :userId
-    AND s.swipe = com.example.tinder.enums.SwipeStatus.ACCEPT
-    AND s.visibility = true
-""")
+        SELECT s.swiper FROM Swipe s
+        WHERE s.swiped.id = :userId
+        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE 
+             OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
+        AND s.visibility = true
+        ORDER BY s.createdAt DESC
+    """)
   Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
-
-
-
 
   @Transactional
   @Modifying
   @Query("""
-    UPDATE Swipe s
-    SET s.visibility = false
-    WHERE
-      (s.swiper.id = :u1 AND s.swiped.id = :u2)
-      OR
-      (s.swiper.id = :u2 AND s.swiped.id = :u1)
-""")
+        UPDATE Swipe s
+        SET s.visibility = false
+        WHERE
+          (s.swiper.id = :u1 AND s.swiped.id = :u2)
+          OR
+          (s.swiper.id = :u2 AND s.swiped.id = :u1)
+    """)
   void hideSwipes(Long u1, Long u2);
+
+  /**
+   * Bitta user uchun swipe type ni topish
+   */
+  @Query("""
+        SELECT s.swipe FROM Swipe s
+        WHERE s.swiper.id = :swiperId 
+        AND s.swiped.id = :swipedId
+        AND s.visibility = true
+    """)
+  Optional<SwipeStatus> findSwipeTypeByUsers(@Param("swiperId") Long swiperId,
+                                             @Param("swipedId") Long swipedId);
 }

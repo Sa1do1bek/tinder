@@ -75,8 +75,8 @@ public class SwipeServiceImpl implements SwipeService {
         swipeRepository.save(swipe);
 
 
-        if (status == SwipeStatus.ACCEPT) {
-            boolean isMutual = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(swipedId, swiperId, SwipeStatus.ACCEPT);
+        if (status == SwipeStatus.LIKE) {
+            boolean isMutual = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(swipedId, swiperId, SwipeStatus.LIKE);
 
             if (isMutual) {
                 boolean alreadyMatched = matchRepository.existsByUsers(swiperOpt.get(), swipedOpt.get());

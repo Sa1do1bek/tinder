@@ -34,6 +34,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
                      SELECT u FROM User u
                      WHERE u.email = :email\s
                      AND u.visibility = true
+                     AND u.active = true
+                     AND u.status = 'ACTIVE'
             \s""")
     Optional<User> findByEmail(@Param("email") String email);
 
@@ -247,41 +249,43 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query(value = """
-            SELECT DISTINCT u.*, 
-            COUNT(s.id) as like_count,
-            (6371 * acos(
-                least(1.0, greatest(-1.0, 
-                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-                ))
-            )) as distance_val
-            FROM users u
-            JOIN users_location ul ON u.id = ul.user_id
-            LEFT JOIN swipe s ON u.id = s.swiped_id AND s.swipe = 'LIKE' AND s.swiper_id <> :currentUserId
-            WHERE u.id != :currentUserId
-            AND u.active = true
-            AND u.show_profile = true           
-                        AND u.id NOT IN (
-                            SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
-                            UNION
-                            SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
-                        )
-                                    
-            AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-            AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-            AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-            AND (6371 * acos(
-                least(1.0, greatest(-1.0, 
-                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-                ))
-            )) <= :maxDistance
-            GROUP BY u.id, ul.latitude, ul.longitude
-            ORDER BY like_count DESC, distance_val ASC
-            LIMIT 10
-            """,
+        SELECT DISTINCT u.*, 
+        COUNT(s.id) as like_count,
+        (6371 * acos(
+            least(1.0, greatest(-1.0, 
+                cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+            ))
+        )) as distance_val
+        FROM users u
+        JOIN users_location ul ON u.id = ul.user_id
+        LEFT JOIN swipe s ON u.id = s.swiped_id 
+            AND (s.swipe = 'LIKE' OR s.swipe = 'SUPERLIKE') 
+            AND s.swiper_id <> :currentUserId
+            AND s.visibility = true
+        WHERE u.id != :currentUserId
+        AND u.active = true
+        AND u.show_profile = true           
+        AND u.id NOT IN (
+            SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
+            UNION
+            SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+        )
+        AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+        AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+        AND (6371 * acos(
+            least(1.0, greatest(-1.0, 
+                cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+            ))
+        )) <= :maxDistance
+        GROUP BY u.id, ul.latitude, ul.longitude
+        ORDER BY like_count DESC, distance_val ASC
+        LIMIT 10
+        """,
             nativeQuery = true)
     List<User> findTopLikedUsersNearby(
             @Param("currentUserId") Long currentUserId,

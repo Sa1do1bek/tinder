@@ -70,7 +70,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("users", responseList);
         responseMap.put("currentPage", usersPage.getNumber());
-        responseMap.put("totalPages", (usersPage.getTotalPages()+1) / 2);
+        responseMap.put("totalPages", usersPage.getTotalPages());
 
         return ApiResponse.success(responseMap, "SUCCESSFULLY DISCOVERED USERS");
     }
@@ -93,7 +93,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
         Page<User> usersPage = userRepository.findUsersBySpecificInterest(
                 currentUserId,
-                interestId,  // Bu yerda interestId bo'lishi kerak
+                interestId,
                 pref.getPreferredGender().name(),
                 pref.getMinAge(),
                 pref.getMaxAge(),
@@ -110,10 +110,9 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("users", dtoList);
         responseMap.put("currentPage", usersPage.getNumber());
-        responseMap.put("totalPages", (usersPage.getTotalPages()+1) / 2);
+        responseMap.put("totalPages", usersPage.getTotalPages());
 
         return ApiResponse.success(responseMap, "USERS FOUND BY INTEREST ID: " + interestId);
-
     }
 
 
@@ -124,7 +123,6 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                     .atZone(ZoneId.systemDefault()).toLocalDate();
             age = Period.between(birthDate, LocalDate.now()).getYears();
         }
-
 
         double distance = 0;
         Optional<UserLocation> targetLoc = locationRepository.findByUserId(targetUser.getId());
