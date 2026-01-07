@@ -10,5 +10,5 @@ public interface BlockService {
 
     boolean isBlocked(Long userId1, Long userId2);
 
-    ApiResponse<?> getUserBlocks(Long userId);
+    ApiResponse<?> getBlockedUsers(Long userId);
 }

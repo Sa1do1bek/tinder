@@ -18,17 +18,22 @@ public class BlockController {
     @PostMapping("/create")
     public ApiResponse<?> block(@CurrentUser User user,
                             @RequestParam("blockedUserId") Long blockedUserId ) {
-
         return ApiResponse.success(
                 blockService.blockUser(user.getId(), blockedUserId)
         );
     }
 
-
     @DeleteMapping("/unblock")
     public ApiResponse<?> unblock(@CurrentUser User user,
                                   @RequestParam("blockedUserId") Long blockedUserId){
-
         return ApiResponse.success(blockService.unblockUser(user.getId(), blockedUserId));
     }
+
+    @GetMapping("/getBlockedUsers")
+    public ApiResponse<?> getBlockedUsers(@CurrentUser User user){
+        return ApiResponse.success(blockService.getBlockedUsers(user.getId()));
+    }
+
+
+
 }
