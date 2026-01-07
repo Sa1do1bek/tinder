@@ -26,7 +26,7 @@ public class SuperLikePurchase extends BaseEntity {
     
     private Integer quantity;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal amountPaid;
     
     @Enumerated(EnumType.STRING)

@@ -18,8 +18,10 @@ public class Card extends BaseEntity{
     private Long userId;
     @Column(nullable = false, unique = true)
     private String number = UUID.randomUUID().toString();
+    @Column(precision = 15, scale = 2)
     private BigDecimal balance;
     private Integer superLikeCount = 0;
     private Integer totalSuperLikesEarned = 0;
+    @Column(precision = 15, scale = 2)
     private BigDecimal totalEarnedUZS;
 }

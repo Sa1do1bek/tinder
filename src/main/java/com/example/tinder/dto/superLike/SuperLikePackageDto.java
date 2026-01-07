@@ -15,6 +15,19 @@ public class SuperLikePackageDto {
     private BigDecimal priceUZS;
     private BigDecimal pricePerUnit; // Har birining narxi
     private BigDecimal platformCommission;
-    private Boolean isActive;
     private String savingsPercent; // Chegirma foizi
+
+
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SuperLikePackageCreateDto {
+        private Integer quantity;
+        private BigDecimal priceUZS;
+        private BigDecimal pricePerUnit; // Har birining narxi
+        private BigDecimal platformCommission;
+    }
+
 }

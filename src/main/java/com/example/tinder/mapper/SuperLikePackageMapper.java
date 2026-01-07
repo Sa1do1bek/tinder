@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 
 @Component
 public class SuperLikePackageMapper {
@@ -32,6 +33,22 @@ public class SuperLikePackageMapper {
                 .platformCommission(pkg.getPlatformCommission())
                 .savingsPercent(savings.intValue() > 0 ? savings.intValue() + "%" : null)
                 .build();
+    }
+
+
+    public SuperLikePackage fromCreateDto(SuperLikePackageDto.SuperLikePackageCreateDto pkg) {
+        if (pkg == null) return null;
+
+        SuperLikePackage entity = new SuperLikePackage();
+        entity.setQuantity(pkg.getQuantity());
+        entity.setPriceUZS(pkg.getPriceUZS());
+        entity.setPricePerSuperlike(pkg.getPricePerUnit());
+        entity.setPlatformCommission(pkg.getPlatformCommission());
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+        entity.setVisibility(true);
+
+        return entity;
     }
 
 }

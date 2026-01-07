@@ -3,6 +3,7 @@ package com.example.tinder.controller;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.superLike.PurchaseSuperLikeRequest;
 import com.example.tinder.dto.superLike.SendSuperLikeRequest;
+import com.example.tinder.dto.superLike.SuperLikePackageDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.service.impl.SuperLikeServiceImpl;
 import com.example.tinder.utils.CurrentUser;
@@ -105,5 +106,24 @@ public class SuperLikeController {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(superLikeService.getMyTransactions(user.getId(), pageable));
     }
+
+    @PostMapping("superlikePackageCreate")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @Operation(summary = "Super Like paketini yaratish")
+    public ApiResponse<?>  superLikePackageCreate(@RequestBody SuperLikePackageDto.SuperLikePackageCreateDto dto){
+        return superLikeService.createPackage(dto);
+    }
+
+    @DeleteMapping("superlikePackageDelete")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @Operation(summary = "Super Like paketini O'chirish")
+    public ApiResponse<?>  superLikePackageDelete(@RequestParam("packageId") Long packageId){
+        return superLikeService.deletePackage(packageId);
+    }
+
+
+
+
+
 }
 

@@ -79,7 +79,10 @@ public enum ErrorType {
     INSUFFICIENT_SUPERLIKES("insufficient.superlikes", HttpStatus.BAD_REQUEST ),
     SUPERLIKE_ALREADY_SENT("superlike.already.sent", HttpStatus.BAD_REQUEST ),
     PAYMENT_FAILED("payment.failed", HttpStatus.BAD_REQUEST ),
-    INSUFFICIENT_BALANCE("insufficient.balance", HttpStatus.BAD_REQUEST ),;
+    INSUFFICIENT_BALANCE("insufficient.balance", HttpStatus.BAD_REQUEST ),
+    INVALID_PACKAGE_QUANTITY("invalid.package.quantity", HttpStatus.BAD_REQUEST ),
+    INVALID_PACKAGE_PRICE("invalid.package.price", HttpStatus.BAD_REQUEST ),
+    INVALID_PLATFORM_COMMISSION("invalid.platform.commission", HttpStatus.BAD_REQUEST ),;
 
 
 

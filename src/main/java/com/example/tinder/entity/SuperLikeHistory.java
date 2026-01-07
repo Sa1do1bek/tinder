@@ -22,9 +22,9 @@ public class SuperLikeHistory extends BaseEntity {
     @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
     
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal rewardAmount; // 5000 som
     
-    @Column(columnDefinition = "boolean default false", precision = 10, scale = 2)
+    @Column(columnDefinition = "boolean default false", precision = 15, scale = 2)
     private Boolean isRewardPaid = false;
 }

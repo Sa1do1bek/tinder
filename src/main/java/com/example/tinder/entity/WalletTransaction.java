@@ -24,10 +24,10 @@ public class WalletTransaction extends BaseEntity {
     @Column(nullable = false)
     private TransactionType type;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal balanceAfter;
     
     @ManyToOne(fetch = FetchType.LAZY)
