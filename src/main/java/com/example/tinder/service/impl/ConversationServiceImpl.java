@@ -93,6 +93,7 @@ public class ConversationServiceImpl implements ConversationService {
 
             } else if (c.getUser1().equals(user1) && !c.getIsMatchedForUser1()){
                 c.setIsMatchedForUser1(true);
+                c.setDeletedForUser1(false);
                 Conversation save = conversationRepository.save(c);
                 return ApiResponse.success(conversationMapper.toDto(save,
                                 user2,
@@ -103,6 +104,7 @@ public class ConversationServiceImpl implements ConversationService {
 
             }else if (c.getUser2().equals(user1) && !c.getIsMatchedForUser2()) {
                 c.setIsMatchedForUser2(true);
+                c.setDeletedForUser2(false);
                 Conversation save = conversationRepository.save(c);
                 return ApiResponse.success(conversationMapper.toDto(save,
                                 user2,
