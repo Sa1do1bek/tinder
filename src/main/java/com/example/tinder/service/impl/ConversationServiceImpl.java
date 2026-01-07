@@ -76,42 +76,27 @@ public class ConversationServiceImpl implements ConversationService {
         if (optional.isPresent()) {
             Conversation c = optional.get();
 
-            if (c.getUser1().equals(user1) && c.getIsMatchedForUser1()) {
-                return ApiResponse.success(conversationMapper.toDto(c,
-                        user2,
-                        c.getLastMessageForUser1(),
-                        c.getUnreadForUser1(),
-                        c.getIsMatchedForUser1()),
-                        SuccessType.CONVERSATION_ALREADY_EXISTS);
-            } else if (c.getUser2().equals(user1) && c.getIsMatchedForUser2()) {
-                return ApiResponse.success(conversationMapper.toDto(c,
-                                user1,
-                                c.getLastMessageForUser2(),
-                                c.getUnreadForUser2(),
-                                c.getIsMatchedForUser2()),
-                        SuccessType.CONVERSATION_ALREADY_EXISTS);
-
-            } else if (c.getUser1().equals(user1) && !c.getIsMatchedForUser1()){
-                c.setIsMatchedForUser1(true);
+            if (c.getUser1().equals(user1)) {
                 c.setDeletedForUser1(false);
+                c.setIsMatchedForUser1(true);
+                Conversation save = conversationRepository.save(c);
+                return ApiResponse.success(conversationMapper.toDto(save,
+                        user1,
+                        save.getLastMessageForUser1(),
+                        save.getUnreadForUser1(),
+                        save.getIsMatchedForUser1()),
+                        SuccessType.CONVERSATION_ALREADY_EXISTS);
+            } else if (c.getUser2().equals(user1)) {
+                c.setDeletedForUser2(false);
+                c.setIsMatchedForUser2(true);
                 Conversation save = conversationRepository.save(c);
                 return ApiResponse.success(conversationMapper.toDto(save,
                                 user2,
-                                save.getLastMessageForUser1(),
-                                save.getUnreadForUser1(),
-                                save.getIsMatchedForUser1()),
+                                save.getLastMessageForUser2(),
+                                save.getUnreadForUser2(),
+                                save.getIsMatchedForUser2()),
                         SuccessType.CONVERSATION_ALREADY_EXISTS);
 
-            }else if (c.getUser2().equals(user1) && !c.getIsMatchedForUser2()) {
-                c.setIsMatchedForUser2(true);
-                c.setDeletedForUser2(false);
-                Conversation save = conversationRepository.save(c);
-                return ApiResponse.success(conversationMapper.toDto(save,
-                                user1,
-                                save.getLastMessageForUser1(),
-                                save.getUnreadForUser1(),
-                                save.getIsMatchedForUser1()),
-                        SuccessType.CONVERSATION_ALREADY_EXISTS);
             }
         }
 
