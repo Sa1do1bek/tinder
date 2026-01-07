@@ -95,7 +95,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             username = baseUsername + counter;
             counter++;
         }
-        
         return username;
     }
 
