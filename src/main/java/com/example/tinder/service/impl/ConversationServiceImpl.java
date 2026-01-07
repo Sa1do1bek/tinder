@@ -107,7 +107,7 @@ public class ConversationServiceImpl implements ConversationService {
                 c.setDeletedForUser2(false);
                 Conversation save = conversationRepository.save(c);
                 return ApiResponse.success(conversationMapper.toDto(save,
-                                user2,
+                                user1,
                                 save.getLastMessageForUser1(),
                                 save.getUnreadForUser1(),
                                 save.getIsMatchedForUser1()),
