@@ -101,7 +101,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         // Platform revenue hisobga olish
         calculatePlatformRevenue(purchase, pkg);
 
-        return ApiResponse.success(superLikePurchaseMapper.toDto(purchase), "SUPER LIKES PURCHASED SUCCESSFULLY");
+        return ApiResponse.success(superLikePurchaseMapper.toDto(purchase), SuccessType.SUPER_LIKES_PURCHASED_SUCCESSFULLY);
     }
 
     @Override
