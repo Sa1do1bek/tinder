@@ -51,10 +51,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (userOptional.isPresent()) {
             User existingUser = userOptional.get();
 
-            existingUser.setFullname(fullname);
-            existingUser.setProfilePic(profilePic);
-            userRepository.save(existingUser);
-            
+            if (existingUser.getProvider() == AuthProvider.LOCAL) {
+                    existingUser.setProvider(AuthProvider.LOCAL_AND_GOOGLE);
+                    userRepository.save(existingUser);
+            }
         } else {
             String username = generateUniqueUsername(email);
             
