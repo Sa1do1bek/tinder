@@ -12,7 +12,12 @@ import java.util.Optional;
 public interface SuperLikePackageRepository extends JpaRepository<SuperLikePackage, Long> {
     
     List<SuperLikePackage> findAllByVisibilityTrueOrderByQuantityAsc();
-    
+
+    @Query("""
+        SELECT p FROM SuperLikePackage p
+        WHERE p.id = :id
+        AND p.visibility = true
+    """)
     Optional<SuperLikePackage> findByIdAndVisibilityTrue(Long id);
     
     @Query("""

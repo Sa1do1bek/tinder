@@ -18,15 +18,15 @@ public class PlatformRevenue extends BaseEntity {
     @JoinColumn(name = "purchase_id", nullable = false)
     private SuperLikePurchase purchase;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal userRewardAmount;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal platformAmount;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 15, scale = 2)
     private BigDecimal commissionRate;
 }

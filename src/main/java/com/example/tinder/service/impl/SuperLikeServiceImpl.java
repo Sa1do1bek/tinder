@@ -37,8 +37,10 @@ public class SuperLikeServiceImpl implements SuperLikeService {
     private final SuperLikePackageMapper superLikePackageMapper;
     private final SuperLikePurchaseMapper superLikePurchaseMapper;
     private final WalletTransactionMapper walletTransactionMapper;
+    private final SuperLikePackageRepository superLikePackageRepository;
 
     private static final BigDecimal REWARD_PER_SUPERLIKE = new BigDecimal("5000.0");
+
 
 
     @Override
@@ -276,6 +278,31 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         return ApiResponse.success(response, "TRANSACTIONS FETCHED SUCCESSFULLY");
     }
 
+    @Override
+    public ApiResponse<?> createPackage(SuperLikePackageDto.SuperLikePackageCreateDto dto) {
+        if (dto.getQuantity() <= 0) throw RestException.restThrow(ErrorType.INVALID_PACKAGE_QUANTITY);
+        if (dto.getPriceUZS() == null || dto.getPriceUZS().compareTo(BigDecimal.ZERO) <= 0)
+            throw RestException.restThrow(ErrorType.INVALID_PACKAGE_PRICE);
+        if (dto.getPricePerUnit() == null || dto.getPricePerUnit().compareTo(BigDecimal.ZERO) <= 0)
+            throw RestException.restThrow(ErrorType.INVALID_PACKAGE_PRICE);
+        if (dto.getPlatformCommission() == null || dto.getPlatformCommission().compareTo(BigDecimal.ZERO) < 0)
+            throw RestException.restThrow(ErrorType.INVALID_PLATFORM_COMMISSION);
+
+        SuperLikePackage save = packageRepository.save(superLikePackageMapper.fromCreateDto(dto));
+        return ApiResponse.success(superLikePackageMapper.toDto(save), "PACKAGE CREATED SUCCESSFULLY");
+    }
+
+    @Override
+    public ApiResponse<?> deletePackage(Long packageId) {
+        Optional<SuperLikePackage> optional = superLikePackageRepository.findByIdAndVisibilityTrue(packageId);
+        if (optional.isEmpty()) throw RestException.restThrow(ErrorType.PACKAGE_NOT_FOUND);
+
+        SuperLikePackage entity = optional.get();
+        entity.setVisibility(false);
+        superLikePackageRepository.save(entity);
+
+        return ApiResponse.success(superLikePackageMapper.toDto(entity), "PACKAGE DELETED SUCCESSFULLY");
+    }
 
 
     private String processPayment(Card card,PaymentMethod method, BigDecimal amount) {
