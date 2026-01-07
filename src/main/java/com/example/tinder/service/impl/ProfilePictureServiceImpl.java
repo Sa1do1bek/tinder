@@ -5,6 +5,7 @@ import com.example.tinder.dto.ProfilePictureDto;
 import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.ProfilePictureRepository;
 import com.example.tinder.repository.UserRepository;
@@ -65,15 +66,12 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             user.getProfilePictures().addAll(newPictures);
             userRepository.save(user);
 
-            return ApiResponse.success("Rasmlar muvaffaqiyatli yuklandi. Soni: " + cloudPaths.size());
+            return ApiResponse.success(SuccessType.PICTURES_UPLOADED_SUCCESSFULLY);
 
         } catch (Exception e) {
             throw new RuntimeException("Rasmlarni yuklashda xatolik: " + e.getMessage());
         }
     }
-
-    // Qolgan metodlar (getUserPictures, deletePicture, setAsMainPicture) o'zgarishsiz qoladi
-    // Chunki ular bitta ID bilan ishlashda davom etadi.
 
     @Override
     public ApiResponse<?> getUserPictures(Long userId) {
@@ -89,7 +87,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
                         .cloudPath(p.getCloudPath())
                         .build())
                 .toList();
-        return ApiResponse.success(dtoList, "SUCCESS");
+        return ApiResponse.success(dtoList, SuccessType.USER_PICTURES_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -120,7 +118,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         // DB dan o'chirish
         profilePictureRepository.delete(picture);
 
-        return ApiResponse.success("PICTURE DELETED SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.PICTURE_DELETED_SUCCESSFULLY);
     }
 
     @Override
@@ -138,6 +136,6 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
 
         user.setProfilePic(profilePicture.getCloudPath());
         userRepository.save(user);
-        return ApiResponse.success(profilePicture.getCloudPath() ,"Asosiy rasm o'zgartirildi.");
+        return ApiResponse.success(profilePicture.getCloudPath() , SuccessType.PICTURE_SET_AS_MAIN_SUCCESSFULLY);
     }
 }

@@ -6,6 +6,7 @@ import com.example.tinder.entity.Notification;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.NotificationPathType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.FCMRepository;
 import com.example.tinder.repository.NotificationRepository;
@@ -34,7 +35,7 @@ public class NotificationServiceImpl implements NotificationService {
         fcm.setFcmToken(fcmToken);
         fcmRepository.save(fcm);
 
-        return ApiResponse.success("FCM token saved successfully");
+        return ApiResponse.success(SuccessType.FCM_TOKEN_SAVED_SUCCESSFULLY);
     }
 
     @Override
@@ -59,7 +60,6 @@ public class NotificationServiceImpl implements NotificationService {
         String token = fcm.getFcmToken();
 
         if (token == null || token.isBlank()) {
-            log.error("FCM token is NULL or EMPTY for userId={}", recipientId);
             throw RestException.restThrow(ErrorType.INVALID_FCM_TOKEN);
         }
 
@@ -81,6 +81,6 @@ public class NotificationServiceImpl implements NotificationService {
             log.error("Firebase xatolik: {}", e.getMessage());
         }
 
-        return ApiResponse.success("Notification sent successfully");
+        return ApiResponse.success(SuccessType.NOTIFICATION_SENT_SUCCESSFULLY);
     }
 }

@@ -8,10 +8,7 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.Code;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
-import com.example.tinder.enums.ErrorType;
-import com.example.tinder.enums.Gender;
-import com.example.tinder.enums.UserRole;
-import com.example.tinder.enums.UserStatus;
+import com.example.tinder.enums.*;
 import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
@@ -56,16 +53,16 @@ public class UserServiceImpl implements UserService {
         user.setUsername(username);
         user.setFullname(fullname);
         this.userRepository.save(user);
-        return ApiResponse.success("User updated successfully");
+        return ApiResponse.success(SuccessType.USER_UPDATED_SUCCESSFULLY);
     }
 
 
     @Override
     public ApiResponse<?> getUserById(Long id) {
         User user = this.userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
-        return ApiResponse.success(this.userMapper.toDto(user), "SUCCESS");
+        return ApiResponse.success(this.userMapper.toDto(user), SuccessType.USER_FOUND_SUCCESSFULLY);
     }
 
 
@@ -81,14 +78,14 @@ public class UserServiceImpl implements UserService {
             responseMap.put("currentPage", page.getNumber());
             responseMap.put("totalPages", (page.getSize() + 1) / 2);
 
-            return ApiResponse.success(responseMap, "SUCCESS");
+            return ApiResponse.success(responseMap, SuccessType.USERS_FETCHED_SUCCESSFULLY);
         }
 
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("users", new ArrayList<>());
         responseMap.put("currentPage", 0);
         responseMap.put("totalPages", 0);
-        return ApiResponse.success(responseMap, "SUCCESS");
+        return ApiResponse.success(responseMap, SuccessType.USERS_FETCHED_SUCCESSFULLY);
     }
 
 
@@ -112,7 +109,7 @@ public class UserServiceImpl implements UserService {
             c.setCounts(0);
             this.codeRepository.save(c);
             this.userRepository.save(user);
-            return ApiResponse.success("Authentication code sent");
+            return ApiResponse.success(SuccessType.AUTHENTICATION_CODE_SENT_SUCCESSFULLY);
         }
         throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
     }
@@ -132,7 +129,7 @@ public class UserServiceImpl implements UserService {
             this.userRepository.save(user);
             this.codeRepository.delete(co);
 
-            return ApiResponse.success("User email updated successfully");
+            return ApiResponse.success(SuccessType.EMAIL_UPDATED_SUCCESSFULLY);
         }
         throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
     }
@@ -146,7 +143,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(encodedPassword);
         userRepository.save(user);
 
-        return ApiResponse.success("Password updated successfully");
+        return ApiResponse.success(SuccessType.PASSWORD_UPDATED_SUCCESSFULLY);
     }
 
 
@@ -163,7 +160,7 @@ public class UserServiceImpl implements UserService {
             co.setApprovedAt(LocalDateTime.now());
             this.codeRepository.save(co);
 
-            return ApiResponse.success("Password updated successfully");
+            return ApiResponse.success(SuccessType.PASSWORD_UPDATED_SUCCESSFULLY);
         }
 
         throw RestException.restThrow(ErrorType.AUTHENTICATION_CODE_ERROR);
@@ -175,7 +172,7 @@ public class UserServiceImpl implements UserService {
             throw RestException.restThrow(ErrorType.USER_ALREADY_EXISTS);
 
         }
-        return ApiResponse.success("SUCCESS");
+        return ApiResponse.success(SuccessType.USERNAME_AVAILABLE_FOR_REGISTRATION);
     }
 
     @Override
@@ -199,7 +196,7 @@ public class UserServiceImpl implements UserService {
                         LoginResponse.builder()
                                 .token(token)
                                 .user(this.userMapper.toDto(user))
-                                .build(), "SUCCESS");
+                                .build(), SuccessType.GOOGLE_AUTH_SUCCESSFULLY);
 
 
             } else {
@@ -223,7 +220,7 @@ public class UserServiceImpl implements UserService {
                         LoginResponse.builder()
                                 .token(token)
                                 .user(this.userMapper.toDto(save))
-                                .build(), "GOOGLE AUTHORIZED SUCCESSFULLY"
+                                .build(), SuccessType.GOOGLE_AUTH_SUCCESSFULLY
                 );
             }
         }
@@ -244,7 +241,7 @@ public class UserServiceImpl implements UserService {
             return userInfo;
         }).toList();
 
-        return ApiResponse.success(result, "SEARCH RESULTS");
+        return ApiResponse.success(result, SuccessType.SEARCH_RESULTS_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -272,7 +269,7 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        return ApiResponse.success("User updated successfully");
+        return ApiResponse.success(SuccessType.USER_UPDATED_SUCCESSFULLY);
     }
 
 
@@ -281,20 +278,20 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(Long.parseLong(userId)).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         user.setActive(false);
         userRepository.save(user);
-        return ApiResponse.success("USER DELETED SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.USER_DELETED_SUCCESSFULLY);
     }
 
     @Override
     public ApiResponse<?> me(User user) {
         userRepository.findByEmail(user.getEmail()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
-        return ApiResponse.success(userMapper.toDto(user), "SUCCESS");
+        return ApiResponse.success(userMapper.toDto(user), SuccessType.USER_FOUND_SUCCESSFULLY);
     }
 
     @Override
     public ApiResponse<?> addInterest(User user, UserInterest userInterest) {
         user.getUserInterests().add(userInterest);
         userRepository.save(user);
-        return ApiResponse.success(userMapper.toDto(user), "SUCCESSFULLY ADDED INTEREST");
+        return ApiResponse.success(userMapper.toDto(user), SuccessType.USER_INTEREST_ADDED_SUCCESSFULLY);
     }
 
 
@@ -317,7 +314,7 @@ public class UserServiceImpl implements UserService {
         userInfo.put("token", jwtToken);
         userInfo.put("user", userMapper.toDto(save));
 
-        return ApiResponse.success(userInfo, "USERNAME UPDATED SUCCESSFULLY");
+        return ApiResponse.success(userInfo, SuccessType.USERNAME_UPDATED_SUCCESSFULLY);
     }
 
     @Override
@@ -325,7 +322,7 @@ public class UserServiceImpl implements UserService {
         User u = userRepository.findById(user.getId()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         u.setShowProfile(status);
         User save = userRepository.save(u);
-        return ApiResponse.success(userMapper.toDto(save), "SUCCESS");
+        return ApiResponse.success(userMapper.toDto(save), SuccessType.SHOW_PROFILE_UPDATED_SUCCESSFULLY);
     }
 
     @Override
@@ -335,7 +332,7 @@ public class UserServiceImpl implements UserService {
         List<UserDto> response = users.stream()
                 .map(userMapper::toDto)
                 .toList();
-        return ApiResponse.success(response, "SUCCESS");
+        return ApiResponse.success(response, SuccessType.ONLINE_USERS_FETCHED_SUCCESSFULLY);
     }
 
 

@@ -6,6 +6,7 @@ import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.CategoryType;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserInterestMapper;
 import com.example.tinder.repository.UserInterestRepository;
@@ -48,7 +49,7 @@ public class UserInterestServiceImpl implements UserInterestService {
 
         repository.save(entity);
 
-        return ApiResponse.success("INTEREST_CREATED_SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.INTEREST_CREATED_SUCCESSFULLY);
     }
 
     @Override
@@ -61,7 +62,7 @@ public class UserInterestServiceImpl implements UserInterestService {
         entity.setVisibility(false);
         repository.save(entity);
 
-        return ApiResponse.success("INTEREST_DELETED_SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.INTEREST_DELETED_SUCCESSFULLY);
     }
 
     @Override
@@ -74,7 +75,7 @@ public class UserInterestServiceImpl implements UserInterestService {
     @Override
     public ApiResponse<?> getAllCategoriesByType(CategoryType type) {
         List<UserInterest> byType = repository.findByCategoryType(type);
-        return ApiResponse.success(mapper.toListDto(byType), "INTEREST_FETCHED_SUCCESSFULLY");
+        return ApiResponse.success(mapper.toListDto(byType), SuccessType.INTEREST_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -90,7 +91,7 @@ public class UserInterestServiceImpl implements UserInterestService {
 
 
         if (categoryIds.isEmpty()){
-            return ApiResponse.success(new ArrayList<>(), "INTEREST_FETCHED_SUCCESSFULLY");
+            return ApiResponse.success(new ArrayList<>(), SuccessType.INTEREST_FETCHED_SUCCESSFULLY);
         }
 
         List<UserInterest> interest = new ArrayList<>();
@@ -108,7 +109,7 @@ public class UserInterestServiceImpl implements UserInterestService {
             userService.addInterest(user, c.get());
         }
 
-        return ApiResponse.success(mapper.toListDto(interest), "INTEREST_FETCHED_SUCCESSFULLY");
+        return ApiResponse.success(mapper.toListDto(interest), SuccessType.INTEREST_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -118,7 +119,7 @@ public class UserInterestServiceImpl implements UserInterestService {
             throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
         }
 
-        return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
+        return ApiResponse.success(mapper.toListDto(list), SuccessType.INTEREST_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -133,7 +134,7 @@ public class UserInterestServiceImpl implements UserInterestService {
             throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
         }
 
-        return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
+        return ApiResponse.success(mapper.toListDto(list), SuccessType.INTEREST_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -146,7 +147,7 @@ public class UserInterestServiceImpl implements UserInterestService {
             throw RestException.restThrow(ErrorType.INTEREST_NOT_FOUND);
         }
 
-        return ApiResponse.success(mapper.toListDto(list), "INTEREST_FETCHED_SUCCESSFULLY");
+        return ApiResponse.success(mapper.toListDto(list), SuccessType.INTEREST_FETCHED_SUCCESSFULLY);
     }
 
 

@@ -4,6 +4,7 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.Block;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.BlockMapper;
 import com.example.tinder.repository.*;
@@ -56,7 +57,7 @@ public class BlockServiceImpl implements BlockService {
                     conversation.setUnreadForUser2(0);
                     conversationRepository.save(conversation);
                 });
-        return ApiResponse.success("USER BLOCKED SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.USER_BLOCKED_SUCCESSFULLY);
     }
 
     @Override
@@ -71,7 +72,7 @@ public class BlockServiceImpl implements BlockService {
                 .orElseThrow(() -> RestException.restThrow(ErrorType.BLOCK_NOT_FOUND));
 
         blockRepository.delete(block);
-        return ApiResponse.success("USER UNBLOCKED SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.USER_UNBLOCKED_SUCCESSFULLY);
     }
 
     /**
@@ -90,6 +91,6 @@ public class BlockServiceImpl implements BlockService {
         return ApiResponse.success(blockRepository.findAllUserBlocks(userId)
                 .stream()
                 .map(blockMapper::toDto)
-                .toList(), "SUCCESS");
+                .toList(), SuccessType.BLOCKED_USERS_FETCHED_SUCCESSFULLY);
     }
 }

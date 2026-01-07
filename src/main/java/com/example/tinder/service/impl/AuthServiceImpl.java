@@ -77,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
         pendingUser.setCode(code);
         pendingUser.setCreatedAt(LocalDateTime.now());
         pendingUserRepository.save(pendingUser);
-        return ApiResponse.success("VERIFICATION_CODE_SENT_TO_EMAIL");
+        return ApiResponse.success(SuccessType.VERIFICATION_CODE_SENT_TO_EMAIL);
     }
 
     @Override
@@ -176,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
         return ApiResponse.success(Map.of(
                         "token", jwtToken,
                         "user", userMapper.toDto(savedUser))
-                , "USER_REGISTERED_SUCCESSFULLY"
+                , SuccessType.USER_REGISTERED_SUCCESSFULLY
         );
     }
 
@@ -273,10 +273,10 @@ public class AuthServiceImpl implements AuthService {
 
                 return ApiResponse.success(
                         LoginResponse.builder()
-                                .message("CODE SENT")
                                 .code(0)
                                 .user(this.userMapper.toDto(user))
-                                .build()
+                                .build(),
+                        SuccessType.VERIFICATION_CODE_SENT_TO_EMAIL
                 );
             }
         }
@@ -290,11 +290,11 @@ public class AuthServiceImpl implements AuthService {
 
         return ApiResponse.success(
                 LoginResponse.builder()
-                        .message("SUCCESS")
                         .code(1)
                         .user(this.userMapper.toDto(user))
                         .token(userToken)
-                        .build()
+                        .build(),
+                SuccessType.USER_LOGIN_SUCCESSFULLY
         );
     }
 
@@ -322,7 +322,7 @@ public class AuthServiceImpl implements AuthService {
                 c.setCreatedAt(LocalDateTime.now());
                 this.codeRepository.save(c);
             }
-            return ApiResponse.success("CODE_SENT");
+            return ApiResponse.success(SuccessType.CODE_SENT_TO_EMAIL);
         }
         throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
     }
@@ -369,7 +369,7 @@ public class AuthServiceImpl implements AuthService {
             map.put("token", currentToken);
             map.put("user", this.userMapper.toDto(user));
 
-            return ApiResponse.success(map, "SUCCESS");
+            return ApiResponse.success(map, SuccessType.CODE_CHECKED_SUCCESSFULLY);
         }
 
         if (!this.utils.checkCode(email, code, device.getId())) {
@@ -386,7 +386,7 @@ public class AuthServiceImpl implements AuthService {
                 throw RestException.restThrow(ErrorType.EMAIL_ALREADY_TAKEN);
             }
         });
-        return ApiResponse.success("SUCCESS");
+        return ApiResponse.success(SuccessType.EMAIL_AVAILABLE_FOR_REGISTRATION);
     }
 
 }

@@ -4,6 +4,7 @@ import com.example.tinder.dto.PreferenceDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.Preference;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.PreferenceMapper;
 import com.example.tinder.mapper.UserInterestMapper;
@@ -19,7 +20,6 @@ import java.util.Optional;
 public class PreferenceServiceImpl implements PreferenceService {
     private final PreferenceRepository repository;
     private final PreferenceMapper mapper;
-    private final UserInterestMapper userInterestMapper;
 
 
     @Override
@@ -34,7 +34,7 @@ public class PreferenceServiceImpl implements PreferenceService {
 
 
             preference = repository.save(entity);
-            return ApiResponse.success(mapper.toDto(preference), "SUCCESSFULLY UPDATE PREFERENCE");
+            return ApiResponse.success(mapper.toDto(preference), SuccessType.SUCCESSFULLY_UPDATE_PREFERENCE);
         }
         throw RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND);
     }

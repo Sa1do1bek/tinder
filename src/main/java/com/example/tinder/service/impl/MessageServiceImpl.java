@@ -7,6 +7,7 @@ import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.NotificationPathType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.MediaMessageMapper;
 import com.example.tinder.mapper.MessageMapper;
@@ -85,7 +86,7 @@ public class MessageServiceImpl implements MessageService {
                     NotificationPathType.NEWS_MESSAGE
             );
         }
-        return ApiResponse.success(messageDto, "MESSAGE_SENT_SUCCESSFULLY");
+        return ApiResponse.success(messageDto, SuccessType.MESSAGE_SENT_SUCCESSFULLY);
     }
 
     @Override
@@ -117,7 +118,7 @@ public class MessageServiceImpl implements MessageService {
 
             List<MediaMessage> list = mediaMessageRepository.saveAll(mediaMessages);
             List<MediaMessageDto> listDto = mediaMessageMapper.toListDto(list);
-            return ApiResponse.success(listDto,"Rasmlar muvaffaqiyatli yuklandi. Soni: " + cloudPaths.size());
+            return ApiResponse.success(listDto,SuccessType.PICTURES_UPLOADED_SUCCESSFULLY);
 
         } catch (Exception e) {
             throw new RuntimeException("Rasmlarni yuklashda xatolik: " + e.getMessage());
@@ -162,7 +163,7 @@ public class MessageServiceImpl implements MessageService {
         result.put("currentPage", page.getNumber());
         result.put("totalPages", (page.getTotalPages() + 1) / 2);
 
-        return ApiResponse.success(result, "MESSAGES_FETCHED_SUCCESSFULLY");
+        return ApiResponse.success(result, SuccessType.MESSAGES_FETCHED_SUCCESSFULLY);
 
     }
 
@@ -212,7 +213,7 @@ public class MessageServiceImpl implements MessageService {
 
         return ApiResponse.success(
                 messageMapper.toDto(message),
-                "MESSAGE_DELETED_SUCCESSFULLY"
+                SuccessType.MESSAGE_DELETED_SUCCESSFULLY
         );
     }
 
@@ -231,7 +232,7 @@ public class MessageServiceImpl implements MessageService {
         message.setEdited(true);
         Message save = messageRepository.save(message);
 
-        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_UPDATED_SUCCESSFULLY");
+        return ApiResponse.success(messageMapper.toDto(save), SuccessType.MESSAGE_UPDATED_SUCCESSFULLY);
     }
 
     @Override
@@ -253,7 +254,7 @@ public class MessageServiceImpl implements MessageService {
         message.setIsLiked(isLike);
         Message save = messageRepository.save(message);
 
-        return ApiResponse.success(messageMapper.toDto(save), "MESSAGE_LIKED_SUCCESSFULLY");
+        return ApiResponse.success(messageMapper.toDto(save), SuccessType.MESSAGE_LIKED_SUCCESSFULLY);
     }
 
 
@@ -279,7 +280,7 @@ public class MessageServiceImpl implements MessageService {
             conversation.setUnreadForUser2(0);
         }
         conversationRepository.save(conversation);
-        return ApiResponse.success("MESSAGE_MARKED_AS_READ_SUCCESSFULLY");
+        return ApiResponse.success(SuccessType.MESSAGE_MARKED_AS_READ_SUCCESSFULLY);
     }
 
 
@@ -329,7 +330,7 @@ public class MessageServiceImpl implements MessageService {
 
         return ApiResponse.success(
                 null,
-                "MESSAGE_DELETED_FOR_ALL_SUCCESSFULLY"
+                SuccessType.MESSAGE_DELETED_FOR_ALL_SUCCESSFULLY
         );
     }
 

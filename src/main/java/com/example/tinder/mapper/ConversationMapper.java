@@ -49,4 +49,11 @@ public class ConversationMapper {
                 .build();
     }
 
+
+    public ConversationDTO toDto(Conversation entity) {
+        if (entity == null) return null;
+        return ConversationDTO.builder()
+                .id(entity.getId())
+                .build();
+    }
 }
