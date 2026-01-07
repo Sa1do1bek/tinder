@@ -1,5 +1,6 @@
 package com.example.tinder.dto.base;
 
+import com.example.tinder.enums.SuccessType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
@@ -10,6 +11,7 @@ public class ApiResponse<T>{
     private final Boolean success;
 
     private String message;
+    private String msgKey;
 
     private T data;
 
@@ -28,6 +30,13 @@ public class ApiResponse<T>{
         this.message = message;
     }
 
+    private ApiResponse(T data, Boolean success, String message, String msgKey) {
+        this.data = data;
+        this.success = success;
+        this.message = message;
+        this.msgKey = msgKey;
+    }
+
     private ApiResponse(String message, Boolean success) {
         this.message = message;
         this.success = success;
@@ -39,6 +48,10 @@ public class ApiResponse<T>{
 
     public static <E> ApiResponse<E> success(E data, String message) {
         return new ApiResponse<>(data, Boolean.TRUE, message);
+    }
+
+    public static <E> ApiResponse<E> success(E data, SuccessType successMsg) {
+        return new ApiResponse<>(data, Boolean.TRUE, successMsg.getKey(), successMsg.getKey());
     }
 
     public static <E> ApiResponse<E> success() {
