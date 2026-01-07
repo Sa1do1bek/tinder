@@ -66,25 +66,24 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     public ApiResponse<?> createConversationDirectly(Long user1Id, Long user2Id) {
 
-        Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
+        Optional<Conversation> optional = findBetweenUsersForDirectly(user1Id, user2Id);
 
         User user1 = userRepository.findById(user1Id)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         User user2 = userRepository.findById(user2Id)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
-
         if (optional.isPresent()) {
             Conversation c = optional.get();
 
-            if (c.getUser1().equals(user1)) {
+            if (c.getUser1().equals(user1) && c.getIsMatchedForUser1()) {
                 return ApiResponse.success(conversationMapper.toDto(c,
                         user2,
                         c.getLastMessageForUser1(),
                         c.getUnreadForUser1(),
                         c.getIsMatchedForUser1()),
                         SuccessType.CONVERSATION_ALREADY_EXISTS);
-            }else {
+            } else if (c.getUser2().equals(user1) && c.getIsMatchedForUser2()) {
                 return ApiResponse.success(conversationMapper.toDto(c,
                                 user1,
                                 c.getLastMessageForUser2(),
@@ -92,6 +91,25 @@ public class ConversationServiceImpl implements ConversationService {
                                 c.getIsMatchedForUser2()),
                         SuccessType.CONVERSATION_ALREADY_EXISTS);
 
+            } else if (c.getUser1().equals(user1) && !c.getIsMatchedForUser1()){
+                c.setIsMatchedForUser1(true);
+                Conversation save = conversationRepository.save(c);
+                return ApiResponse.success(conversationMapper.toDto(save,
+                                user2,
+                                save.getLastMessageForUser1(),
+                                save.getUnreadForUser1(),
+                                save.getIsMatchedForUser1()),
+                        SuccessType.CONVERSATION_ALREADY_EXISTS);
+
+            }else if (c.getUser2().equals(user1) && !c.getIsMatchedForUser2()) {
+                c.setIsMatchedForUser2(true);
+                Conversation save = conversationRepository.save(c);
+                return ApiResponse.success(conversationMapper.toDto(save,
+                                user2,
+                                save.getLastMessageForUser1(),
+                                save.getUnreadForUser1(),
+                                save.getIsMatchedForUser1()),
+                        SuccessType.CONVERSATION_ALREADY_EXISTS);
             }
         }
 
@@ -250,4 +268,7 @@ public class ConversationServiceImpl implements ConversationService {
         return conversationRepository.findBetweenUsers(user1Id, user2Id);
     }
 
+    private Optional<Conversation> findBetweenUsersForDirectly(Long user1Id, Long user2Id) {
+        return conversationRepository.findBetweenUsersForDirectly(user1Id, user2Id);
+    }
 }
