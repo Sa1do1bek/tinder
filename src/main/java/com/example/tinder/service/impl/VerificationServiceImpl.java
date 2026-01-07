@@ -7,6 +7,7 @@ import com.example.tinder.entity.ApproveImage;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.Verification;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.ApproveImageMapper;
 import com.example.tinder.mapper.VerificationMapper;
@@ -51,7 +52,7 @@ public class VerificationServiceImpl implements VerificationService {
         }
         Verification save = verificationRepository.save(newVerification);
 
-        return ApiResponse.success(verificationMapper.toDto(save), "Verification updated successfully");
+        return ApiResponse.success(verificationMapper.toDto(save), SuccessType.VERIFICATION_UPDATED_SUCCESSFULLY);
     }
 
     @Override
@@ -62,7 +63,7 @@ public class VerificationServiceImpl implements VerificationService {
         Verification verification = verificationRepository.findByUserId(user.getId()).orElse(null);
         if (verification == null) throw RestException.restThrow(ErrorType.VERIFICATION_NOT_FOUND);
 
-        return ApiResponse.success(verificationMapper.toDto(verification), "Verification fetched successfully");
+        return ApiResponse.success(verificationMapper.toDto(verification), SuccessType.VERIFICATION_FOUND);
     }
 
 
@@ -95,7 +96,7 @@ public class VerificationServiceImpl implements VerificationService {
 
             List<ApproveImage> list = approveImageRepository.saveAll(approveImages);
             List<ApproveImageDto> listDto = approveImageMapper.toListDto(list);
-            return ApiResponse.success(listDto, "Rasmlar muvaffaqiyatli yuklandi. Soni: " + cloudPaths.size());
+            return ApiResponse.success(listDto, SuccessType.APPROVE_IMAGE_UPLOADED_SUCCESSFULLY);
 
         } catch (Exception e) {
             throw new RuntimeException("Rasmlarni yuklashda xatolik: " + e.getMessage());

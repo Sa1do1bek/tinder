@@ -5,6 +5,7 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserLocation;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.UserLocationRepository;
@@ -45,7 +46,7 @@ public class UserLocationServiceImpl implements UserLocationService {
         userLocation.setLongitude(userLocationDto.getLongitude());
         userLocationRepository.save(userLocation);
 
-        return ApiResponse.success("SUCCESSFULLY UPDATED USER LOCATION");
+        return ApiResponse.success(SuccessType.USER_LOCATION_UPDATED_SUCCESSFULLY);
     }
 
     @Override

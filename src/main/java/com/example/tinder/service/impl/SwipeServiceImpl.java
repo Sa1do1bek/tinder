@@ -7,6 +7,7 @@ import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.MatchRepository;
@@ -109,11 +110,11 @@ public class SwipeServiceImpl implements SwipeService {
                         matchNotification
                 );
 
-                return ApiResponse.success("Match found! You can now start chatting.");
+                return ApiResponse.success(SuccessType.MATCH_FOUND_YOU_CAN_START_CHAT);
             }
         }
 
-        return ApiResponse.success("Swipe recorded.");
+        return ApiResponse.success(SuccessType.SWIPE_RECORDED);
     }
 
     @Override
@@ -130,7 +131,7 @@ public class SwipeServiceImpl implements SwipeService {
             result.add(data);
         }
 
-        return ApiResponse.success(result, "SUCCESS");
+        return ApiResponse.success(result, SuccessType.SWIPES_FETCHED);
     }
 
 

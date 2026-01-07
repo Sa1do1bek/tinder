@@ -5,6 +5,7 @@ import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.PreferenceRepository;
@@ -67,7 +68,7 @@ public class LikeServiceImpl implements LikeService {
             responseMap.put("currentPage", pageRequest.getPageNumber());
             responseMap.put("totalPages", users.getTotalPages());
 
-            return ApiResponse.success(responseMap, "SUCCESS");
+            return ApiResponse.success(responseMap, SuccessType.SUCCESS);
         }
 
         Map<String, Object> responseMap = new HashMap<>();
@@ -75,7 +76,7 @@ public class LikeServiceImpl implements LikeService {
         responseMap.put("currentPage", pageRequest.getPageNumber());
         responseMap.put("totalPages", 0);
 
-        return ApiResponse.success(responseMap, "SUCCESS");
+        return ApiResponse.success(responseMap, SuccessType.SUCCESS);
     }
 
     @NotNull
@@ -97,7 +98,7 @@ public class LikeServiceImpl implements LikeService {
             responseMap.put("currentPage", pageRequest.getPageNumber());
             responseMap.put("totalPages", users.getTotalPages());
 
-            return ApiResponse.success(responseMap, "SUCCESS");
+            return ApiResponse.success(responseMap, SuccessType.SUCCESS);
         }
 
         Map<String, Object> responseMap = new HashMap<>();
@@ -105,7 +106,7 @@ public class LikeServiceImpl implements LikeService {
         responseMap.put("currentPage", pageRequest.getPageNumber());
         responseMap.put("totalPages", 0);
 
-        return ApiResponse.success(responseMap, "SUCCESS");
+        return ApiResponse.success(responseMap, SuccessType.SUCCESS);
     }
 
     @Override
@@ -140,7 +141,7 @@ public class LikeServiceImpl implements LikeService {
                 })
                 .collect(Collectors.toList());
 
-        return ApiResponse.success(responseList, "TOP LIKED USERS FETCHED SUCCESSFULLY");
+        return ApiResponse.success(responseList, SuccessType.TOP_LIKED_USERS_FETCHED_SUCCESSFULLY);
     }
 
     /**

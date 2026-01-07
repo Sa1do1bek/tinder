@@ -48,14 +48,14 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         List<SuperLikePackage> packages = packageRepository.findAllActivePackages();
 
         if (packages.isEmpty()) {
-            return ApiResponse.success(new ArrayList<>(), "NO PACKAGES AVAILABLE");
+            return ApiResponse.success(new ArrayList<>(), SuccessType.NO_SUPER_LIKE_PACKAGES_FOUND);
         }
 
         List<SuperLikePackageDto> dtos = packages.stream()
                 .map(superLikePackageMapper::toDto)
                 .collect(Collectors.toList());
 
-        return ApiResponse.success(dtos, "SUPER LIKE PACKAGES FETCHED SUCCESSFULLY");
+        return ApiResponse.success(dtos, SuccessType.SUPER_LIKE_PACKAGES_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -109,13 +109,11 @@ public class SuperLikeServiceImpl implements SuperLikeService {
     public ApiResponse<?> sendSuperLike(Long senderId, SendSuperLikeRequest request) {
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> {
-                    log.error("Sender not found: {}", senderId);
                     return RestException.restThrow(ErrorType.USER_NOT_FOUND);
                 });
 
         User receiver = userRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> {
-                    log.error("Receiver not found: {}", request.getReceiverId());
                     return RestException.restThrow(ErrorType.USER_NOT_FOUND);
                 });
 
@@ -182,7 +180,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         swipeRepository.save(swipe);
 
         return ApiResponse.success(
-                superLikeHistoryMapper.toDto(history), "SUPER LIKE SENT SUCCESSFULLY");
+                superLikeHistoryMapper.toDto(history), SuccessType.SUPER_LIKE_SENT_SUCCESSFULLY);
     }
 
 
@@ -191,7 +189,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         Card card = cardRepository.findByUserId(userId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.CARD_NOT_FOUND));
 
-        return ApiResponse.success(cardMapper.toDto(card), "CARD FETCHED SUCCESSFULLY");
+        return ApiResponse.success(cardMapper.toDto(card), SuccessType.CARD_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -212,7 +210,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 .unpaidRewardsCount(unpaidRewards)
                 .build();
 
-        return ApiResponse.success(stats, "STATISTICS FETCHED SUCCESSFULLY");
+        return ApiResponse.success(stats, SuccessType.STATISTICS_FETCHED_SUCCESSFULLY);
     }
 
 
@@ -228,7 +226,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         response.put("totalPages", dtos.getTotalPages());
         response.put("totalElements", dtos.getTotalElements());
 
-        return ApiResponse.success(response, "PURCHASE HISTORY FETCHED SUCCESSFULLY");
+        return ApiResponse.success(response, SuccessType.SUPER_LIKES_PURCHASES_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -243,7 +241,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         response.put("totalPages", dtos.getTotalPages());
         response.put("totalElements", dtos.getTotalElements());
 
-        return ApiResponse.success(response, "SENT SUPER LIKES FETCHED SUCCESSFULLY");
+        return ApiResponse.success(response, SuccessType.SENT_SUPER_LIKES_FETCHED_SUCCESSFULLY);
     }
 
 
@@ -259,7 +257,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         response.put("totalPages", dtos.getTotalPages());
         response.put("totalElements", dtos.getTotalElements());
 
-        return ApiResponse.success(response, "RECEIVED SUPER LIKES FETCHED SUCCESSFULLY");
+        return ApiResponse.success(response, SuccessType.RECEIVED_SUPER_LIKES_FETCHED_SUCCESSFULLY);
     }
 
 
@@ -275,7 +273,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         response.put("totalPages", dtos.getTotalPages());
         response.put("totalElements", dtos.getTotalElements());
 
-        return ApiResponse.success(response, "TRANSACTIONS FETCHED SUCCESSFULLY");
+        return ApiResponse.success(response, SuccessType.TRANSACTIONS_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -289,7 +287,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
             throw RestException.restThrow(ErrorType.INVALID_PLATFORM_COMMISSION);
 
         SuperLikePackage save = packageRepository.save(superLikePackageMapper.fromCreateDto(dto));
-        return ApiResponse.success(superLikePackageMapper.toDto(save), "PACKAGE CREATED SUCCESSFULLY");
+        return ApiResponse.success(superLikePackageMapper.toDto(save), SuccessType.PACKAGE_CREATED_SUCCESSFULLY);
     }
 
     @Override
@@ -301,7 +299,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         entity.setVisibility(false);
         superLikePackageRepository.save(entity);
 
-        return ApiResponse.success(superLikePackageMapper.toDto(entity), "PACKAGE DELETED SUCCESSFULLY");
+        return ApiResponse.success(superLikePackageMapper.toDto(entity), SuccessType.PACKAGE_DELETED_SUCCESSFULLY);
     }
 
 

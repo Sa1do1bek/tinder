@@ -5,6 +5,7 @@ import com.example.tinder.dto.UserInterestDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.repository.UserLocationRepository;
@@ -72,7 +73,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         responseMap.put("currentPage", usersPage.getNumber());
         responseMap.put("totalPages", usersPage.getTotalPages());
 
-        return ApiResponse.success(responseMap, "SUCCESSFULLY DISCOVERED USERS");
+        return ApiResponse.success(responseMap, SuccessType.USERS_DISCOVERED_SUCCESSFULLY);
     }
 
 
@@ -112,7 +113,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         responseMap.put("currentPage", usersPage.getNumber());
         responseMap.put("totalPages", usersPage.getTotalPages());
 
-        return ApiResponse.success(responseMap, "USERS FOUND BY INTEREST ID: " + interestId);
+        return ApiResponse.success(responseMap, SuccessType.USERS_FOUND_BY_INTEREST);
     }
 
 

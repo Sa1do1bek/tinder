@@ -30,13 +30,6 @@ public class ApiResponse<T>{
         this.message = message;
     }
 
-    private ApiResponse(T data, Boolean success, String message, String msgKey) {
-        this.data = data;
-        this.success = success;
-        this.message = message;
-        this.msgKey = msgKey;
-    }
-
     private ApiResponse(String message, Boolean success) {
         this.message = message;
         this.success = success;
@@ -51,7 +44,11 @@ public class ApiResponse<T>{
     }
 
     public static <E> ApiResponse<E> success(E data, SuccessType successMsg) {
-        return new ApiResponse<>(data, Boolean.TRUE, successMsg.getKey(), successMsg.getKey());
+        return new ApiResponse<>(data, Boolean.TRUE, successMsg.getKey());
+    }
+
+    public static <E> ApiResponse<E> success(SuccessType successMsg) {
+        return new ApiResponse<>(successMsg.getKey(), Boolean.TRUE);
     }
 
     public static <E> ApiResponse<E> success() {

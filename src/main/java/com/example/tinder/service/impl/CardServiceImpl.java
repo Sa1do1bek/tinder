@@ -4,6 +4,7 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.Card;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.CardMapper;
 import com.example.tinder.repository.CardRepository;
@@ -24,6 +25,6 @@ public class CardServiceImpl implements CardService {
     public ApiResponse<?> getBalance(User user) {
         Optional<Card> card = cardRepository.findByUserId(user.getId());
         if (card.isEmpty()) throw RestException.restThrow(ErrorType.CARD_NOT_FOUND);
-        return ApiResponse.success(cardMapper.toDto(card.get()), "Card balance retrieved successfully");
+        return ApiResponse.success(cardMapper.toDto(card.get()), SuccessType.CARD_BALANCE_FETCHED_SUCCESSFULLY);
     }
 }

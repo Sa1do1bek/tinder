@@ -82,7 +82,8 @@ public enum ErrorType {
     INSUFFICIENT_BALANCE("insufficient.balance", HttpStatus.BAD_REQUEST ),
     INVALID_PACKAGE_QUANTITY("invalid.package.quantity", HttpStatus.BAD_REQUEST ),
     INVALID_PACKAGE_PRICE("invalid.package.price", HttpStatus.BAD_REQUEST ),
-    INVALID_PLATFORM_COMMISSION("invalid.platform.commission", HttpStatus.BAD_REQUEST ),;
+    INVALID_PLATFORM_COMMISSION("invalid.platform.commission", HttpStatus.BAD_REQUEST ),
+    CONVERSATION_ALREADY_EXISTS("conversation.already.exists", HttpStatus.BAD_REQUEST ),;
 
 
 
