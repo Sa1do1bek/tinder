@@ -12,13 +12,26 @@ import java.util.Optional;
 @Repository
 public interface BlockRepository extends JpaRepository<Block, Long> {
 
+    @Query("""
+        select b from Block b
+        where b.blocker.id = :blockerId
+        and b.blocked.id = :blockedId
+        and b.visibility = true
+    """)
     boolean existsByBlockerIdAndBlockedId(Long blockerId, Long blockedId);
 
+    @Query("""
+        select b from Block b
+        where b.blocker.id = :blockerId
+        and b.blocked.id = :blockedId
+        and b.visibility = true
+    """)
     Optional<Block> findByBlockerIdAndBlockedId(Long blockerId, Long blockedId);
 
     @Query("""
         select b from Block b
         where b.blocker.id = :userId
+        and b.visibility = true
     """)
     List<Block> findAllUserBlocks(@Param("userId") Long userId);
 }

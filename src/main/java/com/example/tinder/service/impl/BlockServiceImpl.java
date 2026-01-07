@@ -56,8 +56,6 @@ public class BlockServiceImpl implements BlockService {
                     conversation.setUnreadForUser2(0);
                     conversationRepository.save(conversation);
                 });
-
-
         return ApiResponse.success("USER BLOCKED SUCCESSFULLY");
     }
 
@@ -88,7 +86,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<?> getUserBlocks(Long userId) {
+    public ApiResponse<?> getBlockedUsers(Long userId) {
         return ApiResponse.success(blockRepository.findAllUserBlocks(userId)
                 .stream()
                 .map(blockMapper::toDto)
