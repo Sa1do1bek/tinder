@@ -13,7 +13,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     @Query("""
         SELECT c FROM Card c
-                WHERE c.userId = :userId
+                WHERE c.user.id = :userId
         """)
     Optional<Card> findByUserId(@Param("userId") Long userId);
 
@@ -23,7 +23,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     @Query("""
         SELECT c FROM Card c
-        WHERE c.userId = :userId
+        WHERE c.user.id = :userId
         AND c.visibility = true
     """)
     Optional<Card> findByUserIdWithVisibility(@Param("userId") Long userId);
