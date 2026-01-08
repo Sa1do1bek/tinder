@@ -15,8 +15,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,35 +26,41 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final OAuthUserRegistrationService oAuthUserRegistrationService;
 
-
     @Override
+    @Transactional  // BU JUDA MUHIM - loadUser metodida bo'lishi kerak!
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
-        
+
         Map<String, Object> attributes = oauth2User.getAttributes();
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
         String picture = (String) attributes.get("picture");
-        
+
+        log.info("🔵 OAuth2 login attempt for email: {}", email);
+
         processUser(email, name, picture);
-        
+
         return oauth2User;
     }
 
-    @Transactional
     protected void processUser(String email, String fullname, String profilePic) {
         Optional<User> userOptional = userRepository.findByEmail(email);
-        
+
         if (userOptional.isPresent()) {
             User existingUser = userOptional.get();
 
+            log.info("✅ User already exists: {}", email);
+
             if (existingUser.getProvider() == AuthProvider.LOCAL) {
-                    existingUser.setProvider(AuthProvider.LOCAL_AND_GOOGLE);
-                    userRepository.save(existingUser);
+                log.info("🔄 Updating provider from LOCAL to LOCAL_AND_GOOGLE");
+                existingUser.setProvider(AuthProvider.LOCAL_AND_GOOGLE);
+                userRepository.save(existingUser);
             }
         } else {
+            log.info("🆕 Creating new user: {}", email);
+
             String username = generateUniqueUsername(email);
-            
+
             User newUser = User.builder()
                     .email(email)
                     .username(username)
@@ -75,23 +79,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .longitude("69.3562786")
                     .build();
 
+            // Bu yerda oAuthUserRegistrationService ichida transaction bor
             oAuthUserRegistrationService.register(newUser);
+
+            log.info("✅ New user created successfully with all related entities");
         }
     }
-    
+
     private String generateUniqueUsername(String email) {
         String baseUsername = email.split("@")[0]
                 .replaceAll("[^a-zA-Z0-9]", "")
                 .toLowerCase();
-        
+
         String username = baseUsername;
         int counter = 1;
-        
+
         while (userRepository.existsByUsername(username)) {
             username = baseUsername + counter;
             counter++;
         }
+
+        log.info("📝 Generated unique username: {}", username);
         return username;
     }
-
 }
