@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -98,6 +99,7 @@ public class OAuthUserRegistrationService {
                 .user(savedUser)
                 .balance(new BigDecimal("0.0"))
                 .superLikeCount(0)
+                .number(UUID.randomUUID().toString())
                 .totalSuperLikesEarned(0)
                 .build();
 
