@@ -19,12 +19,5 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     Optional<Card> findByNumber(String number);
 
-    boolean existsByUserId(Long userId);
 
-    @Query("""
-        SELECT c FROM Card c
-        WHERE c.user.id = :userId
-        AND c.visibility = true
-    """)
-    Optional<Card> findByUserIdWithVisibility(@Param("userId") Long userId);
 }
