@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,8 +45,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         return oauth2User;
     }
-    
-    private void processUser(String email, String fullname, String profilePic) {
+
+    @Transactional
+    protected void processUser(String email, String fullname, String profilePic) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         
         if (userOptional.isPresent()) {
@@ -66,6 +68,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .provider(AuthProvider.GOOGLE)
                     .role(UserRole.USER)
                     .status(UserStatus.ACTIVE)
+                    .gender(Gender.EVERYONE)
                     .active(true)
                     .isVerified(true)
                     .isApproved(false)
@@ -76,8 +79,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
 
             User save = userRepository.save(newUser);
-            saveCard(save);
             savePreference(save);
+            saveCard(save);
             saveVerification(save);
             saveUserLocation(save);
         }
