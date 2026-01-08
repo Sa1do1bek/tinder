@@ -10,5 +10,4 @@ import lombok.*;
 @NoArgsConstructor
 public class PurchaseSuperLikeRequest {
     private Long packageId;
-    private PaymentMethod paymentMethod;
 }

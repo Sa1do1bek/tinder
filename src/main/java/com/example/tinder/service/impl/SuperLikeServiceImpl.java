@@ -71,14 +71,13 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 .orElseThrow(() -> RestException.restThrow(ErrorType.CARD_NOT_FOUND));
 
         // To'lov jarayoni
-        String transactionId = processPayment(card ,request.getPaymentMethod(), pkg.getPriceUZS());
+        String transactionId = processPayment(card, pkg.getPriceUZS());
 
         SuperLikePurchase purchase = SuperLikePurchase.builder()
                 .user(user)
                 .superLikePackage(pkg)
                 .quantity(pkg.getQuantity())
                 .amountPaid(pkg.getPriceUZS())
-                .paymentMethod(request.getPaymentMethod())
                 .transactionId(transactionId)
                 .status(TransactionStatus.COMPLETED)
                 .build();
@@ -303,7 +302,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
     }
 
 
-    private String processPayment(Card card,PaymentMethod method, BigDecimal amount) {
+    private String processPayment(Card card, BigDecimal amount) {
         //TODO Bu yerda to'lov gateway (Click, Payme) bilan integratsiya bo'ladi
         // Hozircha mock transaction ID qaytaramiz
 
@@ -312,7 +311,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         }
         card.setBalance(card.getBalance().subtract(amount));
         cardRepository.save(card);
-        return method.name() + "_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
 

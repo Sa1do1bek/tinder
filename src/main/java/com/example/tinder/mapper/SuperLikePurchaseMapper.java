@@ -19,7 +19,6 @@ public class SuperLikePurchaseMapper {
                 .packageInfo(superLikePackageMapper.toDto(purchase.getSuperLikePackage()))
                 .quantity(purchase.getQuantity())
                 .amountPaid(purchase.getAmountPaid())
-                .paymentMethod(purchase.getPaymentMethod())
                 .transactionId(purchase.getTransactionId())
                 .status(purchase.getStatus())
                 .purchaseDate(purchase.getCreatedAt())

@@ -19,7 +19,6 @@ public class SuperLikePurchaseDto {
     private SuperLikePackageDto packageInfo;
     private Integer quantity;
     private BigDecimal amountPaid;
-    private PaymentMethod paymentMethod;
     private String transactionId;
     private TransactionStatus status;
     private LocalDateTime purchaseDate;
