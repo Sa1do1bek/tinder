@@ -49,7 +49,7 @@ public class OAuthUserRegistrationService {
 
     public void saveCard(User user) {
         Card card = new Card();
-        card.setUserId(user.getId());
+        card.setUser(user);
         card.setBalance(new BigDecimal("0.0"));
         card.setCreatedAt(LocalDateTime.now());
         card.setUpdatedAt(LocalDateTime.now());
