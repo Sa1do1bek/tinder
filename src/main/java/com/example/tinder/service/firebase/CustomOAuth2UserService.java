@@ -27,7 +27,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final OAuthUserRegistrationService oAuthUserRegistrationService;
 
     @Override
-    @Transactional  // BU JUDA MUHIM - loadUser metodida bo'lishi kerak!
+    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
 
@@ -79,7 +79,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .longitude("69.3562786")
                     .build();
 
-            // Bu yerda oAuthUserRegistrationService ichida transaction bor
             oAuthUserRegistrationService.register(newUser);
 
             log.info("✅ New user created successfully with all related entities");
