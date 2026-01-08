@@ -22,8 +22,8 @@ public class FirebaseAuthController {
         return authService.loginWithGoogle(request.getIdToken());
     }
 
-    @PostMapping("/google-info")
-    public ResponseEntity<FirebaseUserInfoResponse> getUserInfo(@RequestBody GoogleLoginRequest request) {
-        return ResponseEntity.ok(authService.getUserInfo(request.getIdToken()));
-    }
+//    @PostMapping("/google-info")
+//    public ResponseEntity<FirebaseUserInfoResponse> getUserInfo(@RequestBody GoogleLoginRequest request) {
+//        return ResponseEntity.ok(authService.getUserInfo(request.getIdToken()));
+//    }
 }
