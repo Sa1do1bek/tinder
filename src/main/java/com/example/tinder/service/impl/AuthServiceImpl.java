@@ -156,7 +156,7 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
         System.out.println("SAVED USER ID " +savedUser.getId());
         savePreference(savedUser);
         saveCard(savedUser);
