@@ -4,6 +4,7 @@ import com.example.tinder.dto.auth.FirebaseUserInfoResponse;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.AuthProvider;
+import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.mapper.UserMapper;
@@ -27,6 +28,7 @@ public class FirebaseAuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final FirebaseAuthClient firebaseAuthClient;
+    private final OAuthUserRegistrationService oAuthUserRegistrationService;
 
     @Transactional
     public ApiResponse<?> loginWithGoogle(String idToken) {
@@ -35,87 +37,88 @@ public class FirebaseAuthService {
 
         String firebaseUid = firebaseUser.getUid();
         String email = firebaseUser.getEmail();
-        String name = firebaseUser.getFullName();
-        Boolean emailVerified = firebaseUser.getEmailVerified();
+        String fullname = firebaseUser.getFullName();
         String picture = firebaseUser.getPicture();
+        Boolean emailVerified = firebaseUser.getEmailVerified();
 
         if (firebaseUid == null || firebaseUid.isBlank()) {
-            throw new IllegalStateException("Firebase UID topilmadi");
+            throw new IllegalStateException("Firebase UID not found");
         }
 
         if (email == null || email.isBlank()) {
-            throw new IllegalStateException("Email topilmadi");
+            throw new IllegalStateException("Email not found");
         }
 
-        Optional<User> optionalUser = userRepository.findByFirebaseUidOrEmail(firebaseUid, email);
+        Optional<User> optionalUser =
+                userRepository.findByFirebaseUidOrEmail(firebaseUid, email);
 
         User user;
         boolean isNewUser = false;
 
         if (optionalUser.isEmpty()) {
-            // YANGI USER
+            // 🆕 YANGI USER
             isNewUser = true;
-            log.info("Creating NEW user for Firebase UID: {}", firebaseUid);
+            log.info("🆕 Creating new Firebase user: {}", email);
 
             String username = generateUniqueUsername(email);
 
-            user = User.builder()
+            User newUser = User.builder()
                     .firebaseUid(firebaseUid)
                     .email(email)
                     .username(username)
-                    .fullname(name != null && !name.isBlank() ? name : "User")
+                    .fullname(
+                            fullname != null && !fullname.isBlank()
+                                    ? fullname
+                                    : "User"
+                    )
                     .profilePic(picture)
-                    .isVerified(emailVerified != null ? emailVerified : false)
-                    .status(UserStatus.ACTIVE)
-                    .role(UserRole.USER)
+                    .isVerified(emailVerified != null && emailVerified)
                     .provider(AuthProvider.GOOGLE)
+                    .role(UserRole.USER)
+                    .status(UserStatus.ACTIVE)
+                    .gender(Gender.EVERYONE)
                     .active(true)
-                    .showProfile(true)
-                    .isOnline(false)
                     .isApproved(false)
+                    .isOnline(false)
+                    .showProfile(true)
+                    .latitude("41.1776056")
+                    .longitude("69.3562786")
                     .build();
 
-            user = userRepository.save(user);
+            // 🔥 ENG MUHIM QATOR
+            oAuthUserRegistrationService.register(newUser);
+
+            user = newUser;
+
+            log.info("✅ Firebase user created with all related entities");
 
         } else {
-            // MAVJUD USER
+            // 🔁 MAVJUD USER
             user = optionalUser.get();
-
             boolean needsUpdate = false;
 
-            // Firebase UID ni yangilash
-            if (user.getFirebaseUid() == null || !firebaseUid.equals(user.getFirebaseUid())) {
+            if (user.getFirebaseUid() == null) {
                 user.setFirebaseUid(firebaseUid);
                 needsUpdate = true;
             }
 
-            // Email ni yangilash
-            if (!email.equalsIgnoreCase(user.getEmail())) {
-                user.setEmail(email);
-                needsUpdate = true;
-            }
-
-            // Fullname ni yangilash
-            if (name != null && !name.isBlank() &&
-                    (user.getFullname() == null || !name.equals(user.getFullname()))) {
-                user.setFullname(name);
-                needsUpdate = true;
-            }
-
-            // Profile picture ni yangilash
             if (picture != null && !picture.equals(user.getProfilePic())) {
                 user.setProfilePic(picture);
                 needsUpdate = true;
             }
 
-            // Provider ni yangilash
-            if (user.getProvider() == null) {
-                user.setProvider(AuthProvider.GOOGLE);
+            if (fullname != null && !fullname.equals(user.getFullname())) {
+                user.setFullname(fullname);
+                needsUpdate = true;
+            }
+
+            if (user.getProvider() == AuthProvider.LOCAL) {
+                user.setProvider(AuthProvider.LOCAL_AND_GOOGLE);
                 needsUpdate = true;
             }
 
             if (needsUpdate) {
-                user = userRepository.save(user);
+                userRepository.save(user);
             }
         }
 
@@ -146,11 +149,7 @@ public class FirebaseAuthService {
             counter++;
         }
 
-        log.info("Generated unique username: {}", username);
+        log.info("📝 Generated username: {}", username);
         return username;
-    }
-
-    public FirebaseUserInfoResponse getUserInfo(String idToken) {
-        return firebaseAuthClient.getUserInfo(idToken);
     }
 }
