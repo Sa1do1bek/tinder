@@ -26,10 +26,7 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-    private final CardRepository cardRepository;
-    private final UserLocationRepository userLocationRepository;
-    private final VerificationRepository verificationRepository;
-    private final PreferenceRepository preferenceRepository;
+    private final OAuthUserRegistrationService oAuthUserRegistrationService;
 
 
     @Override
@@ -78,11 +75,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .longitude("69.3562786")
                     .build();
 
-            User save = userRepository.save(newUser);
-            savePreference(save);
-            saveCard(save);
-            saveVerification(save);
-            saveUserLocation(save);
+            oAuthUserRegistrationService.register(newUser);
         }
     }
     
@@ -101,49 +94,4 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return username;
     }
 
-    public void saveUserLocation(User savedUser) {
-        UserLocation userLocation = new UserLocation();
-        userLocation.setUser(savedUser);
-        userLocation.setLatitude("41.1776056");
-        userLocation.setLongitude("69.3562786");
-        userLocation.setCreatedAt(LocalDateTime.now());
-        userLocation.setUpdatedAt(LocalDateTime.now());
-        userLocationRepository.save(userLocation);
-    }
-
-    public void saveVerification(User savedUser) {
-        Verification verification = new Verification();
-        verification.setUser(savedUser);
-        verification.setCreatedAt(LocalDateTime.now());
-        verification.setUpdatedAt(LocalDateTime.now());
-        verificationRepository.save(verification);
-    }
-
-    public void saveCard(User user) {
-        Card card = new Card();
-        card.setUserId(user.getId());
-        card.setBalance(new BigDecimal("0.0"));
-        card.setCreatedAt(LocalDateTime.now());
-        card.setUpdatedAt(LocalDateTime.now());
-        card.setTotalSuperLikesEarned(0);
-        card.setSuperLikeCount(0);
-        this.cardRepository.save(card);
-    }
-
-    public void savePreference(User user) {
-
-        Preference preference = new Preference();
-        preference.setUser(user);
-        if (user.getGender() == Gender.MALE){
-            preference.setPreferredGender(Gender.FEMALE);
-        }else {
-            preference.setPreferredGender(Gender.MALE);
-        }
-        preference.setDistance(70.0);
-        preference.setMinAge(18);
-        preference.setMaxAge(50);
-        preference.setVisibility(true);
-
-        preferenceRepository.save(preference);
-    }
 }
