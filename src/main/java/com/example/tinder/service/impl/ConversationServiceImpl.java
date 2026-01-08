@@ -167,7 +167,7 @@ public class ConversationServiceImpl implements ConversationService {
         if (conversation.getUser1().getId().equals(currentUserId)) {
             conversation.setDeletedForUser1(true);
         } else {
-            conversation.setDeletedForUser1(true);
+            conversation.setDeletedForUser2(true);
         }
         conversationRepository.save(conversation);
 
@@ -184,7 +184,9 @@ public class ConversationServiceImpl implements ConversationService {
         Conversation conversation = optional.get();
 
         conversation.setDeletedForUser1(true);
-        conversation.setDeletedForUser1(true);
+        conversation.setDeletedForUser2(true);
+        conversation.setIsMatchedForUser1(false);
+        conversation.setIsMatchedForUser2(false);
         conversation.setVisibility(false);
         conversationRepository.save(conversation);
 

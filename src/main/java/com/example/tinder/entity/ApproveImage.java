@@ -21,5 +21,4 @@ public class ApproveImage extends BaseEntity{
     private User user;
 
     private String cloudPath;
-
 }
