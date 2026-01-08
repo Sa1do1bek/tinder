@@ -159,7 +159,7 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
         System.out.println("SAVED USER ID " +savedUser.getId());
         savePreference(savedUser);
-        saveCard(user);
+        saveCard(savedUser);
         saveVerification(savedUser);
         saveUserLocation(savedUser);
 
@@ -225,6 +225,20 @@ public class AuthServiceImpl implements AuthService {
 
         preferenceRepository.save(preference);
     }
+
+//    public boolean checkAge(Date d) {
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.setTime(d);
+//        int year = calendar.get(Calendar.YEAR);
+//        int month = calendar.get(Calendar.MONTH);
+//        int day = calendar.get(Calendar.DAY_OF_MONTH);
+//
+//        new Date(
+//
+//        if (year < 1900 || year > 2022) {
+//            return false;
+//    }
+
 
 
     @Override
