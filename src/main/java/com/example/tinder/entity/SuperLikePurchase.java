@@ -29,10 +29,6 @@ public class SuperLikePurchase extends BaseEntity {
     @Column(precision = 15, scale = 2)
     private BigDecimal amountPaid;
     
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentMethod paymentMethod;
-    
     @Column(nullable = false)
     private String transactionId; // To'lov ID si
     

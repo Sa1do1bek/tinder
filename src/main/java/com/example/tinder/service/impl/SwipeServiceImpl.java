@@ -7,6 +7,7 @@ import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.NotificationPathType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
@@ -14,6 +15,7 @@ import com.example.tinder.repository.MatchRepository;
 import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ConversationService;
+import com.example.tinder.service.NotificationService;
 import com.example.tinder.service.SwipeService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class SwipeServiceImpl implements SwipeService {
     private final MatchRepository matchRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ConversationService conversationService;
+    private final NotificationService notificationService;
 
     @Override
     public ApiResponse<?> swipe(Long swiperId, Long swipedId, SwipeStatus status) {
@@ -88,10 +91,7 @@ public class SwipeServiceImpl implements SwipeService {
                             .user2(swipedOpt.get())
                             .build();
                     matchRepository.save(match);
-
                 }
-
-                // todo bu joyni yaxshilab tekshirish kerak.
                 conversationService.createConversation(swiperId, swipedId);
 
                 Map<String, Object> matchNotification = new HashMap<>();
@@ -99,6 +99,13 @@ public class SwipeServiceImpl implements SwipeService {
                 matchNotification.put("fromUserId", swiperOpt.get().getId());
                 matchNotification.put("fromFullName", swiperOpt.get().getFullname());
                 matchNotification.put("message", "You have a new match! You can now start chatting.");
+
+                notificationService.sendNotification(
+                        swiped.getId(),
+                        swiper.getFullname() + "liked you",
+                        "You have a new match! You can now start chatting.",
+                        NotificationPathType.NEWS_MESSAGE
+                );
 
                 messagingTemplate.convertAndSend(
                         "/topic/notification/" + swipedOpt.get().getId(),
@@ -112,6 +119,13 @@ public class SwipeServiceImpl implements SwipeService {
 
                 return ApiResponse.success(SuccessType.MATCH_FOUND_YOU_CAN_START_CHAT);
             }
+
+            notificationService.sendNotification(
+                    swiped.getId(),
+                    swiper.getFullname() + "liked you",
+                    "",
+                    NotificationPathType.NEWS_MESSAGE
+            );
         }
 
         return ApiResponse.success(SuccessType.SWIPE_RECORDED);
