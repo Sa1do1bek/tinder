@@ -26,7 +26,7 @@ public class OAuthUserRegistrationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void register(User user) {
         log.info("📝 Starting OAuth user registration...");
-        User savedUser = userRepository.saveAndFlush(user);
+        User savedUser = userRepository.save(user);
         log.info("✅ User saved with ID: {}", savedUser.getId());
 
         try {
@@ -78,7 +78,7 @@ public class OAuthUserRegistrationService {
         userLocation.setCreatedAt(LocalDateTime.now());
         userLocation.setUpdatedAt(LocalDateTime.now());
 
-        userLocationRepository.saveAndFlush(userLocation);
+        userLocationRepository.save(userLocation);
     }
 
     private void saveVerification(User savedUser) {
@@ -90,7 +90,7 @@ public class OAuthUserRegistrationService {
         verification.setCreatedAt(LocalDateTime.now());
         verification.setUpdatedAt(LocalDateTime.now());
 
-        verificationRepository.saveAndFlush(verification);
+        verificationRepository.save(verification);
     }
 
     private void saveCard(User savedUser) {
@@ -104,7 +104,7 @@ public class OAuthUserRegistrationService {
         card.setCreatedAt(LocalDateTime.now());
         card.setUpdatedAt(LocalDateTime.now());
 
-        cardRepository.saveAndFlush(card);
+        cardRepository.save(card);
     }
 
     private void savePreference(User savedUser) {
@@ -119,7 +119,7 @@ public class OAuthUserRegistrationService {
         preference.setCreatedAt(LocalDateTime.now());
         preference.setUpdatedAt(LocalDateTime.now());
 
-        preferenceRepository.saveAndFlush(preference);
+        preferenceRepository.save(preference);
 
     }
 
