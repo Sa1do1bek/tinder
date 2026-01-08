@@ -26,13 +26,11 @@ public class OAuthUserRegistrationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void register(User user) {
         log.info("📝 Starting OAuth user registration...");
-
-        // 1. User'ni saqlash
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
         log.info("✅ User saved with ID: {}", savedUser.getId());
 
-        // 2. User Location yaratish
         try {
+            log.info("✅ UserLocation save ga kirdi ");
             saveUserLocation(savedUser);
             log.info("✅ UserLocation saved for user ID: {}", savedUser.getId());
         } catch (Exception e) {
@@ -40,8 +38,8 @@ public class OAuthUserRegistrationService {
             throw e;
         }
 
-        // 3. Card yaratish
         try {
+            log.info("✅ Card save ga kirdi ");
             saveCard(savedUser);
             log.info("✅ Card saved for user ID: {}", savedUser.getId());
         } catch (Exception e) {
@@ -49,8 +47,8 @@ public class OAuthUserRegistrationService {
             throw e;
         }
 
-        // 4. Verification yaratish
         try {
+            log.info("✅ Verification save ga kirdi ");
             saveVerification(savedUser);
             log.info("✅ Verification saved for user ID: {}", savedUser.getId());
         } catch (Exception e) {
@@ -58,8 +56,8 @@ public class OAuthUserRegistrationService {
             throw e;
         }
 
-        // 5. Preference yaratish
         try {
+            log.info("✅ Preference save ga kirdi ");
             savePreference(savedUser);
             log.info("✅ Preference saved for user ID: {}", savedUser.getId());
         } catch (Exception e) {
@@ -80,7 +78,7 @@ public class OAuthUserRegistrationService {
         userLocation.setCreatedAt(LocalDateTime.now());
         userLocation.setUpdatedAt(LocalDateTime.now());
 
-        userLocationRepository.save(userLocation);
+        userLocationRepository.saveAndFlush(userLocation);
     }
 
     private void saveVerification(User savedUser) {
@@ -92,7 +90,7 @@ public class OAuthUserRegistrationService {
         verification.setCreatedAt(LocalDateTime.now());
         verification.setUpdatedAt(LocalDateTime.now());
 
-        verificationRepository.save(verification);
+        verificationRepository.saveAndFlush(verification);
     }
 
     private void saveCard(User savedUser) {
@@ -106,7 +104,7 @@ public class OAuthUserRegistrationService {
         card.setCreatedAt(LocalDateTime.now());
         card.setUpdatedAt(LocalDateTime.now());
 
-        cardRepository.save(card);
+        cardRepository.saveAndFlush(card);
     }
 
     private void savePreference(User savedUser) {
@@ -121,10 +119,11 @@ public class OAuthUserRegistrationService {
         preference.setCreatedAt(LocalDateTime.now());
         preference.setUpdatedAt(LocalDateTime.now());
 
-        preferenceRepository.save(preference);
+        preferenceRepository.saveAndFlush(preference);
+
     }
 
-    private Gender getPreferredGender(Gender userGender) {
+    private Gender getPreferredGender(Gender userGender){
         if (userGender == Gender.MALE) {
             return Gender.FEMALE;
         } else if (userGender == Gender.FEMALE) {
