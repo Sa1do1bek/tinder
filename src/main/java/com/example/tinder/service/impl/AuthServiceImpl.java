@@ -438,7 +438,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiResponse<?> checkForgetPasswordByEmail(String email, String code, String deviceName) {
+    public ApiResponse<?> checkForgetPasswordByEmail(String email, String code, String deviceName, String newPassword) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
@@ -462,13 +462,15 @@ public class AuthServiceImpl implements AuthService {
             throw RestException.restThrow(ErrorType.CODE_IS_INVALID);
         }
 
+        user.setPassword(passwordEncoder.encode(newPassword));
+
 
         Device device = dbCode.getDevice();
         device.setIsVerified(true);
         deviceRepository.save(device);
-
+        userRepository.save(user);
         codeRepository.delete(dbCode);
-        return ApiResponse.success(SuccessType.CODE_CHECKED_SUCCESSFULLY);
+        return ApiResponse.success(SuccessType.PASSWORD_UPDATED_SUCCESSFULLY);
     }
 
 }

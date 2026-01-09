@@ -56,8 +56,8 @@ public class AuthController {
     }
 
     @PostMapping("/checkForgetPasswordByEmail")
-    public ApiResponse<?> checkForgetPasswordByEmail(@RequestParam("email") String email, @RequestParam("code") String code, @RequestParam("deviceId") String deviceName) {
-        return authService.checkForgetPasswordByEmail(email, code, deviceName);
+    public ApiResponse<?> checkForgetPasswordByEmail(@RequestParam("email") String email, @RequestParam("code") String code, @RequestParam("deviceId") String deviceName , @RequestParam("newPassword") String newPassword) {
+        return authService.checkForgetPasswordByEmail(email, code, deviceName , newPassword);
     }
 
 
