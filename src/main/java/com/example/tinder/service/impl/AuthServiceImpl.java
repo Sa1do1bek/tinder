@@ -126,9 +126,12 @@ public class AuthServiceImpl implements AuthService {
             user.setActive(true);
             user.setIsVerified(true);
             user.setIsApproved(false);
+            user.setShowProfile(true);
             user.setLatitude("41.1776056");
             user.setLongitude("69.3562786");
             user.setProvider(AuthProvider.LOCAL);
+            user.setUpdatedAt(LocalDateTime.now());
+            user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
 
 
