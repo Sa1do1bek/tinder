@@ -1,6 +1,7 @@
 package com.example.tinder.repository;
 
 import com.example.tinder.entity.Code;
+import com.example.tinder.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,4 +42,21 @@ public interface CodeRepository extends JpaRepository<Code,Long> {
         WHERE c.code = :code  \s
    \s""")
     void deleteByCode(@Param("code") String code);
-}
+
+
+    @Query(
+            value = """
+        select c.*
+        from codes c
+        join device d on d.id = c.device_id
+        where d.device_name = :deviceName
+        and c.user_id = :userId
+        order by c.created_at desc
+        limit 1
+    """,
+            nativeQuery = true
+    )
+    Optional<Code> findByDeviceNamaAndUserId(
+            @Param("deviceName") String deviceName,
+            @Param("userId") Long userId
+    );}

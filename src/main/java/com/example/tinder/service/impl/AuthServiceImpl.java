@@ -106,7 +106,7 @@ public class AuthServiceImpl implements AuthService {
         Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
 
         User user = new User();
-        System.out.println("USER ID " +user.getId());
+        System.out.println("USER ID " + user.getId());
 
 
         if (optionalUser.isPresent()) {
@@ -157,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User savedUser = userRepository.saveAndFlush(user);
-        System.out.println("SAVED USER ID " +savedUser.getId());
+        System.out.println("SAVED USER ID " + savedUser.getId());
         savePreference(savedUser);
         saveCard(savedUser);
         saveVerification(savedUser);
@@ -213,9 +213,9 @@ public class AuthServiceImpl implements AuthService {
 
         Preference preference = new Preference();
         preference.setUser(user);
-        if (user.getGender() == Gender.MALE){
+        if (user.getGender() == Gender.MALE) {
             preference.setPreferredGender(Gender.FEMALE);
-        }else {
+        } else {
             preference.setPreferredGender(Gender.MALE);
         }
         preference.setDistance(70.0);
@@ -238,7 +238,6 @@ public class AuthServiceImpl implements AuthService {
 //        if (year < 1900 || year > 2022) {
 //            return false;
 //    }
-
 
 
     @Override
@@ -401,6 +400,76 @@ public class AuthServiceImpl implements AuthService {
             }
         });
         return ApiResponse.success(SuccessType.EMAIL_AVAILABLE_FOR_REGISTRATION);
+    }
+
+    @Override
+    public ApiResponse<?> forgetPasswordByEmail(String email, String deviceName) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        Device device = deviceRepository
+                .findForVerifyFirstByUserIdAndDeviceName(user.getId(), deviceName)
+                .orElseGet(() -> {
+                    Device newDevice = Device.builder()
+                            .deviceName(deviceName)
+                            .addedAt(LocalDateTime.now())
+                            .user(user)
+                            .isVerified(false)
+                            .build();
+                    return deviceRepository.save(newDevice);
+                });
+
+        String code = utils.getCode();
+
+        if (!utils.sendCodeToMail(email, code)) {
+            throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
+        }
+
+        Code c = Code.builder()
+                .code(code)
+                .createdAt(LocalDateTime.now())
+                .counts(0)
+                .device(device)
+                .user(user)
+                .build();
+
+        codeRepository.save(c);
+
+        return ApiResponse.success(SuccessType.CODE_SENT_TO_EMAIL);
+    }
+
+    @Override
+    public ApiResponse<?> checkForgetPasswordByEmail(String email, String code, String deviceName) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        Code dbCode = codeRepository
+                .findByDeviceNamaAndUserId(deviceName, user.getId())
+                .orElseThrow(() -> RestException.restThrow(ErrorType.CODE_IS_INVALID));
+
+        if (dbCode.getCounts() >= 3) {
+            throw RestException.restThrow(ErrorType.CODE_ATTEMPT_LIMIT_EXCEEDED);
+        }
+
+        LocalDateTime expiredTime = dbCode.getCreatedAt().plusMinutes(2);
+        if (LocalDateTime.now().isAfter(expiredTime)) {
+            throw RestException.restThrow(ErrorType.VERIFICATION_CODE_EXPIRED);
+        }
+
+        if (!dbCode.getCode().equals(code)) {
+            dbCode.setCounts(dbCode.getCounts() + 1);
+            codeRepository.save(dbCode);
+            throw RestException.restThrow(ErrorType.CODE_IS_INVALID);
+        }
+
+
+        Device device = dbCode.getDevice();
+        device.setIsVerified(true);
+        deviceRepository.save(device);
+
+        codeRepository.delete(dbCode);
+        return ApiResponse.success(SuccessType.CODE_CHECKED_SUCCESSFULLY);
     }
 
 }

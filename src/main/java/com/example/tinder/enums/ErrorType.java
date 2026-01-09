@@ -83,9 +83,10 @@ public enum ErrorType {
     INVALID_PACKAGE_QUANTITY("invalid.package.quantity", HttpStatus.BAD_REQUEST ),
     INVALID_PACKAGE_PRICE("invalid.package.price", HttpStatus.BAD_REQUEST ),
     INVALID_PLATFORM_COMMISSION("invalid.platform.commission", HttpStatus.BAD_REQUEST ),
-    CONVERSATION_ALREADY_EXISTS("conversation.already.exists", HttpStatus.BAD_REQUEST ),;
-
-
+    CONVERSATION_ALREADY_EXISTS("conversation.already.exists", HttpStatus.BAD_REQUEST ),
+    //-----*******
+    CODE_NOT_FOUND("code.not.found", HttpStatus.NOT_FOUND ),
+    CODE_ATTEMPT_LIMIT_EXCEEDED("code.attempt.limit.exceeded", HttpStatus.BAD_REQUEST ),;
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;

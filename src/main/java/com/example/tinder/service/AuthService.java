@@ -21,4 +21,7 @@ public interface AuthService {
 
     ApiResponse<?> checkEmail(String username);
 
+    ApiResponse<?> forgetPasswordByEmail(String email, String deviceName);
+
+    ApiResponse<?> checkForgetPasswordByEmail(String email, String code, String deviceName);
 }

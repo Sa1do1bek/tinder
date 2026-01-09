@@ -5,6 +5,7 @@ import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
 import com.example.tinder.service.AuthService;
+import com.google.protobuf.Api;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -32,15 +33,15 @@ public class AuthController {
 
     @PostMapping("/resendCodeToEmail")
     public ApiResponse<?> resendCodeToEmail(@RequestParam("email") String email,
-                                         @RequestParam("deviceId") String deviceId,
-                                         @RequestParam("id") Long id) {
+                                            @RequestParam("deviceId") String deviceId,
+                                            @RequestParam("id") Long id) {
         return this.authService.resendCodeToEmail(email, deviceId, id);
     }
 
     @PostMapping("/checkCodeByEmail")
     public ApiResponse<?> checkCodeByEmail(@RequestParam("email") String email,
-                                        @RequestParam("code") String code,
-                                        @RequestParam("deviceId") String deviceId) {
+                                           @RequestParam("code") String code,
+                                           @RequestParam("deviceId") String deviceId) {
         return this.authService.checkCodeByEmail(email, code, deviceId);
     }
 
@@ -48,5 +49,17 @@ public class AuthController {
     public ApiResponse<?> checkEmail(@RequestParam("email") String email) {
         return this.authService.checkEmail(email);
     }
+
+    @PostMapping("/forgetPasswordByEmail")
+    public ApiResponse<?> forgetPasswordByEmail(@RequestParam("email") String email, @RequestParam("deviceId") String deviceName) {
+        return authService.forgetPasswordByEmail(email, deviceName);
+    }
+
+    @PostMapping("/checkForgetPasswordByEmail")
+    public ApiResponse<?> checkForgetPasswordByEmail(@RequestParam("email") String email, @RequestParam("code") String code, @RequestParam("deviceId") String deviceName) {
+        return authService.checkForgetPasswordByEmail(email, code, deviceName);
+    }
+
+
 
 }
