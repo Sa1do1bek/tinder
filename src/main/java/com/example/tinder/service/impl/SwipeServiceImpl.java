@@ -79,10 +79,10 @@ public class SwipeServiceImpl implements SwipeService {
         swipeRepository.save(swipe);
 
 
-        if (status == SwipeStatus.LIKE) {
+        if (status == SwipeStatus.LIKE || status == SwipeStatus.SUPERLIKE) {
             boolean isMutual = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(swipedId, swiperId, SwipeStatus.LIKE);
-
-            if (isMutual) {
+            boolean isMutual1 = swipeRepository.existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(swipedId, swiperId, SwipeStatus.SUPERLIKE);
+            if (isMutual || isMutual1) {
                 boolean alreadyMatched = matchRepository.existsByUsers(swiperOpt.get(), swipedOpt.get());
 
                 if (!alreadyMatched) {
@@ -102,8 +102,15 @@ public class SwipeServiceImpl implements SwipeService {
 
                 notificationService.sendNotification(
                         swiped.getId(),
-                        swiper.getFullname() + "liked you",
-                        "You have a new match! You can now start chatting.",
+                        swiper.getFullname() + " sizga like bosdi",
+                        "Chat yaratildi! siz suhbat qilishingiz mumkin.",
+                        NotificationPathType.NEWS_MESSAGE
+                );
+
+                notificationService.sendNotification(
+                        swiper.getId(),
+                        swiped.getFullname() + " bilan chat yaratildi!",
+                        "Siz suhbat qilishingiz mumkin.",
                         NotificationPathType.NEWS_MESSAGE
                 );
 

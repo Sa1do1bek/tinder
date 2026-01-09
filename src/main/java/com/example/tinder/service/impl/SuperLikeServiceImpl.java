@@ -8,6 +8,7 @@ import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.*;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.SuperLikeService;
+import com.example.tinder.service.SwipeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
     private final SuperLikePurchaseMapper superLikePurchaseMapper;
     private final WalletTransactionMapper walletTransactionMapper;
     private final SuperLikePackageRepository superLikePackageRepository;
+    private final SwipeService swipeService;
 
     private static final BigDecimal REWARD_PER_SUPERLIKE = new BigDecimal("5000.0");
 
@@ -171,15 +173,13 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 history,
                 "Super Like dan topildi: " + sender.getUsername());
 
-        // Swipe yaratish (SUPERLIKE)
-        Swipe swipe = new Swipe();
-        swipe.setSwiper(sender);
-        swipe.setSwiped(receiver);
-        swipe.setSwipe(SwipeStatus.SUPERLIKE);
-        swipeRepository.save(swipe);
-
-        return ApiResponse.success(
-                superLikeHistoryMapper.toDto(history), SuccessType.SUPER_LIKE_SENT_SUCCESSFULLY);
+//        // Swipe yaratish (SUPERLIKE)
+//        Swipe swipe = new Swipe();
+//        swipe.setSwiper(sender);
+//        swipe.setSwiped(receiver);
+//        swipe.setSwipe(SwipeStatus.SUPERLIKE);
+//        swipeRepository.save(swipe);
+        return swipeService.swipe(senderId, request.getReceiverId(), SwipeStatus.SUPERLIKE);
     }
 
 
