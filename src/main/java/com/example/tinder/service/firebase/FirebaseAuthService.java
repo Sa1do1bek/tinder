@@ -15,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,6 +64,7 @@ public class FirebaseAuthService {
             log.info("🆕 Creating new Firebase user: {}", email);
 
             String username = generateUniqueUsername(email);
+            LocalDateTime createdAt = LocalDateTime.now();
 
             User newUser = User.builder()
                     .firebaseUid(firebaseUid)
@@ -84,6 +88,8 @@ public class FirebaseAuthService {
                     .latitude("41.1776056")
                     .longitude("69.3562786")
                     .build();
+            newUser.setCreatedAt(createdAt);
+            newUser.setUpdatedAt(createdAt);
 
             // 🔥 ENG MUHIM QATOR
             oAuthUserRegistrationService.register(newUser);
