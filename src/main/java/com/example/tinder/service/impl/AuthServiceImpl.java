@@ -434,7 +434,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         codeRepository.save(c);
-
         return ApiResponse.success(SuccessType.CODE_SENT_TO_EMAIL);
     }
 
