@@ -77,7 +77,13 @@ public enum SuccessType {
     ONLINE_USERS_FETCHED_SUCCESSFULLY("online.users.fetched.successfully"),
     VERIFICATION_UPDATED_SUCCESSFULLY("verification.updated.successfully"),
     VERIFICATION_FOUND("verification.found"),
-    APPROVE_IMAGE_UPLOADED_SUCCESSFULLY("approve.image.uploaded.successfully");
+    APPROVE_IMAGE_UPLOADED_SUCCESSFULLY("approve.image.uploaded.successfully"),
+
+//    **********
+    SUBSCRIPTION_PLAN_CREATED_SUCCESSFULLY("subscription.plan.created.successfully"),
+    SUBSCRIPTION_PLAN_FETCHED_SUCCESSFULLY("subscription.plan.fetched.successfully"),
+    SUBSCRIPTION_PLAN_DELETED_SUCCESSFULLY("successfully.deleted"),
+    SUBSCRIPTION_CREATED_SUCCESSFULLY("subscription.created.successfully"),;
 
 
 
