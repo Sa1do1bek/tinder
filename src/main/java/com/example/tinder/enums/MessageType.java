@@ -1,8 +1,9 @@
 package com.example.tinder.enums;
 
 
-public enum MessageType {
+public enum MessageType{
     TEXT,
     IMAGE,
-    AUDIO
+    AUDIO,
+    LOCATION
 }

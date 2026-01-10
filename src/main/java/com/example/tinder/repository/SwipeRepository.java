@@ -59,7 +59,7 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
   @Query("""
         SELECT s.swiper FROM Swipe s
         WHERE s.swiped.id = :userId
-        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE 
+        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
              OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
         AND s.visibility = true
         ORDER BY s.createdAt DESC
@@ -83,7 +83,7 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
    */
   @Query("""
         SELECT s.swipe FROM Swipe s
-        WHERE s.swiper.id = :swiperId 
+        WHERE s.swiper.id = :swiperId
         AND s.swiped.id = :swipedId
         AND s.visibility = true
     """)

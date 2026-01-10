@@ -1,5 +1,6 @@
 package com.example.tinder.dto;
 
+import com.example.tinder.enums.SubscriptionType;
 import com.example.tinder.enums.SwipeStatus;
 import lombok.*;
 
@@ -16,6 +17,7 @@ public class LikedUserDto {
     private int age;
     private String bio;
     private String gender;
+    private SubscriptionType subscriptionType;
 
     private Double distanceKm;
     private Double height;

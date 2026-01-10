@@ -213,7 +213,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     )) <= :maxDistance
     """,
             countQuery = """
-        SELECT count(DISTINCT u.id) FROM users u 
+        SELECT count(DISTINCT u.id) FROM users u
         JOIN users_user_interests uui ON u.id = uui.user_id 
         WHERE u.id != :currentUserId 
         AND u.active = true
@@ -223,6 +223,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 UNION
                 SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
             )
+        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
         AND uui.user_interests_id = :interestId
     """,
             nativeQuery = true)

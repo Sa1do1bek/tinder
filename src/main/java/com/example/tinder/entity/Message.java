@@ -2,11 +2,9 @@ package com.example.tinder.entity;
 
 import com.example.tinder.enums.MessageType;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.databind.ser.Serializers;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

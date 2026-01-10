@@ -155,6 +155,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .interests(interests)
                 .latitude(targetUser.getLatitude())
                 .longitude(targetUser.getLongitude())
+                .subscriptionType(targetUser.getSubscriptionType())
                 .build();
     }
 

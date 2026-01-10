@@ -1,5 +1,6 @@
 package com.example.tinder.dto;
 
+import com.example.tinder.enums.SubscriptionType;
 import lombok.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public class DiscoveryResponseDTO {
     private int age;
     private String bio;
     private String gender;
+    private SubscriptionType subscriptionType;
     
     private Double distanceKm;
     private Double height;
