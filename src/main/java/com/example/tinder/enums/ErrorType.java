@@ -83,7 +83,9 @@ public enum ErrorType {
     INVALID_PACKAGE_QUANTITY("invalid.package.quantity", HttpStatus.BAD_REQUEST ),
     INVALID_PACKAGE_PRICE("invalid.package.price", HttpStatus.BAD_REQUEST ),
     INVALID_PLATFORM_COMMISSION("invalid.platform.commission", HttpStatus.BAD_REQUEST ),
-    CONVERSATION_ALREADY_EXISTS("conversation.already.exists", HttpStatus.BAD_REQUEST ),;
+    CONVERSATION_ALREADY_EXISTS("conversation.already.exists", HttpStatus.BAD_REQUEST ),
+    SUBSCRIPTION_PLAN_ALREADY_EXISTS("subscription.plan.already.exists", HttpStatus.BAD_REQUEST ),
+    SUBSCRIPTION_PLAN_NOT_FOUND("subscription.plan.not.found", HttpStatus.NOT_FOUND ),;
 
 
 

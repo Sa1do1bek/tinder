@@ -144,17 +144,12 @@ public class LikeServiceImpl implements LikeService {
         return ApiResponse.success(responseList, SuccessType.TOP_LIKED_USERS_FETCHED_SUCCESSFULLY);
     }
 
-    /**
-     * Swiper va swiped userlar orasidagi swipe type ni topish
-     */
+
     private SwipeStatus getSwipeTypeForUser(Long swiperId, Long swipedId) {
-        return swipeRepository.findSwipeTypeByUsers(swiperId, swipedId)
-                .orElse(SwipeStatus.LIKE); // default LIKE
+        return swipeRepository.findSwipeTypeByUsers(swipedId, swiperId).orElse(null);
     }
 
-    /**
-     * User ni LikedUserDto ga convert qilish
-     */
+
     private LikedUserDto convertToLikedUserDto(User targetUser, Optional<UserLocation> currentLoc, SwipeStatus swipeType) {
         int age = 0;
         if (targetUser.getBirthDate() != null) {
@@ -194,7 +189,8 @@ public class LikeServiceImpl implements LikeService {
                 .interests(interests)
                 .latitude(targetUser.getLatitude())
                 .longitude(targetUser.getLongitude())
-                .likeType(swipeType) // SwipeType qo'shamiz
+                .likeType(swipeType)
+                .subscriptionType(targetUser.getSubscriptionType())
                 .build();
     }
 

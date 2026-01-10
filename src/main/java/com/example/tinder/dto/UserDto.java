@@ -1,6 +1,7 @@
 package com.example.tinder.dto;
 
 import com.example.tinder.enums.Gender;
+import com.example.tinder.enums.SubscriptionType;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import lombok.*;
@@ -33,6 +34,7 @@ public class UserDto {
     private boolean showProfile;
     private Boolean isApproved;
     private String firebaseUid;
+    private SubscriptionType subscriptionType;
 
 
 
