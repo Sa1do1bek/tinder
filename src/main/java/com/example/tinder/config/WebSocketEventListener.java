@@ -92,5 +92,4 @@ public class WebSocketEventListener {
     public Set<String> getOnlineUsernames() {
         return new HashSet<>(onlineUsers.keySet());
     }
-
 }
