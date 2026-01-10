@@ -6,6 +6,7 @@ import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.auth.LoginResponse;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.Code;
+import com.example.tinder.entity.Preference;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.*;
@@ -13,6 +14,7 @@ import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.CodeRepository;
+import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.UserService;
 import com.example.tinder.utils.JwtUtil;
@@ -40,6 +42,7 @@ public class UserServiceImpl implements UserService {
     private final UserDetailsService userDetailsService;
     private final Utils utils;
     private final WebSocketEventListener webSocketEventListener;
+    private final PreferenceRepository preferenceRepository;
 
     @Override
     public ApiResponse<?> updateUserNameAndFullName(Long userId, String username, String fullname) {
@@ -251,21 +254,30 @@ public class UserServiceImpl implements UserService {
         if (optionalUser.isEmpty()) {
             throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
+        Optional<Preference> optionalPreference = preferenceRepository.findByUserId(userId);
+        if (optionalPreference.isEmpty()) throw RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND);
+        Preference preference = optionalPreference.get();
 
         User user = optionalUser.get();
 
         if (dto.getBirthDate() != null)
             user.setBirthDate(dto.getBirthDate());
 
-        if (dto.getGender() != null)
-            user.setGender(dto.getGender());
-
+        if (dto.getGender() != null) {
+            if (dto.getGender().equals(Gender.MALE)){
+                user.setGender(Gender.FEMALE);
+            }else if (dto.getGender().equals(Gender.FEMALE)){
+                user.setGender(Gender.MALE);
+            }
+        }
         if (dto.getBio() != null) {
             user.setBio(dto.getBio());
         }
         if (dto.getFullName() != null) {
             user.setFullname(dto.getFullName());
         }
+
+
 
         userRepository.save(user);
 
@@ -277,6 +289,8 @@ public class UserServiceImpl implements UserService {
     public ApiResponse<?> deleteUser(String userId) {
         User user = userRepository.findById(Long.parseLong(userId)).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         user.setActive(false);
+        user.setVisibility(false);
+        user.setFirebaseUid(null);
         userRepository.save(user);
         return ApiResponse.success(SuccessType.USER_DELETED_SUCCESSFULLY);
     }
