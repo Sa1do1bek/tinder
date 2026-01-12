@@ -36,7 +36,6 @@ public class SwipeServiceImpl implements SwipeService {
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
     private final ConversationRepository conversationRepository;
-    private final ConversationMapper conversationMapper;
 
     @Override
     public ApiResponse<?> swipe(Long swiperId, Long swipedId, SwipeStatus status) {
