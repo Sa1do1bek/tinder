@@ -1,7 +1,6 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
@@ -93,7 +92,7 @@ public class SwipeServiceImpl implements SwipeService {
                             .build();
                     matchRepository.save(match);
                 }
-                createConversation(swiperId, swipedId);
+                findConversationBetween(swiperId, swipedId);
 
                 Map<String, Object> matchNotification = new HashMap<>();
                 matchNotification.put("type", "MATCH");
@@ -143,40 +142,9 @@ public class SwipeServiceImpl implements SwipeService {
     }
 
 
-    public void createConversation(Long user1Id, Long user2Id) {
-
-        Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
-        if (optional.isPresent() && optional.get().getVisibility()){
-            optional.get().setIsMatchedForUser1(true);
-            optional.get().setIsMatchedForUser2(true);
-            conversationRepository.save(optional.get());
-            throw RestException.restThrow(ErrorType.CONVERSATION_ALREADY_EXISTS);
-        }
-
-        User user1 = userRepository.findById(user1Id)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
-        User user2 = userRepository.findById(user2Id)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
-
-        Conversation conversation = Conversation.builder()
-                .user1(user1)
-                .user2(user2)
-                .deletedForUser1(false)
-                .deletedForUser2(false)
-                .isMatchedForUser1(true)
-                .isMatchedForUser2(true)
-                .messages(new ArrayList<>())
-                .unreadForUser1(0)
-                .unreadForUser2(0)
-                .build();
-
-        conversationRepository.save(conversation);
+    private void findConversationBetween(Long user1Id, Long user2Id) {
+        conversationRepository.findBetweenUsers(user1Id, user2Id);
     }
-
-    private Optional<Conversation> findConversationBetween(Long user1Id, Long user2Id) {
-        return conversationRepository.findBetweenUsers(user1Id, user2Id);
-    }
-
 
 
     @Override
