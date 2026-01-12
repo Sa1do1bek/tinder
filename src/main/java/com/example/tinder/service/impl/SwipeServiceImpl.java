@@ -143,7 +143,7 @@ public class SwipeServiceImpl implements SwipeService {
     }
 
 
-    public ApiResponse<?> createConversation(Long user1Id, Long user2Id) {
+    public void createConversation(Long user1Id, Long user2Id) {
 
         Optional<Conversation> optional = findConversationBetween(user1Id, user2Id);
         if (optional.isPresent() && optional.get().getVisibility()){
@@ -170,8 +170,7 @@ public class SwipeServiceImpl implements SwipeService {
                 .unreadForUser2(0)
                 .build();
 
-        Conversation saved = conversationRepository.save(conversation);
-        return ApiResponse.success(conversationMapper.toDto(saved), SuccessType.CONVERSATION_CREATED_SUCCESSFULLY);
+        conversationRepository.save(conversation);
     }
 
     private Optional<Conversation> findConversationBetween(Long user1Id, Long user2Id) {
