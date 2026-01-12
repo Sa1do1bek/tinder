@@ -88,7 +88,7 @@ public class LikeServiceImpl implements LikeService {
             List<LikedUserDto> responseList = users.getContent().stream()
                     .map(user -> {
                         // Har bir user uchun uning swipe type ni topamiz
-                        SwipeStatus swipeType = getSwipeTypeForUserForMe(userId, user.getId());
+                        SwipeStatus swipeType = getHisSwipeType(userId, user.getId());
                         return convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeType);
                     })
                     .collect(Collectors.toList());
@@ -136,7 +136,7 @@ public class LikeServiceImpl implements LikeService {
 
         List<LikedUserDto> responseList = topLikedUsers.stream()
                 .map(user -> {
-                    SwipeStatus swipeType = getSwipeTypeForUser(currentUserId, user.getId());
+                    SwipeStatus swipeType = getSwipeType(currentUserId, user.getId());
                     return convertToLikedUserDto(user, Optional.of(myLoc), swipeType);
                 })
                 .collect(Collectors.toList());
@@ -172,7 +172,7 @@ public class LikeServiceImpl implements LikeService {
 
         List<LikedUserDto> responseList = topLikedUsers.stream()
                 .map(user -> {
-                    SwipeStatus swipeType = getSwipeTypeForUser(currentUserId, user.getId());
+                    SwipeStatus swipeType = getSwipeType(currentUserId, user.getId());
                     return convertToLikedUserDto(user, Optional.of(myLoc), swipeType);
                 })
                 .collect(Collectors.toList());
@@ -185,9 +185,19 @@ public class LikeServiceImpl implements LikeService {
         return swipeRepository.findSwipeTypeByUsers(swipedId, swiperId).orElse(null);
     }
 
-    private SwipeStatus getSwipeTypeForUserForMe(Long swiperId, Long swipedId) {
-        return swipeRepository.findSwipeTypeByUsers(swiperId, swipedId).orElse(null);
+    private SwipeStatus getSwipeType(Long meId, Long targetUserId) {
+        return swipeRepository
+                .findSwipeTypeByUsers(meId, targetUserId)
+                .orElse(null);
     }
+
+    // U meni swipe qilganmi
+    private SwipeStatus getHisSwipeType(Long meId, Long targetUserId) {
+        return swipeRepository
+                .findSwipeTypeByUsers(targetUserId, meId)
+                .orElse(null);
+    }
+
 
     private LikedUserDto convertToLikedUserDto(User targetUser, Optional<UserLocation> currentLoc, SwipeStatus swipeType) {
         int age = 0;
