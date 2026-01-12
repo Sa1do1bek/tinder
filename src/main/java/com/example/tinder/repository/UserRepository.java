@@ -115,7 +115,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         )
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-            AND u.id NOT IN (SELECT swiped_id FROM swipe s WHERE swiper_id = :currentUserId AND)
+            AND u.id NOT IN (SELECT swiped_id FROM swipe s WHERE swiper_id = :currentUserId)
             AND (6371 * acos(
                 least(1.0, greatest(-1.0,
                     cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
