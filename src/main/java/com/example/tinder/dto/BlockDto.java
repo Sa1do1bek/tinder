@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class BlockDto {
     private Long id;
-    private Long blockerId;
-    private Long blockedId;
+    private UserDto blockerUser;
+    private UserDto blockedUser;
 
 }
