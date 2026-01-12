@@ -45,5 +45,7 @@ public interface UserService {
 
     ApiResponse<?> showProfileUpdate(User user, boolean status);
 
+    ApiResponse<?> freeTonightUpdate(User user, boolean status);
+
     ApiResponse<?> getOnlineUsers();
 }

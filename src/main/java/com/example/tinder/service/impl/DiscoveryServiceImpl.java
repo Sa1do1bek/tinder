@@ -117,6 +117,48 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
 
+    @Override
+    public ApiResponse<?> findFreeTonight(Long currentUserId, Pageable pageable) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        Preference pref = preferenceRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND));
+        UserLocation myLoc = locationRepository.findByUserId(currentUserId)
+                .orElse(null);
+
+        Page<User> usersPage;
+
+        if (myLoc != null && myLoc.getLatitude() != null) {
+            usersPage = userRepository.findDiscoveryUsersWithSmartMatchingAndFreeTonight(
+                    currentUserId,
+                    pref.getPreferredGender().name(),
+                    pref.getMinAge(),
+                    pref.getMaxAge(),
+                    pref.getDistance(),
+                    Double.parseDouble(myLoc.getLatitude()),
+                    Double.parseDouble(myLoc.getLongitude()),
+                    pageable
+            );
+        } else {
+            usersPage = userRepository.findDiscoveryUsersWithoutLocationAndFreeTonight(
+                    currentUserId, pref.getPreferredGender().name(),
+                    pref.getMinAge(), pref.getMaxAge(), pageable);
+        }
+
+        List<DiscoveryResponseDTO> responseList = usersPage.getContent().stream()
+                .map(user -> convertToCardResponse(user, Optional.ofNullable(myLoc)))
+                .collect(Collectors.toList());
+
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", responseList);
+        responseMap.put("currentPage", usersPage.getNumber());
+        responseMap.put("totalPages", usersPage.getTotalPages());
+
+        return ApiResponse.success(responseMap, SuccessType.USERS_FETCHED_SUCCESSFULLY);
+    }
+
+
+
     public DiscoveryResponseDTO convertToCardResponse(User targetUser, Optional<UserLocation> currentLoc) {
         int age = 0;
         if (targetUser.getBirthDate() != null) {
@@ -155,6 +197,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .interests(interests)
                 .latitude(targetUser.getLatitude())
                 .longitude(targetUser.getLongitude())
+                .subscriptionType(targetUser.getSubscriptionType())
                 .build();
     }
 

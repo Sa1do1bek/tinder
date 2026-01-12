@@ -13,7 +13,8 @@ import java.util.Optional;
 public interface BlockRepository extends JpaRepository<Block, Long> {
 
     @Query("""
-        select b from Block b
+        select CASE WHEN COUNT(b) > 0 THEN true ELSE false END
+        from Block b
         where b.blocker.id = :blockerId
         and b.blocked.id = :blockedId
         and b.visibility = true

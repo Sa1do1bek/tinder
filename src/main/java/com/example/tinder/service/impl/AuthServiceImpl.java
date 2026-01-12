@@ -135,6 +135,7 @@ public class AuthServiceImpl implements AuthService {
             throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
 
+
         long EXPIRATION_MINUTES = 2;
         if (pending.getCreatedAt().plusMinutes(EXPIRATION_MINUTES).isBefore(LocalDateTime.now())) {
             pendingUserRepository.delete(pending);
@@ -166,17 +167,18 @@ public class AuthServiceImpl implements AuthService {
             user.setIsVerified(true);
             user.setIsApproved(false);
             user.setShowProfile(true);
+            user.setFreeTonight(false);
             user.setLatitude("41.1776056");
             user.setLongitude("69.3562786");
             user.setProvider(AuthProvider.EMAIL);
+            user.setProvider(AuthProvider.EMAIL);
+            user.setSubscriptionType(SubscriptionType.FREE);
             user.setUpdatedAt(LocalDateTime.now());
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
 
-
             userLocationRepository.findByUserId(user.getId()).ifPresent(userLocationRepository::delete);
             preferenceRepository.findByUserId(user.getId()).ifPresent(preferenceRepository::delete);
-
         } else {
             user = User.builder()
                     .email(pending.getEmail())
@@ -188,6 +190,7 @@ public class AuthServiceImpl implements AuthService {
                     .fullname(pending.getFullName())
                     .role(UserRole.USER)
                     .provider(AuthProvider.EMAIL)
+                    .subscriptionType(SubscriptionType.FREE)
                     .active(true)
                     .profilePictures(new ArrayList<>())
                     .userInterests(new ArrayList<>())
@@ -295,6 +298,7 @@ public class AuthServiceImpl implements AuthService {
                     .latitude("41.1776056")
                     .longitude("69.3562786")
                     .isVerified(true)
+                    .freeTonight(false)
                     .bio(null)
                     .build();
         }
@@ -305,6 +309,7 @@ public class AuthServiceImpl implements AuthService {
         saveCard(savedUser);
         saveVerification(savedUser);
         saveUserLocation(savedUser);
+
 
         deviceService.addTrustedDevice(savedUser.getId(), pending.getDeviceId());
 
@@ -367,19 +372,6 @@ public class AuthServiceImpl implements AuthService {
 
         preferenceRepository.save(preference);
     }
-
-//    public boolean checkAge(Date d) {
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.setTime(d);
-//        int year = calendar.get(Calendar.YEAR);
-//        int month = calendar.get(Calendar.MONTH);
-//        int day = calendar.get(Calendar.DAY_OF_MONTH);
-//
-//        new Date(
-//
-//        if (year < 1900 || year > 2022) {
-//            return false;
-//    }
 
 
     @Override

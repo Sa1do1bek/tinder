@@ -36,9 +36,15 @@ public class UserController {
     }
 
     @PutMapping("/updateShowProfile")
-    public ApiResponse<?> updateEmail(@CurrentUser User user,
+    public ApiResponse<?> updateShowProfile(@CurrentUser User user,
                                       @RequestParam("status") boolean status) {
         return this.userService.showProfileUpdate(user, status);
+    }
+
+    @PutMapping("/updateFreeTonight")
+    public ApiResponse<?> updateFreeTonight(@CurrentUser User user,
+                                      @RequestParam("status") boolean status) {
+        return this.userService.freeTonightUpdate(user, status);
     }
 
 

@@ -1,9 +1,6 @@
 package com.example.tinder.entity;
 
-import com.example.tinder.enums.AuthProvider;
-import com.example.tinder.enums.Gender;
-import com.example.tinder.enums.UserRole;
-import com.example.tinder.enums.UserStatus;
+import com.example.tinder.enums.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
@@ -92,6 +89,11 @@ public class User extends BaseEntity implements UserDetails {
     @Column(unique = true)
     private String firebaseUid;
 
+    @Enumerated(EnumType.STRING)
+    private SubscriptionType subscriptionType = SubscriptionType.FREE;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean freeTonight = false;
 
 
 
