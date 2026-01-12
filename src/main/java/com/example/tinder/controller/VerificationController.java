@@ -18,6 +18,7 @@ import java.util.List;
 public class VerificationController {
     private final VerificationService verificationService;
 
+
     @PutMapping("/verify")
     public ApiResponse<?> verify(@CurrentUser User user,
                                  @RequestBody VerificationDto.VerificationUpdateDto dto) {
