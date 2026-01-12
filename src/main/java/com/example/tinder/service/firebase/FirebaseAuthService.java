@@ -85,6 +85,7 @@ public class FirebaseAuthService {
                     .isApproved(false)
                     .isOnline(false)
                     .showProfile(true)
+                    .freeTonight(false)
                     .latitude("41.1776056")
                     .longitude("69.3562786")
                     .build();
@@ -118,8 +119,8 @@ public class FirebaseAuthService {
                 needsUpdate = true;
             }
 
-            if (user.getProvider() == AuthProvider.LOCAL) {
-                user.setProvider(AuthProvider.LOCAL_AND_GOOGLE);
+            if (user.getProvider() == AuthProvider.EMAIL) {
+                user.setProvider(AuthProvider.EMAIL_AND_GOOGLE);
                 needsUpdate = true;
             }
 

@@ -14,7 +14,6 @@ public class SubscriptionPlanController {
     private final SubscriptionPlanService subscriptionPlanService;
 
     @GetMapping("/getAll")
-    @PreAuthorize("hasAnyRole('ADMIN')")
     public ApiResponse<?> getAll() {
         return ApiResponse.success(subscriptionPlanService.getAll());
     }

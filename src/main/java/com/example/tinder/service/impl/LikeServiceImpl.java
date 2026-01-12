@@ -145,6 +145,42 @@ public class LikeServiceImpl implements LikeService {
     }
 
 
+    @Override
+    public ApiResponse<?> getLeastLikedUsers(Long currentUserId) {
+        userRepository.findById(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        Preference pref = preferenceRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PREFERENCE_NOT_FOUND));
+
+        UserLocation myLoc = locationRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.LOCATION_NOT_FOUND));
+
+        if (myLoc.getLatitude() == null || myLoc.getLongitude() == null) {
+            throw RestException.restThrow(ErrorType.LOCATION_NOT_FOUND);
+        }
+
+        List<User> topLikedUsers = userRepository.findLeastLikedUsersNearby(
+                currentUserId,
+                pref.getPreferredGender().name(),
+                pref.getMinAge(),
+                pref.getMaxAge(),
+                pref.getDistance(),
+                Double.parseDouble(myLoc.getLatitude()),
+                Double.parseDouble(myLoc.getLongitude())
+        );
+
+        List<LikedUserDto> responseList = topLikedUsers.stream()
+                .map(user -> {
+                    SwipeStatus swipeType = getSwipeTypeForUser(currentUserId, user.getId());
+                    return convertToLikedUserDto(user, Optional.of(myLoc), swipeType);
+                })
+                .collect(Collectors.toList());
+
+        return ApiResponse.success(responseList, SuccessType.TOP_LIKED_USERS_FETCHED_SUCCESSFULLY);
+    }
+
+
     private SwipeStatus getSwipeTypeForUser(Long swiperId, Long swipedId) {
         return swipeRepository.findSwipeTypeByUsers(swipedId, swiperId).orElse(null);
     }

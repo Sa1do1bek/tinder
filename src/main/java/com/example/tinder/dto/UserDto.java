@@ -35,6 +35,8 @@ public class UserDto {
     private Boolean isApproved;
     private String firebaseUid;
     private SubscriptionType subscriptionType;
+    private Boolean freeTonight;
+
 
 
 

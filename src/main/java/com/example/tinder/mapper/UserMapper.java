@@ -40,6 +40,7 @@ public class UserMapper {
                 .isApproved(user.getIsApproved())
                 .firebaseUid(user.getFirebaseUid())
                 .subscriptionType(user.getSubscriptionType())
+                .freeTonight(user.getFreeTonight())
                 .build();
     }
 

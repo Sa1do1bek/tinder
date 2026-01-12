@@ -1,10 +1,7 @@
 package com.example.tinder.service.firebase;
 
 import com.example.tinder.entity.*;
-import com.example.tinder.enums.AuthProvider;
-import com.example.tinder.enums.Gender;
-import com.example.tinder.enums.UserRole;
-import com.example.tinder.enums.UserStatus;
+import com.example.tinder.enums.*;
 import com.example.tinder.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,9 +48,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             log.info("✅ User already exists: {}", email);
 
-            if (existingUser.getProvider() == AuthProvider.LOCAL) {
+            if (existingUser.getProvider() == AuthProvider.EMAIL) {
                 log.info("🔄 Updating provider from LOCAL to LOCAL_AND_GOOGLE");
-                existingUser.setProvider(AuthProvider.LOCAL_AND_GOOGLE);
+                existingUser.setProvider(AuthProvider.EMAIL_AND_GOOGLE);
                 userRepository.save(existingUser);
             }
         } else {
@@ -67,6 +64,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .fullname(fullname)
                     .profilePic(profilePic)
                     .provider(AuthProvider.GOOGLE)
+                    .subscriptionType(SubscriptionType.FREE)
                     .role(UserRole.USER)
                     .status(UserStatus.ACTIVE)
                     .gender(Gender.EVERYONE)
@@ -75,6 +73,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .isApproved(false)
                     .isOnline(false)
                     .showProfile(true)
+                    .freeTonight(false)
                     .latitude("41.1776056")
                     .longitude("69.3562786")
                     .build();

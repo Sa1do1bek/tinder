@@ -7,7 +7,7 @@ import com.example.tinder.enums.*;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserSubscriptionMapper;
 import com.example.tinder.repository.*;
-import com.example.tinder.service.UserSubscrationService;
+import com.example.tinder.service.UserSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UserSubscriptionServiceImpl implements UserSubscrationService {
+public class UserSubscriptionServiceImpl implements UserSubscriptionService {
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final UserRepository userRepository;
