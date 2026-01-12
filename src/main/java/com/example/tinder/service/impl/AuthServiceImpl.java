@@ -1,5 +1,6 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.dto.TelegramAuthRequest;
 import com.example.tinder.dto.VerifyDto;
 import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.LoginResponse;
@@ -25,8 +26,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -464,5 +469,63 @@ public class AuthServiceImpl implements AuthService {
         codeRepository.delete(dbCode);
         return ApiResponse.success(SuccessType.PASSWORD_UPDATED_SUCCESSFULLY);
     }
+
+
+    @Override
+    public ApiResponse<?> loginOrRegisterByTelegram(TelegramAuthRequest req) {
+        String fakeEmail = req.getTelegramId() + "@telegram.app";
+        Optional<User> optionalUser = userRepository.findByEmail(fakeEmail);
+
+        User user;
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+        } else {
+            String fullName = "";
+            if (req.getFirstName() != null) {
+                fullName += req.getFirstName();
+            }
+            if (req.getLastName() != null) {
+                fullName += req.getLastName();
+            }
+            user = User.builder()
+                    .firebaseUid(null)
+                    .email(fakeEmail)
+                    .username(req.getUsername())
+                    .fullname(fullName)
+                    .profilePic(null)
+                    .isVerified(true)
+                    .provider(AuthProvider.TELEGRAM)
+                    .role(UserRole.USER)
+                    .status(UserStatus.ACTIVE)
+                    .gender(Gender.EVERYONE)
+                    .active(true)
+                    .isApproved(false)
+                    .isOnline(false)
+                    .showProfile(true)
+                    .freeTonight(false)
+                    .latitude("41.1776056")
+                    .longitude("69.3562786")
+                    .birthDate(Date.valueOf("2004-05-31 05:00:00.000000"))
+                    .build();
+            user.setCreatedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
+            User savedUser = userRepository.save(user);
+            user = savedUser;
+            savePreference(savedUser);
+            saveCard(savedUser);
+            saveVerification(savedUser);
+            saveUserLocation(savedUser);
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
+
+        return ApiResponse.success(Map.of(
+                        "token", jwtToken,
+                        "user", userMapper.toDto(user))
+                , SuccessType.TELEGRAM_USER_ENTERED_SUCCESSFULLY
+        );
+    }
+
 
 }

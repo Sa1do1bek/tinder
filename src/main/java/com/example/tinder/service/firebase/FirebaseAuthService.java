@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -88,6 +90,7 @@ public class FirebaseAuthService {
                     .freeTonight(false)
                     .latitude("41.1776056")
                     .longitude("69.3562786")
+                    .birthDate(Date.valueOf("2004-05-31 05:00:00.000000"))
                     .build();
             newUser.setCreatedAt(createdAt);
             newUser.setUpdatedAt(createdAt);
