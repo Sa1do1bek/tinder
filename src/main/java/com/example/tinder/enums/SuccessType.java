@@ -83,7 +83,8 @@ public enum SuccessType {
     SUBSCRIPTION_PLAN_CREATED_SUCCESSFULLY("subscription.plan.created.successfully"),
     SUBSCRIPTION_PLAN_FETCHED_SUCCESSFULLY("subscription.plan.fetched.successfully"),
     SUBSCRIPTION_PLAN_DELETED_SUCCESSFULLY("successfully.deleted"),
-    SUBSCRIPTION_CREATED_SUCCESSFULLY("subscription.created.successfully"),;
+    SUBSCRIPTION_CREATED_SUCCESSFULLY("subscription.created.successfully"),
+    FREE_TONIGHT_UPDATED_SUCCESSFULLY("free.tonight.updated.successfully"),;
 
 
 

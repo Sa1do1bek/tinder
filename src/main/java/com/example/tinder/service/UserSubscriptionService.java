@@ -5,7 +5,7 @@ import com.example.tinder.entity.User;
 import org.springframework.stereotype.Service;
 
 @Service
-public interface UserSubscrationService {
+public interface UserSubscriptionService {
     ApiResponse<?> create(User user, Long subscriptionPlanId);
 
 }

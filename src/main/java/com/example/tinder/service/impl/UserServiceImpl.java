@@ -340,6 +340,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ApiResponse<?> freeTonightUpdate(User user, boolean status) {
+        User u = userRepository.findById(user.getId()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        u.setFreeTonight(status);
+        User save = userRepository.save(u);
+        return ApiResponse.success(userMapper.toDto(save), SuccessType.FREE_TONIGHT_UPDATED_SUCCESSFULLY);
+    }
+
+    @Override
     public ApiResponse<?> getOnlineUsers() {
         Set<String> onlineUsernames = webSocketEventListener.getOnlineUsernames();
         List<User> users = userRepository.findByUsernameIn(onlineUsernames);

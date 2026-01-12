@@ -45,6 +45,11 @@ public class LikeController{
         return userService.getTopLikedUsers(user.getId());
     }
 
+    @GetMapping("/getLeastLikedUsers")
+    public ApiResponse<?> getLeastLikedUsers(@CurrentUser User user){
+        return userService.getLeastLikedUsers(user.getId());
+    }
+
 
 
 

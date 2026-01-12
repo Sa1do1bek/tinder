@@ -13,4 +13,6 @@ public interface LikeService {
 
     ApiResponse<?> getTopLikedUsers(Long currentUserId);
 
+    ApiResponse<?> getLeastLikedUsers(Long currentUserId);
+
 }

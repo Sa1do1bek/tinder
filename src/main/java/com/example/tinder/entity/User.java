@@ -83,8 +83,10 @@ public class User extends BaseEntity implements UserDetails {
     private String firebaseUid;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private SubscriptionType subscriptionType = SubscriptionType.FREE;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean freeTonight = false;
 
 
 

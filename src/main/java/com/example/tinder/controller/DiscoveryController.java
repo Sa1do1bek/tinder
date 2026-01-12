@@ -40,6 +40,13 @@ public class DiscoveryController {
         return discoveryService.findAllUsersByUserInterests(currentUser.getId(),categoryId, pageable);
     }
 
+    @GetMapping("/findFreeTonight")
+    public ApiResponse<?> findFreeTonight(@CurrentUser User currentUser,
+                                       @RequestParam(required = false, defaultValue = "0") Integer page,
+                                       @RequestParam(required = false, defaultValue = "20") Integer size){
+        Pageable pageable = PageRequest.of(page, size);
+        return discoveryService.findFreeTonight(currentUser.getId(), pageable);
+    }
 
 
 
