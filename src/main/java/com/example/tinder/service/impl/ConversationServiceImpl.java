@@ -6,6 +6,7 @@ import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
+import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.ConversationMapper;
 import com.example.tinder.repository.ConversationRepository;
@@ -13,6 +14,7 @@ import com.example.tinder.repository.MatchRepository;
 import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ConversationService;
+import com.example.tinder.service.SwipeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,7 @@ public class ConversationServiceImpl implements ConversationService {
     private final MatchRepository matchRepository;
     private final ConversationMapper conversationMapper;
     private final SwipeRepository swipeRepository;
+    private final SwipeService swipeService;
 
 
     @Override
@@ -111,6 +114,8 @@ public class ConversationServiceImpl implements ConversationService {
                 .unreadForUser1(0)
                 .unreadForUser2(0)
                 .build();
+
+        swipeService.swipe(user1Id, user2Id, SwipeStatus.LIKE);
 
         Conversation saved = conversationRepository.save(conversation);
         return ApiResponse.success(conversationMapper.toDto(saved),SuccessType.CONVERSATION_CREATED_SUCCESSFULLY);

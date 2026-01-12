@@ -1,10 +1,10 @@
 package com.example.parking.service.impl;
 
-import com.example.parking.bot.ParkingTelegramBot;
 import com.example.parking.bot.keyboard.KeyboardFactory;
 import com.example.parking.entity.ContactRequest;
 import com.example.parking.entity.UserBot;
 import com.example.parking.service.NotificationServices;
+import com.example.tinder.bot.TelegramBot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -20,7 +20,7 @@ public class NotificationServicesImpl implements NotificationServices {
     private KeyboardFactory keyboardFactory;
 
     @Override
-    public void sendContactRequestNotification(ContactRequest request, ParkingTelegramBot bot) {
+    public void sendContactRequestNotification(ContactRequest request, TelegramBot bot) {
         String username = request.getSender().getUsername();
         String formattedUsername = (username != null && !username.isBlank()) ? "@" + username : "—";
 
@@ -47,7 +47,7 @@ public class NotificationServicesImpl implements NotificationServices {
 
 
     @Override
-    public void sendPhoneNumberRequest(UserBot requester, UserBot owner, String licensePlate, ParkingTelegramBot bot) {
+    public void sendPhoneNumberRequest(UserBot requester, UserBot owner, String licensePlate, TelegramBot bot) {
         String requestText = String.format(
                 "📞 Telefon raqami so'rovi!\n\n" +
                         "🚗 Avtomobil: %s\n" +
@@ -62,7 +62,7 @@ public class NotificationServicesImpl implements NotificationServices {
     }
 
     @Override
-    public void sendPhoneNumberResponse(UserBot owner, UserBot requester, String phoneNumber, ParkingTelegramBot bot) {
+    public void sendPhoneNumberResponse(UserBot owner, UserBot requester, String phoneNumber, TelegramBot bot) {
         String responseText = String.format(
                 "📞 Telefon raqami ulashildi!\n\n" +
                         "👤 %s\n" +
@@ -75,7 +75,7 @@ public class NotificationServicesImpl implements NotificationServices {
         sendMessage(bot, requester.getChatId(), responseText, null);
     }
 
-    private void sendMessage(ParkingTelegramBot bot, Long chatId, String text,
+    private void sendMessage(TelegramBot bot, Long chatId, String text,
                              org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup keyboard) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());

@@ -4,5 +4,6 @@ public enum AuthProvider {
     GOOGLE,
     EMAIL,
     PHONE,
-    EMAIL_AND_GOOGLE;
+    EMAIL_AND_GOOGLE,
+    TELEGRAM,
 }

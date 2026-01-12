@@ -3,11 +3,13 @@ package com.example.tinder.service;
 import com.example.tinder.dto.auth.byPhone.LoginByPhoneDto;
 import com.example.tinder.dto.auth.byPhone.RegisterByPhoneDto;
 import com.example.tinder.dto.auth.byPhone.VerifyByPhoneDto;
+import com.example.tinder.dto.TelegramAuthRequest;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
 import jakarta.validation.Valid;
+import com.example.tinder.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -45,4 +47,6 @@ public interface AuthService {
 
     ApiResponse<?> checkForgetPasswordByPhone(String phone, String code, String deviceName, String newPassword);
 
+
+    ApiResponse<?>  loginOrRegisterByTelegram(TelegramAuthRequest req);
 }
