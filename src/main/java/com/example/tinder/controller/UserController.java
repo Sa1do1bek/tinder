@@ -47,7 +47,7 @@ public class UserController {
         return this.userService.freeTonightUpdate(user, status);
     }
 
-
+    // deprecated
     @PostMapping("/checkUpdatedEmail")
     public ApiResponse<?> checkUpdatedEmail(@RequestParam("oldEmail") String oldEmail,
                                             @RequestParam("newEmail") String newEmail,

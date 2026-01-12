@@ -89,7 +89,12 @@ public enum ErrorType {
 
     //-----*******
     CODE_NOT_FOUND("code.not.found", HttpStatus.NOT_FOUND ),
-    CODE_ATTEMPT_LIMIT_EXCEEDED("code.attempt.limit.exceeded", HttpStatus.BAD_REQUEST ),;
+    CODE_ATTEMPT_LIMIT_EXCEEDED("code.attempt.limit.exceeded", HttpStatus.BAD_REQUEST ),
+    PHONE_ALREADY_TAKEN("phone.already.taken", HttpStatus.BAD_REQUEST ),
+    INVALID_VERIFICATION_CODE_OR_PHONE("invalid.verification.code.or.phone", HttpStatus.BAD_REQUEST ),
+    USER_PHONE_INVALID("user.phone.invalid", HttpStatus.BAD_REQUEST ),;
+
+
 
     private final String msg;
     private HttpStatus status = HttpStatus.BAD_REQUEST;

@@ -78,8 +78,10 @@ public enum SuccessType {
     VERIFICATION_UPDATED_SUCCESSFULLY("verification.updated.successfully"),
     VERIFICATION_FOUND("verification.found"),
     APPROVE_IMAGE_UPLOADED_SUCCESSFULLY("approve.image.uploaded.successfully"),
-
-//    **********
+    //--**--********************
+    VERIFICATION_CODE_SENT_TO_PHONE("verification.code.sent.to.phone"),
+    CODE_SENT_TO_PHONE("code.sent.to.phone"),
+    PHONE_AVAILABLE_FOR_REGISTRATION("phone.available.for.registration"),
     SUBSCRIPTION_PLAN_CREATED_SUCCESSFULLY("subscription.plan.created.successfully"),
     SUBSCRIPTION_PLAN_FETCHED_SUCCESSFULLY("subscription.plan.fetched.successfully"),
     SUBSCRIPTION_PLAN_DELETED_SUCCESSFULLY("successfully.deleted"),

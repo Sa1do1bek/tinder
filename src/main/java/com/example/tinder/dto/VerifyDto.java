@@ -20,6 +20,7 @@ public class VerifyDto {
     private String password;
 
 
+
     @NotBlank
     private String deviceId;
 

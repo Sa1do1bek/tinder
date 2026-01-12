@@ -22,22 +22,33 @@ import java.util.Set;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("""
-        SELECT u FROM User u
-        WHERE u.id = :id
-        AND u.visibility = true
-    """)
-    Optional<User> findByIdCustom(@Param("id")Long id);
+                SELECT u FROM User u
+                WHERE u.id = :id
+                AND u.visibility = true
+            """)
+    Optional<User> findByIdCustom(@Param("id") Long id);
 
     boolean existsByUsername(String username);
 
+    //**************
     @Query("""
                      SELECT u FROM User u
-                     WHERE u.email = :email\s
+                     WHERE u.email = :email
                      AND u.visibility = true
                      AND u.active = true
                      AND u.status = 'ACTIVE'
             \s""")
     Optional<User> findByEmail(@Param("email") String email);
+
+    @Query("""
+       SELECT u FROM User u
+       WHERE u.phoneNumber = :phoneNumber
+         AND u.visibility = true
+         AND u.active = true
+         AND u.status = 'ACTIVE'
+       """)
+    Optional<User> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+
 
     @Modifying
     @Transactional
@@ -85,10 +96,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
 
+    //****************
     boolean existsByEmailAndActiveTrue(@NotBlank(message = "email cannot be null or empty") @Email String email);
 
-    boolean existsByUsernameAndActiveTrue(String username);
+    @Query("""
+                select (count(u) > 0)
+                from User u
+                where u.phoneNumber = :phoneNumber
+                  and u.active = true
+            """)
+    boolean existsByPhoneNumberAndActiveTrue(@Param("phoneNumber") String phoneNumber);
 
+    boolean existsByUsernameAndActiveTrue(String username);
 
     @Query(value = """
             SELECT u.*,
@@ -126,18 +145,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
             ORDER BY match_score DESC, distance_val ASC
             """,
             countQuery = """
-                    SELECT count(*) FROM users u
-                    JOIN users_location ul
-                    ON u.id = ul.user_id
-                    WHERE u.id != :currentUserId
-                    AND u.active = true
-                    AND u.show_profile = true
-                    AND u.id NOT IN (
-                        SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
-                        UNION
-                        SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
-                    )
-""",
+                                        SELECT count(*) FROM users u
+                                        JOIN users_location ul
+                                        ON u.id = ul.user_id
+                                        WHERE u.id != :currentUserId
+                                        AND u.active = true
+                                        AND u.show_profile = true
+                                        AND u.id NOT IN (
+                                            SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
+                                            UNION
+                                            SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+                                        )
+                    """,
             nativeQuery = true)
     Page<User> findDiscoveryUsersWithSmartMatching(
             @Param("currentUserId") Long currentUserId,
@@ -213,17 +232,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     )) <= :maxDistance
     """,
             countQuery = """
-        SELECT count(DISTINCT u.id) FROM users u
-        JOIN users_user_interests uui ON u.id = uui.user_id
-        WHERE u.id != :currentUserId
+        SELECT count(DISTINCT u.id) FROM users u 
+        JOIN users_user_interests uui ON u.id = uui.user_id 
+        WHERE u.id != :currentUserId 
         AND u.active = true
-        AND u.show_profile = true
+        AND u.show_profile = true   
             AND u.id NOT IN (
                 SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                 UNION
                 SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
             )
-        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
         AND uui.user_interests_id = :interestId
     """,
             nativeQuery = true)
@@ -239,7 +257,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             Pageable pageable);
 
 
-
     @Modifying
     @Transactional
     @Query(value = """
@@ -250,43 +267,43 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query(value = """
-        SELECT DISTINCT u.*,
-        COUNT(s.id) as like_count,
-        (6371 * acos(
-            least(1.0, greatest(-1.0,
-                cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-            ))
-        )) as distance_val
-        FROM users u
-        JOIN users_location ul ON u.id = ul.user_id
-        LEFT JOIN swipe s ON u.id = s.swiped_id
-            AND (s.swipe = 'LIKE' OR s.swipe = 'SUPERLIKE')
-            AND s.swiper_id <> :currentUserId
-            AND s.visibility = true
-        WHERE u.id != :currentUserId
-        AND u.active = true
-        AND u.show_profile = true
-        AND u.id NOT IN (
-            SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
-            UNION
-            SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
-        )
-        AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-        AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-        AND (6371 * acos(
-            least(1.0, greatest(-1.0,
-                cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-            ))
-        )) <= :maxDistance
-        GROUP BY u.id, ul.latitude, ul.longitude
-        ORDER BY like_count DESC, distance_val ASC
-        LIMIT 10
-        """,
+            SELECT DISTINCT u.*, 
+            COUNT(s.id) as like_count,
+            (6371 * acos(
+                least(1.0, greatest(-1.0, 
+                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+                ))
+            )) as distance_val
+            FROM users u
+            JOIN users_location ul ON u.id = ul.user_id
+            LEFT JOIN swipe s ON u.id = s.swiped_id 
+                AND (s.swipe = 'LIKE' OR s.swipe = 'SUPERLIKE') 
+                AND s.swiper_id <> :currentUserId
+                AND s.visibility = true
+            WHERE u.id != :currentUserId
+            AND u.active = true
+            AND u.show_profile = true           
+            AND u.id NOT IN (
+                SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
+                UNION
+                SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+            )
+            AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+            AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+            AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+            AND (6371 * acos(
+                least(1.0, greatest(-1.0, 
+                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+                ))
+            )) <= :maxDistance
+            GROUP BY u.id, ul.latitude, ul.longitude
+            ORDER BY like_count DESC, distance_val ASC
+            LIMIT 10
+            """,
             nativeQuery = true)
     List<User> findTopLikedUsersNearby(
             @Param("currentUserId") Long currentUserId,
@@ -300,16 +317,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUsernameIn(Set<String> usernames);
 
 
-
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("""
-    UPDATE User u
-       SET u.isOnline = :online,
-           u.lastSeen = :lastSeen
-     WHERE u.username = :username
-""")
+                UPDATE User u
+                   SET u.isOnline = :online,
+                       u.lastSeen = :lastSeen
+                 WHERE u.username = :username
+            """)
     void updateOnlineStatus(
             @Param("username") String username,
             @Param("online") Boolean online,
