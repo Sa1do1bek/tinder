@@ -30,9 +30,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
+    //**************
     @Query("""
                      SELECT u FROM User u
-                     WHERE u.email = :email\s
+                     WHERE u.email = :email
                      AND u.visibility = true
                      AND u.active = true
                      AND u.status = 'ACTIVE'
@@ -95,6 +96,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
 
+    //****************
     boolean existsByEmailAndActiveTrue(@NotBlank(message = "email cannot be null or empty") @Email String email);
 
     @Query("""

@@ -300,7 +300,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> me(User user) {
-        userRepository.findByEmail(user.getEmail()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        userRepository.findById(user.getId()).orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
         return ApiResponse.success(userMapper.toDto(user), SuccessType.USER_FOUND_SUCCESSFULLY);
     }
 

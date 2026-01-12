@@ -7,9 +7,16 @@ import com.example.tinder.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.Optional;
 import java.util.Random;
@@ -21,6 +28,16 @@ public class Utils {
     private final CodeRepository codeRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+
+
+    //test
+    private final RestTemplate restTemplate;
+    @Value("${application.playMobile.url}")
+    private String playMobileUrl;
+    @Value("${application.playMobile.username}")
+    private String playMobileUsername;
+    @Value("${application.playMobile.password}")
+    private String playMobilePassword;
 
     private static final double EARTH_RADIUS_KM = 6371.0;
 
@@ -125,8 +142,52 @@ public class Utils {
         }
     }
 
+    //-------------test-----------
     public boolean sendCodeToPhone(String phoneNumber, String code) {
-        return true;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(playMobileUsername, playMobilePassword);
+
+        String result = restTemplate.exchange(
+                playMobileUrl,
+                HttpMethod.POST,
+                getStringHttpEntity(phoneNumber , code ,  headers),
+                String.class
+        ).getBody();
+
+        if (result != null) {
+            return result.equals("Request is received");
+        } else {
+            return false;
+        }
+    }
+
+    //-------------test-----------
+    private static HttpEntity<String> getStringHttpEntity(String phoneNumber, String code, HttpHeaders headers) {
+
+        String message = "Sizning tasdiqlash kodingiz: " + code + " Iltimos, kodni hech kimga bermang!  Tinder";
+
+        message = "\"" + message + "\"";
+        String json = """
+                {
+                    "messages":[
+                        {
+                            "recipient":998""" + phoneNumber + """
+                ,
+                "message-id":"abc000000001",
+                "sms":{
+                   "originator": "3700",
+                    "content": {
+                       "text":\s""" + message + """
+                                  }
+                             }
+                        }
+                   ]
+                }
+                """;
+
+        System.out.println(json);
+        return new HttpEntity<>(json, headers);
     }
 
     public boolean existUsername(String username) {

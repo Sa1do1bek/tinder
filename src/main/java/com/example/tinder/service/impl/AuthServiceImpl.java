@@ -100,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
 
         String code = utils.getCode();
         System.out.println("------------code: " + code);
-        if (!utils.sendCodeToPhone(code, dto.getPhoneNumber())) {
+        if (!utils.sendCodeToPhone(dto.getPhoneNumber(),code)) {
             throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
 
@@ -247,13 +247,14 @@ public class AuthServiceImpl implements AuthService {
             throw RestException.restThrow(ErrorType.VERIFICATION_CODE_EXPIRED);
         }
 
-        Optional<User> optionalUser = userRepository.findByEmail(pending.getEmail());
+        Optional<User> optionalUser = userRepository.findByPhoneNumber(pending.getPhoneNumber());
 
         User user = new User();
         System.out.println("USER ID " + user.getId());
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
+            System.out.println("--------------user : " + optionalUser.get().getUsername());
 
             user.setUsername(pending.getUsername());
             user.setPassword(pending.getPassword());
@@ -470,7 +471,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElse(null);
 
         String code = utils.getCode();
-
+        System.out.println("-------------code : " +  code);
         if (trustedDevice == null) {
             if (utils.sendCodeToPhone(dto.getPhoneNumber(), code)) {
                 Device device = new Device();
