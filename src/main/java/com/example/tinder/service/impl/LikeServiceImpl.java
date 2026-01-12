@@ -88,7 +88,7 @@ public class LikeServiceImpl implements LikeService {
             List<LikedUserDto> responseList = users.getContent().stream()
                     .map(user -> {
                         // Har bir user uchun uning swipe type ni topamiz
-                        SwipeStatus swipeType = getSwipeTypeForUser(userId, user.getId());
+                        SwipeStatus swipeType = getSwipeTypeForUserForMe(userId, user.getId());
                         return convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeType);
                     })
                     .collect(Collectors.toList());
@@ -185,6 +185,9 @@ public class LikeServiceImpl implements LikeService {
         return swipeRepository.findSwipeTypeByUsers(swipedId, swiperId).orElse(null);
     }
 
+    private SwipeStatus getSwipeTypeForUserForMe(Long swiperId, Long swipedId) {
+        return swipeRepository.findSwipeTypeByUsers(swiperId, swipedId).orElse(null);
+    }
 
     private LikedUserDto convertToLikedUserDto(User targetUser, Optional<UserLocation> currentLoc, SwipeStatus swipeType) {
         int age = 0;
