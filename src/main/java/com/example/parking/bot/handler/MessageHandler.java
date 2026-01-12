@@ -1,8 +1,9 @@
 package com.example.parking.bot.handler;
 
-import com.example.parking.bot.ParkingTelegramBot;
 import com.example.parking.bot.handler.callback.CallbackHandler;
 import com.example.parking.bot.handler.command.CommandHandler;
+import com.example.tinder.bot.TelegramBot;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -10,15 +11,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 
 @Component
+@RequiredArgsConstructor
 public class MessageHandler {
     
-    @Autowired
-    private CommandHandler commandHandler;
+    private final CommandHandler commandHandler;
+    private final CallbackHandler callbackHandler;
     
-    @Autowired
-    private CallbackHandler callbackHandler;
-    
-    public void handleUpdate(Update update, ParkingTelegramBot bot) {
+    public void handleUpdate(Update update, com.example.tinder.bot.TelegramBot bot) {
         try {
             if (update.hasMessage()) {
                 if (update.getMessage().hasText()) {

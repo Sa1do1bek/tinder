@@ -1,5 +1,6 @@
 package com.example.tinder.controller;
 
+import com.example.tinder.dto.TelegramAuthRequest;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.RegisterDto;
@@ -55,12 +56,14 @@ public class AuthController {
         return authService.forgetPasswordByEmail(email, deviceName);
     }
 
-
     @PostMapping("/checkForgetPasswordByEmail")
     public ApiResponse<?> checkForgetPasswordByEmail(@RequestParam("email") String email, @RequestParam("code") String code, @RequestParam("deviceId") String deviceName , @RequestParam("newPassword") String newPassword) {
         return authService.checkForgetPasswordByEmail(email, code, deviceName , newPassword);
     }
 
-
+    @PostMapping("/telegram")
+    public ApiResponse<?> telegramAuth(@RequestBody TelegramAuthRequest req) {
+        return authService.loginOrRegisterByTelegram(req);
+    }
 
 }

@@ -1,9 +1,11 @@
 package com.example.tinder.service;
 
+import com.example.tinder.dto.TelegramAuthRequest;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
+import com.example.tinder.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,4 +26,6 @@ public interface AuthService {
     ApiResponse<?> forgetPasswordByEmail(String email, String deviceName);
 
     ApiResponse<?> checkForgetPasswordByEmail(String email, String code, String deviceName , String newPassword);
+
+    ApiResponse<?>  loginOrRegisterByTelegram(TelegramAuthRequest req);
 }

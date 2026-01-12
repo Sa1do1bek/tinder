@@ -1,10 +1,10 @@
 package com.example.parking.bot.handler.callback;
 
-import com.example.parking.bot.ParkingTelegramBot;
 import com.example.parking.entity.*;
 import com.example.parking.service.*;
 import com.example.parking.bot.keyboard.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.tinder.bot.TelegramBot;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -21,25 +21,15 @@ import java.util.List;
 import java.util.ArrayList;
 
 @Component
+@RequiredArgsConstructor
 public class CallbackHandler {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private CarService carService;
-
-    @Autowired
-    private ContactService contactService;
-
-    @Autowired
-    private NotificationServices notificationService;
-
-    @Autowired
-    private KeyboardFactory keyboardFactory;
-
-    @Autowired
-    private TempCarDataService tempCarDataService;
+    private final UserService userService;
+    private final CarService carService;
+    private final ContactService contactService;
+    private final NotificationServices notificationService;
+    private final KeyboardFactory keyboardFactory;
+    private final TempCarDataService tempCarDataService;
 
     private final Map<Long, List<Integer>> callbackMessageIds = new ConcurrentHashMap<>();
 
@@ -47,7 +37,7 @@ public class CallbackHandler {
         callbackMessageIds.computeIfAbsent(chatId, k -> new ArrayList<>()).add(messageId);
     }
 
-    private void deleteCallbackMessages(ParkingTelegramBot bot, Long chatId) {
+    private void deleteCallbackMessages(TelegramBot bot, Long chatId) {
         List<Integer> messageIds = callbackMessageIds.get(chatId);
         if (messageIds != null && !messageIds.isEmpty()) {
             for (int i = messageIds.size() - 1; i >= 0; i--) {
@@ -70,7 +60,7 @@ public class CallbackHandler {
     }
 
     @Transactional
-    public void handleCallbackQuery(CallbackQuery callbackQuery, ParkingTelegramBot bot) {
+    public void handleCallbackQuery(CallbackQuery callbackQuery, TelegramBot bot) {
         String data = callbackQuery.getData();
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
@@ -108,7 +98,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handleCarNumberConfirmation(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleCarNumberConfirmation(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         try {
             if (data.equals("car_number_confirm_no")) {
                 if (user.getState() == UserState.WAITING_FIRST_CAR_CONFIRMATION) {
@@ -187,7 +177,7 @@ public class CallbackHandler {
         }
     }
 
-    private void showMainMenu(ParkingTelegramBot bot, Long chatId, String text) {
+    private void showMainMenu(TelegramBot bot, Long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
         message.setText(text);
@@ -200,7 +190,7 @@ public class CallbackHandler {
         }
     }
 
-    private void showCarsMenu(ParkingTelegramBot bot, Long chatId, String text) {
+    private void showCarsMenu(TelegramBot bot, Long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
         message.setText(text);
@@ -213,7 +203,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handleReasonSelection(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleReasonSelection(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         try {
             String[] parts = data.split("_", 3);
             if (parts.length < 3) {
@@ -264,7 +254,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handleContactRequest(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleContactRequest(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         String[] parts = data.split("_");
         if (parts.length < 3) return;
 
@@ -287,7 +277,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handleOwnerResponse(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleOwnerResponse(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         String[] parts = data.split("_");
         if (parts.length < 4) return;
 
@@ -310,7 +300,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handlePhoneShare(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handlePhoneShare(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         String[] parts = data.split("_");
         if (parts.length < 4) return;
 
@@ -328,7 +318,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handlePrivacySettings(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handlePrivacySettings(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         String[] parts = data.split("_");
         if (parts.length < 3) return;
 
@@ -355,7 +345,7 @@ public class CallbackHandler {
         editMessage(bot, chatId, messageId, message, keyboardFactory.getPrivacySettingsKeyboard(user));
     }
 
-    private void handleCarManagement(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleCarManagement(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         try {
             Long carId = Long.parseLong(data.split("_")[2]);
             Optional<Car> carOpt = carService.findById(carId);
@@ -386,7 +376,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handleCarEdit(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleCarEdit(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         try {
             Long carId = Long.parseLong(data.split("_")[2]);
             tempCarDataService.createOrUpdateForEdit(chatId, carId);
@@ -404,7 +394,7 @@ public class CallbackHandler {
         }
     }
 
-    private void handleCarDelete(UserBot user, String data, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleCarDelete(UserBot user, String data, Long chatId, Integer messageId, TelegramBot bot) {
         try {
             String[] parts = data.split("_");
             String action = parts[2];
@@ -448,11 +438,11 @@ public class CallbackHandler {
         }
     }
 
-    private void handleCarsMenuBack(UserBot user, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void handleCarsMenuBack(UserBot user, Long chatId, Integer messageId, TelegramBot bot) {
         showUserCarsCallback(user, chatId, messageId, bot);
     }
 
-    private void showUserCarsCallback(UserBot user, Long chatId, Integer messageId, ParkingTelegramBot bot) {
+    private void showUserCarsCallback(UserBot user, Long chatId, Integer messageId, TelegramBot bot) {
         List<Car> cars = carService.findByOwner(chatId);
 
         if (cars.isEmpty()) {
@@ -469,7 +459,7 @@ public class CallbackHandler {
                 keyboardFactory.getCarsListKeyboard(cars));
     }
 
-    private void sendMessage(ParkingTelegramBot bot, Long chatId, String text,
+    private void sendMessage(TelegramBot bot, Long chatId, String text,
                              InlineKeyboardMarkup keyboard) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
@@ -486,11 +476,11 @@ public class CallbackHandler {
         }
     }
 
-    private void editMessage(ParkingTelegramBot bot, Long chatId, Integer messageId, String text) {
+    private void editMessage(TelegramBot bot, Long chatId, Integer messageId, String text) {
         editMessage(bot, chatId, messageId, text, null);
     }
 
-    private void editMessage(ParkingTelegramBot bot, Long chatId, Integer messageId, String text,
+    private void editMessage(TelegramBot bot, Long chatId, Integer messageId, String text,
                              InlineKeyboardMarkup keyboard) {
         EditMessageText editMessage = new EditMessageText();
         editMessage.setChatId(chatId.toString());

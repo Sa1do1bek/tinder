@@ -1,10 +1,10 @@
 package com.example.parking.bot.handler.command;
 
-import com.example.parking.bot.ParkingTelegramBot;
 import com.example.parking.bot.keyboard.KeyboardFactory;
 import com.example.parking.entity.*;
 import com.example.parking.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.tinder.bot.TelegramBot;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -21,25 +21,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
 
 @Component
+@RequiredArgsConstructor
 public class CommandHandler {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private CarService carService;
-
-    @Autowired
-    private ContactService contactService;
-
-    @Autowired
-    private TempCarDataService tempCarDataService;
-
-    @Autowired
-    private KeyboardFactory keyboardFactory;
-
-    @Autowired
-    private OilChangeService oilChangeService;
+    private final UserService userService;
+    private final CarService carService;
+    private final ContactService contactService;
+    private final TempCarDataService tempCarDataService;
+    private final KeyboardFactory keyboardFactory;
+    private final OilChangeService oilChangeService;
 
     private final Map<Long, List<Integer>> contentMessageIds = new ConcurrentHashMap<>();
 
@@ -52,7 +42,7 @@ public class CommandHandler {
         contentMessageIds.computeIfAbsent(chatId, k -> new ArrayList<>()).add(messageId);
     }
 
-    private void deleteContentMessages(ParkingTelegramBot bot, Long chatId) {
+    private void deleteContentMessages(TelegramBot bot, Long chatId) {
         List<Integer> messageIds = contentMessageIds.get(chatId);
         if (messageIds != null && !messageIds.isEmpty()) {
             for (int i = messageIds.size() - 1; i >= 0; i--) {
@@ -74,7 +64,7 @@ public class CommandHandler {
         }
     }
 
-    private void deleteOldMenuMessages(ParkingTelegramBot bot, Long chatId) {
+    private void deleteOldMenuMessages(TelegramBot bot, Long chatId) {
         Integer oldMainMenu = mainMenuMessageIds.get(chatId);
         if (oldMainMenu != null) {
             try {
@@ -124,7 +114,7 @@ public class CommandHandler {
         }
     }
 
-    private void sendContentMessage(ParkingTelegramBot bot, Long chatId, String text, InlineKeyboardMarkup inlineKeyboard) {
+    private void sendContentMessage(TelegramBot bot, Long chatId, String text, InlineKeyboardMarkup inlineKeyboard) {
         deleteContentMessages(bot, chatId);
 
         SendMessage message = new SendMessage();
@@ -143,7 +133,7 @@ public class CommandHandler {
         }
     }
 
-    private void showMainMenu(ParkingTelegramBot bot, Long chatId, String text) {
+    private void showMainMenu(TelegramBot bot, Long chatId, String text) {
         deleteContentMessages(bot, chatId);
 
         deleteOldMenuMessages(bot, chatId);
@@ -166,7 +156,7 @@ public class CommandHandler {
         }
     }
 
-    private void showSettingsMenu(ParkingTelegramBot bot, Long chatId, String text) {
+    private void showSettingsMenu(TelegramBot bot, Long chatId, String text) {
         deleteContentMessages(bot, chatId);
 
         Integer oldSettingsMenu = settingsMenuMessageIds.get(chatId);
@@ -194,7 +184,7 @@ public class CommandHandler {
         }
     }
 
-    private void showCarsMenu(ParkingTelegramBot bot, Long chatId, String text) {
+    private void showCarsMenu(TelegramBot bot, Long chatId, String text) {
         deleteContentMessages(bot, chatId);
 
         Integer oldCarsMenu = carsMenuMessageIds.get(chatId);
@@ -222,7 +212,7 @@ public class CommandHandler {
         }
     }
 
-    private void showPhoneRequest(ParkingTelegramBot bot, Long chatId, String text) {
+    private void showPhoneRequest(TelegramBot bot, Long chatId, String text) {
         deleteContentMessages(bot, chatId);
 
         deleteOldMenuMessages(bot, chatId);
@@ -244,7 +234,7 @@ public class CommandHandler {
     }
 
 
-    public void handleTextMessage(Message message, ParkingTelegramBot bot) {
+    public void handleTextMessage(Message message, TelegramBot bot) {
         Long chatId = message.getChatId();
         String text = message.getText();
 
@@ -331,7 +321,7 @@ public class CommandHandler {
         }
     }
 
-    private boolean handleUniversalButtons(UserBot user, String text, ParkingTelegramBot bot) {
+    private boolean handleUniversalButtons(UserBot user, String text, TelegramBot bot) {
         if (user.getState() == UserState.REGISTERED && carService.isValidLicensePlate(text)) {
             handleLicensePlateInput(user, text, bot);
             return true;
@@ -439,7 +429,7 @@ public class CommandHandler {
         }
     }
 
-    private void startFirstCarRegistration(UserBot user, ParkingTelegramBot bot) {
+    private void startFirstCarRegistration(UserBot user, TelegramBot bot) {
         tempCarDataService.createOrUpdate(user.getChatId());
         sendContentMessage(bot, user.getChatId(),
                 "🚗 Avtomobilingizning davlat raqamini kiriting:\n\n" +
@@ -449,7 +439,7 @@ public class CommandHandler {
     }
 
 
-    private void handleFirstCarNumberInput(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleFirstCarNumberInput(UserBot user, String text, TelegramBot bot) {
         if (!carService.isValidLicensePlate(text)) {
             sendContentMessage(bot, user.getChatId(),
                     "❌ Noto'g'ri format! Iltimos, avtomobil raqamini to'g'ri formatda kiriting:\n\n" +
@@ -481,7 +471,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.WAITING_FIRST_CAR_CONFIRMATION);
     }
 
-    private void handleCarNumberInput(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleCarNumberInput(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish")) {
             showCarsMenu(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🚙 Avtomobillar menyusi:");
             userService.updateUserState(user.getChatId(), UserState.CARS_MENU);
@@ -518,7 +508,7 @@ public class CommandHandler {
 
         userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_CONFIRMATION);
     }
-    private void handleCarsMenuCommands(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleCarsMenuCommands(UserBot user, String text, TelegramBot bot) {
         switch (text) {
             case "📋 Avtomobillarimni Ko'rish":
                 showUserCars(user, bot);
@@ -541,7 +531,7 @@ public class CommandHandler {
         }
     }
 
-    private void startOilChangeProcess(UserBot user, ParkingTelegramBot bot) {
+    private void startOilChangeProcess(UserBot user, TelegramBot bot) {
         try {
             oilChangeService.createOrUpdateTempData(user.getChatId());
 
@@ -564,7 +554,7 @@ public class CommandHandler {
         }
     }
 
-    private void handleOilWaitingLastDate(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleOilWaitingLastDate(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -598,7 +588,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_LAST_MILEAGE);
     }
 
-    private void handleOilWaitingLastMileage(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleOilWaitingLastMileage(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -632,7 +622,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_BRAND);
     }
 
-    private void handleOilWaitingBrand(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleOilWaitingBrand(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -664,7 +654,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_RECOMMENDED_KM);
     }
 
-    private void handleOilWaitingRecommendedKm(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleOilWaitingRecommendedKm(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -698,7 +688,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.OIL_WAITING_DAILY_DISTANCE);
     }
 
-    private void handleOilWaitingDailyDistance(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleOilWaitingDailyDistance(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Moy ma'lumotlari kiritish bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -757,7 +747,7 @@ public class CommandHandler {
         oilChangeService.deleteTempData(user.getChatId());
     }
 
-    private void showTexnikKorik(UserBot user, ParkingTelegramBot bot) {
+    private void showTexnikKorik(UserBot user, TelegramBot bot) {
         try {
             String message = """
                 🔧 Texnik ko'rik haqida ma'lumot:
@@ -790,7 +780,7 @@ public class CommandHandler {
         }
     }
 
-    private void showSugurta(UserBot user, ParkingTelegramBot bot) {
+    private void showSugurta(UserBot user, TelegramBot bot) {
         try {
             String text = """
                 🛡 Sug'urta haqida ma'lumot:
@@ -813,7 +803,7 @@ public class CommandHandler {
         }
     }
 
-    public void handleContactMessage(Message message, ParkingTelegramBot bot) {
+    public void handleContactMessage(Message message, TelegramBot bot) {
         Long chatId = message.getChatId();
 
         saveContentMessageId(chatId, message.getMessageId());
@@ -843,7 +833,7 @@ public class CommandHandler {
         }
     }
 
-    private void handleStartCommand(Message message, ParkingTelegramBot bot) {
+    private void handleStartCommand(Message message, TelegramBot bot) {
         Long chatId = message.getChatId();
 
         saveContentMessageId(chatId, message.getMessageId());
@@ -858,7 +848,7 @@ public class CommandHandler {
                     message.getFrom().getUserName()
             );
 
-            String welcomeText = "🚗 Assalomu alaykum! Parking Bot'ga xush kelibsiz!\n\n" +
+            String welcomeText = "🚗 Assalomu alaykum!  Bot'ga xush kelibsiz!\n\n" +
                     "Bu bot avtomobil egalarini topish va ular bilan aloqa o'rnatishga yordam beradi.\n\n" +
                     "🔹 Noto'g'ri parklangan avtomobil egasini toping\n" +
                     "🔹 O'z avtomobillaringizni ro'yxatga oling\n" +
@@ -885,7 +875,7 @@ public class CommandHandler {
         }
     }
 
-    private void handleUserByState(UserBot user, ParkingTelegramBot bot) {
+    private void handleUserByState(UserBot user, TelegramBot bot) {
         switch (user.getState()) {
             case REGISTERED:
                 showMainMenu(bot, user.getChatId(), "🏠 Asosiy menyu:");
@@ -906,17 +896,17 @@ public class CommandHandler {
         }
     }
 
-    private void handleNewUserState(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleNewUserState(UserBot user, String text, TelegramBot bot) {
         String welcomeText = "📱 Ro'yxatdan o'tish uchun telefon raqamingizni ulashing:";
         showPhoneRequest(bot, user.getChatId(), welcomeText);
         userService.updateUserState(user.getChatId(), UserState.WAITING_PHONE);
     }
 
-    private void handleWaitingPhoneState(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleWaitingPhoneState(UserBot user, String text, TelegramBot bot) {
         sendContentMessage(bot, user.getChatId(), "📱 Iltimos, telefon raqamingizni ulash tugmasini bosing.", null);
     }
 
-    private void handleRegisteredUserCommands(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleRegisteredUserCommands(UserBot user, String text, TelegramBot bot) {
         if (carService.isValidLicensePlate(text)) {
             handleLicensePlateInput(user, text, bot);
             return;
@@ -959,7 +949,7 @@ public class CommandHandler {
         }
     }
 
-    private void handleSettingsCommands(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleSettingsCommands(UserBot user, String text, TelegramBot bot) {
         switch (text) {
             case "🔒 Maxfiylik Sozlamalari":
                 showPrivacySettings(user, bot);
@@ -976,7 +966,7 @@ public class CommandHandler {
         }
     }
 
-    private void handleLicensePlateInput(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleLicensePlateInput(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu")) {
             showMainMenu(bot, user.getChatId(), "🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -1033,7 +1023,7 @@ public class CommandHandler {
     }
 
 
-    private void handleCarBrandInput(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleCarBrandInput(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish")) {
             showCarsMenu(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🚙 Avtomobillar menyusi:");
             userService.updateUserState(user.getChatId(), UserState.CARS_MENU);
@@ -1054,7 +1044,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_MODEL);
     }
 
-    private void handleCarModelInput(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleCarModelInput(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish")) {
             showCarsMenu(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🚙 Avtomobillar menyusi:");
             userService.updateUserState(user.getChatId(), UserState.CARS_MENU);
@@ -1075,7 +1065,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.WAITING_CAR_COLOR);
     }
 
-    private void handleCarColorInput(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleCarColorInput(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish")) {
             showCarsMenu(bot, user.getChatId(), "❌ Avtomobil qo'shish bekor qilindi.\n\n🚙 Avtomobillar menyusi:");
             userService.updateUserState(user.getChatId(), UserState.CARS_MENU);
@@ -1126,7 +1116,7 @@ public class CommandHandler {
         tempCarDataService.delete(user.getChatId());
     }
 
-    private void showCarManagementMenu(UserBot user, ParkingTelegramBot bot, Long carId) {
+    private void showCarManagementMenu(UserBot user, TelegramBot bot, Long carId) {
         Optional<Car> carOpt = carService.findById(carId);
         if (carOpt.isEmpty()) {
             showCarsMenu(bot, user.getChatId(), "❌ Avtomobil topilmadi.\n\n🚙 Avtomobillar menyusi:");
@@ -1143,7 +1133,7 @@ public class CommandHandler {
                 keyboardFactory.getCarManagementKeyboard(carId));
     }
 
-    private void showUserCars(UserBot user, ParkingTelegramBot bot) {
+    private void showUserCars(UserBot user, TelegramBot bot) {
         List<Car> cars = carService.findByOwner(user.getChatId());
 
         if (cars.isEmpty()) {
@@ -1158,7 +1148,7 @@ public class CommandHandler {
                 keyboardFactory.getCarsListKeyboard(cars));
     }
 
-    private void showRequestHistory(UserBot user, ParkingTelegramBot bot) {
+    private void showRequestHistory(UserBot user, TelegramBot bot) {
         List<ContactRequest> sentRequests = contactService.getSentRequests(user.getChatId());
         List<ContactRequest> receivedRequests = contactService.getReceivedRequests(user.getChatId());
 
@@ -1192,7 +1182,7 @@ public class CommandHandler {
         sendContentMessage(bot, user.getChatId(), message.toString(), null);
     }
 
-    private void showPrivacySettings(UserBot user, ParkingTelegramBot bot) {
+    private void showPrivacySettings(UserBot user, TelegramBot bot) {
         String message = String.format("🔒 Maxfiylik sozlamalari:\n\n" +
                         "👤 Username ulashish: %s\n" +
                         "📱 Telefon raqami ulashish: %s\n" +
@@ -1205,7 +1195,7 @@ public class CommandHandler {
                 keyboardFactory.getPrivacySettingsKeyboard(user));
     }
 
-    private void toggleDoNotDisturb(UserBot user, ParkingTelegramBot bot) {
+    private void toggleDoNotDisturb(UserBot user, TelegramBot bot) {
         boolean newStatus = !user.getDoNotDisturb();
         userService.updatePrivacySettings(user.getChatId(), user.getShareUsername(), user.getSharePhoneNumber());
 
@@ -1217,7 +1207,7 @@ public class CommandHandler {
     }
 
 
-    private void handleWaitingEditCarBrand(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleWaitingEditCarBrand(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Avtomobil tahrirlash bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -1241,7 +1231,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.WAITING_EDIT_CAR_MODEL);
     }
 
-    private void handleWaitingEditCarModel(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleWaitingEditCarModel(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Avtomobil tahrirlash bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
@@ -1265,7 +1255,7 @@ public class CommandHandler {
         userService.updateUserState(user.getChatId(), UserState.WAITING_EDIT_CAR_COLOR);
     }
 
-    private void handleWaitingEditCarColor(UserBot user, String text, ParkingTelegramBot bot) {
+    private void handleWaitingEditCarColor(UserBot user, String text, TelegramBot bot) {
         if (text.equals("🔙 Orqaga") || text.equals("❌ Bekor qilish") || text.equals("🏠 Asosiy Menyu") || text.equals("/start")) {
             showMainMenu(bot, user.getChatId(), "❌ Avtomobil tahrirlash bekor qilindi.\n\n🏠 Asosiy menyu:");
             userService.updateUserState(user.getChatId(), UserState.REGISTERED);
