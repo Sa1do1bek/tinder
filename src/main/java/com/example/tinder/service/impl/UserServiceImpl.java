@@ -265,9 +265,11 @@ public class UserServiceImpl implements UserService {
 
         if (dto.getGender() != null) {
             if (dto.getGender().equals(Gender.MALE)){
-                user.setGender(Gender.FEMALE);
-            }else if (dto.getGender().equals(Gender.FEMALE)){
                 user.setGender(Gender.MALE);
+                preference.setPreferredGender(Gender.FEMALE);
+            }else if (dto.getGender().equals(Gender.FEMALE)){
+                user.setGender(Gender.FEMALE);
+                preference.setPreferredGender(Gender.MALE);
             }
         }
         if (dto.getBio() != null) {
@@ -279,6 +281,7 @@ public class UserServiceImpl implements UserService {
 
 
 
+        preferenceRepository.save(preference);
         userRepository.save(user);
 
         return ApiResponse.success(SuccessType.USER_UPDATED_SUCCESSFULLY);
