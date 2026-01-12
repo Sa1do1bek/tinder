@@ -5,6 +5,7 @@ import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.UserRole;
 import com.example.tinder.enums.UserStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import net.minidev.json.annotate.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,6 +32,12 @@ public class User extends BaseEntity implements UserDetails {
 
     private String email;
     private String fullname;
+
+    @Pattern(
+            regexp = "^[0-9]{9}$",
+            message = "Invalid phone number"
+    )
+    private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     private UserStatus status;

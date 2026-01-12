@@ -73,6 +73,15 @@ public class Utils {
 
     public boolean checkCode(String email, String code, Long deviceId) {
         Optional<User> optionalUser = this.userRepository.findByEmail(email);
+        return checkIsPresent(code, deviceId, optionalUser);
+    }
+
+    public boolean checkCodeByPhone(String phoneNumber, String code, Long deviceId) {
+        Optional<User> optionalUser = this.userRepository.findByPhoneNumber(phoneNumber);
+        return checkIsPresent(code, deviceId, optionalUser);
+    }
+
+    private boolean checkIsPresent(String code, Long deviceId, Optional<User> optionalUser) {
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
             Optional<Code> optional = this.codeRepository.findByUserIdAndDeviceId(user.getId(), deviceId);
@@ -117,6 +126,9 @@ public class Utils {
         }
     }
 
+    public boolean sendCodeToPhone(String phoneNumber, String code) {
+        return true;
+    }
 
     public boolean existUsername(String username) {
         return this.userRepository.existsByUsername(username);

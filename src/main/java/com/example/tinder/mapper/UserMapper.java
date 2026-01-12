@@ -23,6 +23,7 @@ public class UserMapper {
         return UserDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
                 .fullname(user.getFullname())
                 .status(user.getStatus())
                 .role(user.getRole())
