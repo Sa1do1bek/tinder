@@ -44,11 +44,8 @@ public class BlockServiceImpl implements BlockService {
         }
 
         blockRepository.save(new Block(blocker, blocked));
-
         swipeRepository.hideSwipes(blocker.getId(), blocked.getId());
-
         matchRepository.deactivateMatch(blocker.getId(), blocked.getId());
-
         conversationRepository.findBetweenUsers(blocker.getId(), blocked.getId())
                 .ifPresent(conversation -> {
                     messageRepository.hideAllMessages(conversation.getId());
