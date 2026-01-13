@@ -41,4 +41,9 @@ public class NotificationController {
         return notificationService.sendNotification(userId, title, body, NotificationPathType.NEWS_MESSAGE);
     }
 
+    @DeleteMapping("/deleteToken")
+    public ApiResponse<?> deleteToken(@CurrentUser User user) {
+        return notificationService.deleteToken(user);
+    }
+
 }
