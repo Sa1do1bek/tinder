@@ -37,7 +37,7 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
   @Query("""
         SELECT s.swiped FROM Swipe s
         WHERE s.swiper.id = :userId
-        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE 
+        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
              OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
         AND s.visibility = true
         ORDER BY s.createdAt DESC
@@ -65,6 +65,10 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
         ORDER BY s.createdAt DESC
     """)
   Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
+
+
+
+
 
   @Transactional
   @Modifying
