@@ -14,6 +14,7 @@ import com.example.tinder.repository.UserLocationRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.LikeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LikeServiceImpl implements LikeService {
@@ -36,14 +38,14 @@ public class LikeServiceImpl implements LikeService {
     @Override
     public ApiResponse<?> getAllRejectUsers(PageRequest pageRequest, Long userId) {
         Page<User> users = swipeRepository.findAllRejectedUsers(userId, pageRequest);
-        return getApiResponse(pageRequest, userId, users, SwipeStatus.REJECT);
+        return getApiResponse(pageRequest, userId, users);
     }
 
     @Override
     public ApiResponse<?> getMyLikedUsers(PageRequest pageRequest, Long userId) {
         // LIKE va SUPERLIKE aralash olamiz
         Page<User> users = swipeRepository.findAllLikeUsers(userId, pageRequest);
-        return getApiResponseWithMixedSwipeTypes(pageRequest, userId, users);
+        return getApiResponseWithMixedSwipeTypesForMyLikedUsers(pageRequest, userId, users);
     }
 
     @Override
@@ -54,13 +56,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
     @NotNull
-    private ApiResponse<?> getApiResponse(PageRequest pageRequest, Long userId, Page<User> users, SwipeStatus swipeStatus) {
+    private ApiResponse<?> getApiResponse(PageRequest pageRequest, Long userId, Page<User> users) {
         if (!users.isEmpty()) {
             UserLocation myLoc = locationRepository.findByUserId(userId)
                     .orElse(null);
 
             List<LikedUserDto> responseList = users.getContent().stream()
-                    .map(user -> convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeStatus))
+                    .map(user -> convertToLikedUserDto(user, Optional.ofNullable(myLoc), SwipeStatus.REJECT))
                     .collect(Collectors.toList());
 
             Map<String, Object> responseMap = new HashMap<>();
@@ -89,6 +91,37 @@ public class LikeServiceImpl implements LikeService {
                     .map(user -> {
                         // Har bir user uchun uning swipe type ni topamiz
                         SwipeStatus swipeType = getHisSwipeType(userId, user.getId());
+                        return convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeType);
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("users", responseList);
+            responseMap.put("currentPage", pageRequest.getPageNumber());
+            responseMap.put("totalPages", users.getTotalPages());
+
+            return ApiResponse.success(responseMap, SuccessType.SUCCESS);
+        }
+
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("users", new ArrayList<>());
+        responseMap.put("currentPage", pageRequest.getPageNumber());
+        responseMap.put("totalPages", 0);
+
+        return ApiResponse.success(responseMap, SuccessType.SUCCESS);
+    }
+
+
+    @NotNull
+    private ApiResponse<?> getApiResponseWithMixedSwipeTypesForMyLikedUsers(PageRequest pageRequest, Long userId, Page<User> users) {
+        if (!users.isEmpty()) {
+            UserLocation myLoc = locationRepository.findByUserId(userId)
+                    .orElse(null);
+
+            List<LikedUserDto> responseList = users.getContent().stream()
+                    .map(user -> {
+                        // Har bir user uchun uning swipe type ni topamiz
+                        SwipeStatus swipeType = getSwipeType(userId, user.getId());
                         return convertToLikedUserDto(user, Optional.ofNullable(myLoc), swipeType);
                     })
                     .collect(Collectors.toList());
@@ -181,21 +214,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
 
-    private SwipeStatus getSwipeTypeForUser(Long swiperId, Long swipedId) {
-        return swipeRepository.findSwipeTypeByUsers(swipedId, swiperId).orElse(null);
-    }
-
     private SwipeStatus getSwipeType(Long meId, Long targetUserId) {
-        return swipeRepository
-                .findSwipeTypeByUsers(meId, targetUserId)
-                .orElse(null);
+        return swipeRepository.findSwipeTypeByUsers(meId, targetUserId).orElse(null);
     }
 
     // U meni swipe qilganmi
     private SwipeStatus getHisSwipeType(Long meId, Long targetUserId) {
-        return swipeRepository
-                .findSwipeTypeByUsers(targetUserId, meId)
-                .orElse(null);
+        return swipeRepository.findSwipeTypeByUsers(targetUserId, meId).orElse(null);
     }
 
 
