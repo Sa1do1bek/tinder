@@ -382,7 +382,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public ApiResponse<?> loginByEmail(LoginDto dto) {
+    public ApiResponse<?>   loginByEmail(LoginDto dto) {
         if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
             throw RestException.restThrow(ErrorType.USER_EMAIL_INVALID);
         }

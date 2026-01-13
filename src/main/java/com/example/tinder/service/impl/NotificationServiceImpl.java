@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -82,5 +84,20 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         return ApiResponse.success(SuccessType.NOTIFICATION_SENT_SUCCESSFULLY);
+    }
+
+    @Override
+    public ApiResponse<?> deleteToken(User user) {
+        Optional<User> currentUser = userRepository.findById(user.getId());
+        if (currentUser.isEmpty()) throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+        User user1 = currentUser.get();
+        user1.setFirebaseUid(null);
+        userRepository.save(user1);
+
+        Optional<FCM> byUserIdAndVisibilityTrue = fcmRepository.findByUserIdAndVisibilityTrue(user1.getId());
+        byUserIdAndVisibilityTrue.ifPresent(fcm -> fcm.setVisibility(false));
+
+        return ApiResponse.success(SuccessType.FCM_TOKEN_DELETED_SUCCESSFULLY);
+
     }
 }

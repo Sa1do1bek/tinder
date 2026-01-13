@@ -248,7 +248,7 @@ public class LikeServiceImpl implements LikeService {
                 .collect(Collectors.toList());
 
         List<UserInterestDto> interests = targetUser.getUserInterests().stream()
-                .map(i -> new UserInterestDto(i.getId(), targetUser.getId(), i.getCategoryType(), i.getCode(), i.getName()))
+                .map(i -> new UserInterestDto(i.getId(), targetUser.getId(), i.getCategoryType(), i.getCode(), i.getName(), i.getNameRu(), i.getNameUz()))
                 .collect(Collectors.toList());
 
         return LikedUserDto.builder()

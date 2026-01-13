@@ -10,4 +10,6 @@ import org.springframework.stereotype.Component;
 public interface NotificationService {
     ApiResponse<?> saveOrUpdateStep(User user, String fcmToken);
     ApiResponse<?> sendNotification(Long recipientId, String title, String body, NotificationPathType type);
+
+    ApiResponse<?> deleteToken(User user);
 }
