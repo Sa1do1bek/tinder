@@ -18,6 +18,8 @@ public class UserInterestDto {
     private CategoryType categoryType;
     private String code;
     private String name;
+    private String nameRu;
+    private String nameUz;
 
 
     @Getter
@@ -30,6 +32,8 @@ public class UserInterestDto {
         private CategoryType categoryType;
         private String code;
         private String name;
+        private String nameRu;
+        private String nameUz;
     }
 
 }

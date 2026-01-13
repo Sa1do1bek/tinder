@@ -17,6 +17,8 @@ public class UserInterestMapper {
         entity.setId(dto.getId());
         entity.setCode(dto.getCode());
         entity.setName(dto.getName());
+        entity.setNameRu(dto.getNameRu());
+        entity.setNameUz(dto.getNameUz());
         entity.setCategoryType(dto.getCategoryType());
 
         return entity;
@@ -29,6 +31,8 @@ public class UserInterestMapper {
         dto.setId(entity.getId());
         dto.setCode(entity.getCode());
         dto.setName(entity.getName());
+        dto.setNameUz(entity.getNameUz());
+        dto.setNameRu(entity.getNameRu());
         dto.setCategoryType(entity.getCategoryType());
 
         return dto;
@@ -40,6 +44,8 @@ public class UserInterestMapper {
         UserInterest entity = new UserInterest();
         entity.setCode(dto.getCode());
         entity.setName(dto.getName());
+        entity.setNameRu(dto.getNameRu());
+        entity.setNameUz(dto.getNameUz());
         entity.setCategoryType(dto.getCategoryType());
 
         return entity;

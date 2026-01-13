@@ -22,6 +22,10 @@ public class UserInterest extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
+    private String nameRu;
+
+    private String nameUz;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Preference preferenceLanguage;
 }
