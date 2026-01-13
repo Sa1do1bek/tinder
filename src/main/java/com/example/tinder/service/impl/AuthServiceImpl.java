@@ -758,7 +758,7 @@ public class AuthServiceImpl implements AuthService {
                 });
 
         String code = utils.getCode();
-        System.out.println("------------code : " +  code);
+        System.out.println("----------code : " +  code);
         if (!utils.sendCodeToPhone(phone, code)) {
             throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
