@@ -32,7 +32,7 @@ public class PlatformRevenue extends BaseEntity {
     private BigDecimal commissionRate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "revenue_type", nullable = false)
     private RevenueType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
