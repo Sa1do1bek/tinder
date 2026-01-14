@@ -9,8 +9,9 @@ public interface SubscriptionPlanService {
 
     ApiResponse<?> create(SubscriptionPlanDto.SubscriptionPlanCreateDto subscriptionPlanCreateDto);
 
+    ApiResponse<?> update(SubscriptionPlanDto.SubscriptionPlanUpdateDto subscriptionPlanUpdateDto);
+
     ApiResponse<?> getAll();
 
     ApiResponse<?> delete(Long id);
-
 }

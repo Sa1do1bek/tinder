@@ -17,13 +17,24 @@ public class SubscriptionPlanDto {
     private int months;
     private BigDecimal price;
 
-
     @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     public static class SubscriptionPlanCreateDto {
+        private String code;
+        private SubscriptionType type;
+        private int months;
+        private BigDecimal price;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubscriptionPlanUpdateDto {
         private String code;
         private SubscriptionType type;
         private int months;

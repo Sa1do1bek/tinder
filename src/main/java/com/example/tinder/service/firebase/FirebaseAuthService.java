@@ -77,7 +77,7 @@ public class FirebaseAuthService {
                                     ? fullname
                                     : "User"
                     )
-                    .profilePic(picture)
+                    .profilePic(null)
                     .isVerified(emailVerified != null && emailVerified)
                     .provider(AuthProvider.GOOGLE)
                     .role(UserRole.USER)

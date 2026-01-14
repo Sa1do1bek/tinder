@@ -35,4 +35,24 @@ public class SubscriptionPlanMapper {
         return entity;
     }
 
+    public SubscriptionPlan fromUpdateDto(SubscriptionPlanDto.SubscriptionPlanUpdateDto dto, SubscriptionPlan entity) {
+        if (dto == null || entity == null) return entity;
+
+        if (dto.getType() != null) {
+            entity.setType(dto.getType());
+        }
+
+        if (dto.getMonths() > 0) {
+            entity.setMonths(dto.getMonths());
+        }
+
+        if (dto.getPrice() != null) {
+            entity.setPrice(dto.getPrice());
+        }
+
+        entity.setUpdatedAt(LocalDateTime.now());
+        return entity;
+    }
+
+
 }
