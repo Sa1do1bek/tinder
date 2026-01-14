@@ -40,6 +40,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
         SubscriptionPlan plan = subscriptionPlanRepository.findByCode(subscriptionPlanUpdateDto.getCode())
                 .orElseThrow(() -> RestException.restThrow(ErrorType.SUBSCRIPTION_PLAN_NOT_FOUND));
 
+
         SubscriptionPlan subscriptionPlan = subscriptionPlanMapper.fromUpdateDto(subscriptionPlanUpdateDto, plan);
         SubscriptionPlan save = subscriptionPlanRepository.save(subscriptionPlan);
 
