@@ -88,7 +88,8 @@ public enum SuccessType {
     SUBSCRIPTION_CREATED_SUCCESSFULLY("subscription.created.successfully"),
     FREE_TONIGHT_UPDATED_SUCCESSFULLY("free.tonight.updated.successfully"),
     TELEGRAM_USER_ENTERED_SUCCESSFULLY("telegram.user.entered.successfully"),
-    FCM_TOKEN_DELETED_SUCCESSFULLY("fcm.token.deleted.successfully"),;
+    FCM_TOKEN_DELETED_SUCCESSFULLY("fcm.token.deleted.successfully"),
+    SUBSCRIPTION_PLAN_UPDATE_SUCCESSFULLY("subscription.plan.update.successfully"),;
 
 
 

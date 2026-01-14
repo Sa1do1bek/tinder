@@ -36,6 +36,17 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
+    public ApiResponse<?> update(SubscriptionPlanDto.SubscriptionPlanUpdateDto subscriptionPlanUpdateDto) {
+        SubscriptionPlan plan = subscriptionPlanRepository.findByCode(subscriptionPlanUpdateDto.getCode())
+                .orElseThrow(() -> RestException.restThrow(ErrorType.SUBSCRIPTION_PLAN_NOT_FOUND));
+
+        SubscriptionPlan subscriptionPlan = subscriptionPlanMapper.fromUpdateDto(subscriptionPlanUpdateDto, plan);
+        SubscriptionPlan save = subscriptionPlanRepository.save(subscriptionPlan);
+
+        return ApiResponse.success(subscriptionPlanMapper.toDto(save), SuccessType.SUBSCRIPTION_PLAN_UPDATE_SUCCESSFULLY);
+    }
+
+    @Override
     public ApiResponse<?> getAll() {
         List<SubscriptionPlan> all = subscriptionPlanRepository.findAll();
         if (all.isEmpty()) {
