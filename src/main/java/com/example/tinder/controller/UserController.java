@@ -4,10 +4,13 @@ import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
+import com.example.tinder.enums.SubscriptionType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.service.UserService;
 import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -121,6 +124,18 @@ public class UserController {
     @GetMapping("/online")
     public ApiResponse<?> getOnlineUsers() {
         return userService.getOnlineUsers();
+    }
+
+    @GetMapping("/countBySubscriptionType")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ApiResponse<?> countBySubscriptionType(@RequestParam("type") SubscriptionType type) {
+        return ApiResponse.success(userService.countBySubscriptionType(type));
+    }
+
+    @GetMapping("/countAndTotalSumBySubscriptionType")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ApiResponse<?> countAndTotalSumBySubscriptionType(@RequestParam("type") SubscriptionType type) {
+        return userService.countAndTotalSumBySubscriptionType(type);
     }
 
 

@@ -5,7 +5,9 @@ import com.example.tinder.dto.UpdateUserGBIDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.Gender;
-import org.springframework.data.domain.PageRequest;
+import com.example.tinder.enums.SubscriptionType;
+import com.example.tinder.enums.SuccessType;
+import com.google.protobuf.Api;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -48,4 +50,8 @@ public interface UserService {
     ApiResponse<?> freeTonightUpdate(User user, boolean status);
 
     ApiResponse<?> getOnlineUsers();
+
+    ApiResponse<?> countBySubscriptionType(SubscriptionType type);
+
+    ApiResponse<?> countAndTotalSumBySubscriptionType(SubscriptionType type);
 }
