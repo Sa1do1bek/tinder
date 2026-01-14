@@ -3,7 +3,6 @@ package com.example.tinder.controller;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.superLike.PurchaseSuperLikeRequest;
 import com.example.tinder.dto.superLike.SendSuperLikeRequest;
-import com.example.tinder.dto.superLike.SuperLikePackageDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.service.impl.SuperLikeServiceImpl;
 import com.example.tinder.utils.CurrentUser;
@@ -13,7 +12,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +25,8 @@ public class SuperLikeController {
     
     @GetMapping("/packages")
     @Operation(summary = "Barcha Super Like paketlarini olish")
-    public ResponseEntity<ApiResponse<?>> getAllPackages() {
-        return ResponseEntity.ok(superLikeService.getAllPackages());
+    public ApiResponse<?> getAllPackages() {
+        return superLikeService.getAllPackages();
     }
     
     @PostMapping("/purchase")
@@ -48,13 +46,7 @@ public class SuperLikeController {
             @RequestBody SendSuperLikeRequest request) {
         return superLikeService.sendSuperLike(user.getId(), request);
     }
-    
-    @GetMapping("/card")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "O'zimning card ma'lumotlarimni olish")
-    public ApiResponse<?> getMyCard(@CurrentUser User user) {
-        return superLikeService.getMyCard(user.getId());
-    }
+
     
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
@@ -88,42 +80,13 @@ public class SuperLikeController {
     @GetMapping("/received")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Olgan Super Like'larimni olish")
-    public ResponseEntity<ApiResponse<?>> getMyReceivedSuperLikes(
+    public ApiResponse<?> getMyReceivedSuperLikes(
             @CurrentUser User user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(superLikeService.getMyReceivedSuperLikes(user.getId(), pageable));
+        return superLikeService.getMyReceivedSuperLikes(user.getId(), pageable);
     }
-    
-    @GetMapping("/transactions")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "Wallet tranzaksiya tarixini olish")
-    public ResponseEntity<ApiResponse<?>> getMyTransactions(
-            @CurrentUser User user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(superLikeService.getMyTransactions(user.getId(), pageable));
-    }
-
-    @PostMapping("superlikePackageCreate")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @Operation(summary = "Super Like paketini yaratish")
-    public ApiResponse<?>  superLikePackageCreate(@RequestBody SuperLikePackageDto.SuperLikePackageCreateDto dto){
-        return superLikeService.createPackage(dto);
-    }
-
-    @DeleteMapping("superlikePackageDelete")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @Operation(summary = "Super Like paketini O'chirish")
-    public ApiResponse<?>  superLikePackageDelete(@RequestParam("packageId") Long packageId){
-        return superLikeService.deletePackage(packageId);
-    }
-
-
-
-
 
 }
 
