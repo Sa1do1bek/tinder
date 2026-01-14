@@ -138,5 +138,4 @@ public class UserController {
         return userService.countAndTotalSumBySubscriptionType(type);
     }
 
-
 }
