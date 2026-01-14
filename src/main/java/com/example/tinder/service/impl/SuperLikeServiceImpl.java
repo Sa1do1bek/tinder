@@ -173,12 +173,6 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 history,
                 "Super Like dan topildi: " + sender.getUsername());
 
-//        // Swipe yaratish (SUPERLIKE)
-//        Swipe swipe = new Swipe();
-//        swipe.setSwiper(sender);
-//        swipe.setSwiped(receiver);
-//        swipe.setSwipe(SwipeStatus.SUPERLIKE);
-//        swipeRepository.save(swipe);
         return swipeService.swipe(senderId, request.getReceiverId(), SwipeStatus.SUPERLIKE);
     }
 
