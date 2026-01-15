@@ -14,6 +14,7 @@ import com.example.tinder.mapper.VerificationMapper;
 import com.example.tinder.repository.ApproveImageRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.repository.VerificationRepository;
+import com.example.tinder.service.FaceCompareService;
 import com.example.tinder.service.S3Service;
 import com.example.tinder.service.VerificationService;
 import jakarta.transaction.Transactional;
@@ -33,6 +34,7 @@ public class VerificationServiceImpl implements VerificationService {
     private final S3Service s3Service;
     private final ApproveImageRepository approveImageRepository;
     private final ApproveImageMapper approveImageMapper;
+    private final FaceCompareService faceCompareService;
 
 
     @Override
@@ -46,12 +48,16 @@ public class VerificationServiceImpl implements VerificationService {
         if (verification == null) throw RestException.restThrow(ErrorType.VERIFICATION_NOT_FOUND);
 
 
-        Verification newVerification = verificationMapper.fromUpdate(dto, user, verification.getId());
-        if (newVerification.getSimilarityScore() >= 80.0) {
+        double similarity = faceCompareService.compare(dto.getMatchImageURL(), dto.getFaceImageURL());
+
+        verification.setMatchImageURL(dto.getMatchImageURL());
+        verification.setFaceImageURL(dto.getFaceImageURL());
+        verification.setSimilarityScore(similarity);
+
+        if (similarity >= 80.0) {
             user.setIsApproved(true);
         }
-        Verification save = verificationRepository.save(newVerification);
-
+        Verification save = verificationRepository.save(verification);
         return ApiResponse.success(verificationMapper.toDto(save), SuccessType.VERIFICATION_UPDATED_SUCCESSFULLY);
     }
 

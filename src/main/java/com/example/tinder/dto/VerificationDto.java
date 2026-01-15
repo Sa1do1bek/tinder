@@ -22,8 +22,8 @@ public class VerificationDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class VerificationUpdateDto {
+        private Long userId;
         private String matchImageURL;
         private String faceImageURL;
-        private Double similarityScore;
     }
 }
