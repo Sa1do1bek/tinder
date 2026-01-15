@@ -10,7 +10,6 @@ import com.example.tinder.entity.Preference;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.*;
-import com.example.tinder.exception.ResourceNotFoundException;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.CodeRepository;
@@ -28,6 +27,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -359,6 +359,32 @@ public class UserServiceImpl implements UserService {
                 .toList();
         return ApiResponse.success(response, SuccessType.ONLINE_USERS_FETCHED_SUCCESSFULLY);
     }
+
+    @Override
+    public ApiResponse<?> countBySubscriptionType(SubscriptionType type) {
+        return ApiResponse.success(userRepository.countBySubscriptionType(type));
+    }
+
+    @Override
+    public ApiResponse<?> countAndTotalSumBySubscriptionType(SubscriptionType type) {
+        List<Object[]> resultList = userRepository.countAndTotalSumBySubscriptionType(type);
+
+        long count = 0L;
+        BigDecimal totalSum = BigDecimal.ZERO;
+
+        if(!resultList.isEmpty()) {
+            Object[] row = resultList.get(0);
+            count = ((Number) row[0]).longValue();
+            totalSum = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("count", count);
+        response.put("totalSum", totalSum);
+
+        return ApiResponse.success(response);
+    }
+
 
 
 }

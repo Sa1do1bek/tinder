@@ -2,6 +2,7 @@ package com.example.tinder.repository;
 
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
+import com.example.tinder.enums.SubscriptionType;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -496,4 +497,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("maxDistance") Double maxDistance,
             @Param("lat") Double lat,
             @Param("lon") Double lon);
+
+    @Query("""
+        SELECT COUNT(u)
+        FROM User u
+        WHERE u.subscriptionType = :type
+          AND u.active = true
+    """)
+    long countBySubscriptionType(@Param("type") SubscriptionType type);
+
+    @Query("""
+        SELECT COUNT(us.id), COALESCE(SUM(us.SubscriptionPlan.price), 0)
+        FROM UserSubscription us
+        WHERE us.SubscriptionType = :type
+    """)
+    List<Object[]> countAndTotalSumBySubscriptionType(@Param("type") SubscriptionType type);
 }
