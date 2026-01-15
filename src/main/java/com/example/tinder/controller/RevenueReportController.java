@@ -20,7 +20,8 @@ import java.time.LocalDate;
 @Tag(name = "Revenue Report", description = "Platform daromad hisobotlari")
 @PreAuthorize("hasRole('ADMIN')")
 public class RevenueReportController {
-    
+
+
     private final RevenueReportService reportService;
     
     @GetMapping
