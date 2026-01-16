@@ -265,6 +265,7 @@ public class LikeServiceImpl implements LikeService {
                 .longitude(targetUser.getLongitude())
                 .likeType(swipeType)
                 .subscriptionType(targetUser.getSubscriptionType())
+                .isApproved(targetUser.getIsApproved())
                 .build();
     }
 

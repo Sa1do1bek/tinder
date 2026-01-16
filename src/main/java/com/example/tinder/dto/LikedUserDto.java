@@ -28,4 +28,5 @@ public class LikedUserDto {
     private String latitude;
     private String longitude;
     private SwipeStatus likeType;
+    private Boolean isApproved;
 }

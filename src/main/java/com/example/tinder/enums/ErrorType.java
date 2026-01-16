@@ -86,8 +86,6 @@ public enum ErrorType {
     CONVERSATION_ALREADY_EXISTS("conversation.already.exists", HttpStatus.BAD_REQUEST ),
     SUBSCRIPTION_PLAN_ALREADY_EXISTS("subscription.plan.already.exists", HttpStatus.BAD_REQUEST ),
     SUBSCRIPTION_PLAN_NOT_FOUND("subscription.plan.not.found", HttpStatus.NOT_FOUND ),
-
-    //-----*******
     CODE_NOT_FOUND("code.not.found", HttpStatus.NOT_FOUND ),
     CODE_ATTEMPT_LIMIT_EXCEEDED("code.attempt.limit.exceeded", HttpStatus.BAD_REQUEST ),
     PHONE_ALREADY_TAKEN("phone.already.taken", HttpStatus.BAD_REQUEST ),
@@ -95,6 +93,7 @@ public enum ErrorType {
     USER_PHONE_INVALID("user.phone.invalid", HttpStatus.BAD_REQUEST ),
     MINIMUM_WITHDRAW_NOT_MET("minimum.withdrawn.not.met", HttpStatus.BAD_REQUEST ),
     PHOTOS_ARE_DOES_NOT_SIMILAR("photos.are.does.not.similar", HttpStatus.BAD_REQUEST ),;
+    //***************************
 
 
 
