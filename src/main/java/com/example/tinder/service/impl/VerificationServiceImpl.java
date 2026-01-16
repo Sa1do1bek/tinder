@@ -48,17 +48,21 @@ public class VerificationServiceImpl implements VerificationService {
         if (verification == null) throw RestException.restThrow(ErrorType.VERIFICATION_NOT_FOUND);
 
 
-        double similarity = faceCompareService.compare(dto.getMatchImageURL(), dto.getFaceImageURL());
+        double similarity = faceCompareService.compareFaces(dto.getMatchImageURL(), dto.getFaceImageURL());
+        if (!(similarity >= 50.0)) {
+            throw RestException.restThrow(ErrorType.PHOTOS_ARE_DOES_NOT_SIMILAR);
+        }
+
 
         verification.setMatchImageURL(dto.getMatchImageURL());
         verification.setFaceImageURL(dto.getFaceImageURL());
         verification.setSimilarityScore(similarity);
 
-        if (similarity >= 80.0) {
-            user.setIsApproved(true);
-        }
+        user.setIsApproved(true);
+        userRepository.save(user);
+
         Verification save = verificationRepository.save(verification);
-        return ApiResponse.success(verificationMapper.toDto(save), SuccessType.VERIFICATION_UPDATED_SUCCESSFULLY);
+        return ApiResponse.success(verificationMapper.toDto(save), SuccessType.VERIFICATION_SUCCESSFULLY);
     }
 
     @Override
