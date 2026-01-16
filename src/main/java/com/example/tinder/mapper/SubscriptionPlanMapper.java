@@ -14,6 +14,7 @@ public class SubscriptionPlanMapper {
     public SubscriptionPlanDto toDto(SubscriptionPlan dto) {
         if (dto == null) return null;
 
+
         SubscriptionPlanDto entity = new SubscriptionPlanDto();
         entity.setId(dto.getId());
         entity.setCode(dto.getCode());
