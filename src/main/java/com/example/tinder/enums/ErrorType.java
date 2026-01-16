@@ -93,7 +93,8 @@ public enum ErrorType {
     PHONE_ALREADY_TAKEN("phone.already.taken", HttpStatus.BAD_REQUEST ),
     INVALID_VERIFICATION_CODE_OR_PHONE("invalid.verification.code.or.phone", HttpStatus.BAD_REQUEST ),
     USER_PHONE_INVALID("user.phone.invalid", HttpStatus.BAD_REQUEST ),
-    MINIMUM_WITHDRAW_NOT_MET("minimum.withdrawn.not.met", HttpStatus.BAD_REQUEST ),;
+    MINIMUM_WITHDRAW_NOT_MET("minimum.withdrawn.not.met", HttpStatus.BAD_REQUEST ),
+    PHOTOS_ARE_DOES_NOT_SIMILAR("photos.are.does.not.similar", HttpStatus.BAD_REQUEST ),;
 
 
 

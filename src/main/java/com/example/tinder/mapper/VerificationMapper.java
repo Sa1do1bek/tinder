@@ -19,16 +19,16 @@ public class VerificationMapper {
         return dto;
     }
 
-    public Verification fromUpdate(VerificationDto.VerificationUpdateDto dto,
-                                   User user,
-                                   Long verificationId) {
-        if (dto == null) return null;
-        Verification entity = new Verification();
-        entity.setId(verificationId);
-        entity.setUser(user);
-        entity.setFaceImageURL(dto.getFaceImageURL());
-        entity.setMatchImageURL(dto.getMatchImageURL());
-        entity.setSimilarityScore(dto.getSimilarityScore());
-        return entity;
-    }
+//    public Verification fromUpdate(VerificationDto.VerificationUpdateDto dto,
+//                                   User user,
+//                                   Long verificationId) {
+//        if (dto == null) return null;
+//        Verification entity = new Verification();
+//        entity.setId(verificationId);
+//        entity.setUser(user);
+//        entity.setFaceImageURL(dto.getFaceImageURL());
+//        entity.setMatchImageURL(dto.getMatchImageURL());
+//        en
+//        return entity;
+//    }
 }

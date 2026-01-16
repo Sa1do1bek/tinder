@@ -14,6 +14,7 @@ import com.example.tinder.mapper.VerificationMapper;
 import com.example.tinder.repository.ApproveImageRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.repository.VerificationRepository;
+import com.example.tinder.service.FaceCompareService;
 import com.example.tinder.service.S3Service;
 import com.example.tinder.service.VerificationService;
 import jakarta.transaction.Transactional;
@@ -33,6 +34,7 @@ public class VerificationServiceImpl implements VerificationService {
     private final S3Service s3Service;
     private final ApproveImageRepository approveImageRepository;
     private final ApproveImageMapper approveImageMapper;
+    private final FaceCompareService faceCompareService;
 
 
     @Override
@@ -46,13 +48,21 @@ public class VerificationServiceImpl implements VerificationService {
         if (verification == null) throw RestException.restThrow(ErrorType.VERIFICATION_NOT_FOUND);
 
 
-        Verification newVerification = verificationMapper.fromUpdate(dto, user, verification.getId());
-        if (newVerification.getSimilarityScore() >= 80.0) {
-            user.setIsApproved(true);
+        double similarity = faceCompareService.compareFaces(dto.getMatchImageURL(), dto.getFaceImageURL());
+        if (!(similarity >= 50.0)) {
+            throw RestException.restThrow(ErrorType.PHOTOS_ARE_DOES_NOT_SIMILAR);
         }
-        Verification save = verificationRepository.save(newVerification);
 
-        return ApiResponse.success(verificationMapper.toDto(save), SuccessType.VERIFICATION_UPDATED_SUCCESSFULLY);
+
+        verification.setMatchImageURL(dto.getMatchImageURL());
+        verification.setFaceImageURL(dto.getFaceImageURL());
+        verification.setSimilarityScore(similarity);
+
+        user.setIsApproved(true);
+        userRepository.save(user);
+
+        Verification save = verificationRepository.save(verification);
+        return ApiResponse.success(verificationMapper.toDto(save), SuccessType.VERIFICATION_SUCCESSFULLY);
     }
 
     @Override
