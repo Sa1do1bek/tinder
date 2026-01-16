@@ -15,7 +15,7 @@ public class FaceCompareServiceImpl implements FaceCompareService {
     private final RestTemplate restTemplate;
 
     private static final String AI_COMPARE_URL =
-            "https://9e4fa0b51709.ngrok-free.app/compare";
+            "https://4f75f8791d2b.ngrok-free.app/compare";
 
     @Override
     public double compareFaces(String imageUrl1, String imageUrl2) {
