@@ -1,60 +1,45 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.dto.SimilarityResponse;
 import com.example.tinder.service.FaceCompareService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.rekognition.RekognitionClient;
-import software.amazon.awssdk.services.rekognition.model.CompareFacesRequest;
-import software.amazon.awssdk.services.rekognition.model.CompareFacesResponse;
-import software.amazon.awssdk.services.rekognition.model.Image;
-import software.amazon.awssdk.services.rekognition.model.S3Object;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 
 @Service
 @RequiredArgsConstructor
 public class FaceCompareServiceImpl implements FaceCompareService {
+    private final RestTemplate restTemplate;
 
-    private final RekognitionClient rekognitionClient;
+    private static final String AI_COMPARE_URL =
+            "https://9e4fa0b51709.ngrok-free.app/compare";
 
     @Override
-    public double compare(String sourceImageUrl, String targetImageUrl) {
+    public double compareFaces(String imageUrl1, String imageUrl2) {
 
-        Image source = Image.builder()
-                .s3Object(S3Object.builder()
-                        .bucket(extractBucket(sourceImageUrl))
-                        .name(extractKey(sourceImageUrl))
-                        .build())
-                .build();
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                .fromHttpUrl(AI_COMPARE_URL)
+                .queryParam("image_url_1", imageUrl1)
+                .queryParam("image_url_2", imageUrl2);
 
-        Image target = Image.builder()
-                .s3Object(S3Object.builder()
-                        .bucket(extractBucket(targetImageUrl))
-                        .name(extractKey(targetImageUrl))
-                        .build())
-                .build();
+        ResponseEntity<SimilarityResponse> response =
+                restTemplate.exchange(
+                        uriBuilder.toUriString(),
+                        HttpMethod.GET,
+                        null,
+                        SimilarityResponse.class
+                );
 
-        CompareFacesRequest request = CompareFacesRequest.builder()
-                .sourceImage(source)
-                .targetImage(target)
-                .similarityThreshold(0f)
-                .build();
+        SimilarityResponse body = response.getBody();
 
-        CompareFacesResponse response =
-                rekognitionClient.compareFaces(request);
+        if (body == null || body.getSimilarity() == null) {
+            throw new IllegalStateException("AI similarity response is empty");
+        }
 
-        return response.faceMatches().isEmpty()
-                ? 0.0
-                : response.faceMatches().get(0).similarity();
+        return body.getSimilarity();
     }
-
-    private String extractBucket(String url) {
-        return URI.create(url).getHost().split("\\.")[0];
-    }
-
-    private String extractKey(String url) {
-        return URI.create(url).getPath().substring(1);
-    }
-
 
 }

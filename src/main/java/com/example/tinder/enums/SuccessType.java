@@ -94,7 +94,8 @@ public enum SuccessType {
     REVENUE_SUMMARY_FETCHED_SUCCESSFULLY("revenue.summary.fetched.successfully"),
     REVENUE_COMPARISON_GENERATED_SUCCESSFULLY("revenue.comparison.fetched.successfully"),
     CHART_DATA_GENERATED_SUCCESSFULLY("chart.data.generated.successfully"),
-    SUBSCRIPTION_PLAN_UPDATE_SUCCESSFULLY("subscription.plan.update.successfully"),;
+    SUBSCRIPTION_PLAN_UPDATE_SUCCESSFULLY("subscription.plan.update.successfully"),
+    VERIFICATION_SUCCESSFULLY("verification.successful"),;
 
 
 
