@@ -17,6 +17,7 @@ public class DiscoveryResponseDTO {
     private String bio;
     private String gender;
     private SubscriptionType subscriptionType;
+    private Boolean isApproved;
     
     private Double distanceKm;
     private Double height;

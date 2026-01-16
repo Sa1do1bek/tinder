@@ -198,6 +198,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .latitude(targetUser.getLatitude())
                 .longitude(targetUser.getLongitude())
                 .subscriptionType(targetUser.getSubscriptionType())
+                .isApproved(targetUser.getIsApproved())
                 .build();
     }
 

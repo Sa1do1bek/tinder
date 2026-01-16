@@ -78,7 +78,6 @@ public enum SuccessType {
     VERIFICATION_UPDATED_SUCCESSFULLY("verification.updated.successfully"),
     VERIFICATION_FOUND("verification.found"),
     APPROVE_IMAGE_UPLOADED_SUCCESSFULLY("approve.image.uploaded.successfully"),
-    //--**--********************
     VERIFICATION_CODE_SENT_TO_PHONE("verification.code.sent.to.phone"),
     CODE_SENT_TO_PHONE("code.sent.to.phone"),
     PHONE_AVAILABLE_FOR_REGISTRATION("phone.available.for.registration"),
@@ -96,6 +95,8 @@ public enum SuccessType {
     CHART_DATA_GENERATED_SUCCESSFULLY("chart.data.generated.successfully"),
     SUBSCRIPTION_PLAN_UPDATE_SUCCESSFULLY("subscription.plan.update.successfully"),
     VERIFICATION_SUCCESSFULLY("verification.successful"),;
+    //--**--********************
+
 
 
 
