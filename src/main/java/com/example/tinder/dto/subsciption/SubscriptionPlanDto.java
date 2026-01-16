@@ -16,6 +16,7 @@ public class SubscriptionPlanDto {
     private SubscriptionType type;
     private int months;
     private BigDecimal price;
+    private BigDecimal monthly_price;
 
     @Getter
     @Setter

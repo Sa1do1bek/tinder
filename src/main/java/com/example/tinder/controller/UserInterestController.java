@@ -57,10 +57,4 @@ public class UserInterestController {
     public ApiResponse<?> getUserCategoriesByType(@CurrentUser User user) {
         return userInterestService.getAllUserCategoriesByUserId(user.getId());
     }
-
-
-
-
-
-
 }

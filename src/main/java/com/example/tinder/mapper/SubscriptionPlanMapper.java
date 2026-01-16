@@ -4,6 +4,8 @@ import com.example.tinder.dto.subsciption.SubscriptionPlanDto;
 import com.example.tinder.entity.SubscriptionPlan;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Component
@@ -18,6 +20,20 @@ public class SubscriptionPlanMapper {
         entity.setMonths(dto.getMonths());
         entity.setPrice(dto.getPrice());
         entity.setType(dto.getType());
+
+        // monthly_price = price / months
+        if (dto.getPrice() != null && dto.getMonths() > 0) {
+            entity.setMonthly_price(
+                    dto.getPrice().divide(
+                            BigDecimal.valueOf(dto.getMonths()),
+                            2,
+                            RoundingMode.HALF_UP
+                    )
+            );
+        } else {
+            entity.setMonthly_price(BigDecimal.ZERO);
+        }
+
         return entity;
     }
 
