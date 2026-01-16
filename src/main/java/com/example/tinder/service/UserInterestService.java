@@ -25,6 +25,4 @@ public interface UserInterestService {
     ApiResponse<?> getUserCategoriesByType(Long userId, CategoryType type);
 
     ApiResponse<?> getAllUserCategoriesByUserId(Long userId);
-
-
 }
