@@ -35,11 +35,11 @@ public class FaceCompareServiceImpl implements FaceCompareService {
 
         SimilarityResponse body = response.getBody();
 
-        if (body == null || body.getSimilarity() == null) {
+        if (body == null || body.getSimilarityPercent() == null) {
             throw new IllegalStateException("AI similarity response is empty");
         }
 
-        return body.getSimilarity();
+        return body.getSimilarityPercent();
     }
 
 }

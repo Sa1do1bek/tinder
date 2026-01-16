@@ -1,5 +1,6 @@
 package com.example.tinder.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter
@@ -8,5 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SimilarityResponse {
-    private Double similarity;
+
+    @JsonProperty("similarity_percent")
+    private Double similarityPercent;
+
 }
