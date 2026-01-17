@@ -24,6 +24,7 @@ public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPl
     @Query(value = """
                 SELECT sp FROM SubscriptionPlan sp
                 WHERE sp.visibility = true
+                ORDER BY sp.months ASC
             """)
     List<SubscriptionPlan> findAll();
 

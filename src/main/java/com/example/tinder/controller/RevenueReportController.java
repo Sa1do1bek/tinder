@@ -21,7 +21,6 @@ import java.time.LocalDate;
 @PreAuthorize("hasRole('ADMIN')")
 public class RevenueReportController {
 
-
     private final RevenueReportService reportService;
     
     @GetMapping
