@@ -136,6 +136,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe s WHERE swiper_id = :currentUserId)
+            AND u.id NOT IN (
+                        SELECT user1_id  FROM conversation
+                        WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                        AND visibility = true
+                        )
+            
+            
             AND (6371 * acos(
                 least(1.0, greatest(-1.0,
                     cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
@@ -157,6 +164,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                             UNION
                                             SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
                                         )
+                                         AND u.id NOT IN (
+                                            SELECT user1_id  FROM conversation
+                                            WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                                            AND visibility = true
+                                         )
                     """,
             nativeQuery = true)
     Page<User> findDiscoveryUsersWithSmartMatching(
@@ -183,6 +195,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+            AND u.id NOT IN (
+                            SELECT user1_id  FROM conversation
+                            WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                            AND visibility = true
+                            )
             ORDER BY match_score DESC, u.fullname ASC
             """,
             countQuery = """
@@ -195,6 +212,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                      SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                                      UNION
                                      SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+                                    )
+                    AND u.id NOT IN (
+                                    SELECT user1_id  FROM conversation
+                                    WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                                    AND visibility = true
                                     )
                     
                     """,
@@ -215,11 +237,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     WHERE u.id != :currentUserId
     AND u.active = true
     AND u.show_profile = true
-        AND u.id NOT IN (
+    AND u.id NOT IN (
             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
             UNION
             SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
         )
+    AND u.id NOT IN (
+                        SELECT user1_id  FROM conversation
+                        WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                        AND visibility = true
+                        )
     AND uui.user_interests_id = :interestId
     AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
     AND (u.birth_date IS NOT NULL AND EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
@@ -238,11 +265,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE u.id != :currentUserId 
         AND u.active = true
         AND u.show_profile = true   
-            AND u.id NOT IN (
+        AND u.id NOT IN (
                 SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                 UNION
                 SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
             )
+        AND u.id NOT IN (
+                         SELECT user1_id  FROM conversation
+                         WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                         AND visibility = true
+                        )        
         AND uui.user_interests_id = :interestId
     """,
             nativeQuery = true)
@@ -291,6 +323,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 UNION
                 SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
             )
+            AND u.id NOT IN (
+                            SELECT user1_id  FROM conversation
+                            WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                            AND visibility = true
+                            )
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -370,6 +407,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                             UNION
                             SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
                         )
+            AND u.id NOT IN (
+                            SELECT user1_id  FROM conversation
+                            WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                            AND visibility = true
+                            )
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -395,6 +437,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         UNION
                         SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
                     )
+                    AND u.id NOT IN (
+                                     SELECT user1_id  FROM conversation
+                                     WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                                     AND visibility = true
+                                    )
 """,
             nativeQuery = true)
     Page<User> findDiscoveryUsersWithSmartMatchingAndFreeTonight(
@@ -435,6 +482,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                      UNION
                                      SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
                                     )
+                    AND u.id NOT IN (
+                                     SELECT user1_id  FROM conversation
+                                     WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                                     AND visibility = true
+                                     )
                     
                     """,
             nativeQuery = true)
@@ -451,43 +503,48 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query(value = """
-        SELECT DISTINCT u.*,
-        COUNT(s.id) as like_count,
-        (6371 * acos(
-            least(1.0, greatest(-1.0,
-                cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-            ))
-        )) as distance_val
-        FROM users u
-        JOIN users_location ul ON u.id = ul.user_id
-        LEFT JOIN swipe s ON u.id = s.swiped_id
-            AND (s.swipe = 'LIKE' OR s.swipe = 'SUPERLIKE')
-            AND s.swiper_id <> :currentUserId
-            AND s.visibility = true
-        WHERE u.id != :currentUserId
-        AND u.active = true
-        AND u.show_profile = true
-        AND u.id NOT IN (
-            SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
-            UNION
-            SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
-        )
-        AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-        AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-        AND (6371 * acos(
-            least(1.0, greatest(-1.0,
-                cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-                cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-                sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-            ))
-        )) <= :maxDistance
-        GROUP BY u.id, ul.latitude, ul.longitude
-        ORDER BY like_count ASC, distance_val ASC
-        LIMIT 10
-        """,
+            SELECT DISTINCT u.*,
+            COUNT(s.id) as like_count,
+            (6371 * acos(
+                least(1.0, greatest(-1.0,
+                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+                ))
+            )) as distance_val
+            FROM users u
+            JOIN users_location ul ON u.id = ul.user_id
+            LEFT JOIN swipe s ON u.id = s.swiped_id
+                AND (s.swipe = 'LIKE' OR s.swipe = 'SUPERLIKE')
+                AND s.swiper_id <> :currentUserId
+                AND s.visibility = true
+            WHERE u.id != :currentUserId
+            AND u.active = true
+            AND u.show_profile = true
+            AND u.id NOT IN (
+                SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
+                UNION
+                SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+            )
+            AND u.id NOT IN (
+                             SELECT user1_id  FROM conversation
+                             WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                             AND visibility = true
+                             )
+            AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+            AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+            AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+            AND (6371 * acos(
+                least(1.0, greatest(-1.0,
+                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+                ))
+            )) <= :maxDistance
+            GROUP BY u.id, ul.latitude, ul.longitude
+            ORDER BY like_count ASC, distance_val ASC
+            LIMIT 10
+            """,
             nativeQuery = true)
     List<User> findLeastLikedUsersNearby(
             @Param("currentUserId") Long currentUserId,
