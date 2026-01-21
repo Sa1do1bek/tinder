@@ -1,6 +1,7 @@
 package com.example.tinder.exception.handler;
 
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.exception.PaymentException;
 import com.example.tinder.exception.RestException;
 import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -240,6 +241,15 @@ public class GlobalExceptionHandler {
         errorResponse.put("status", status.value());
 
         return ResponseEntity.status(status).body(errorResponse);
+    }
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentException(PaymentException ex) {
+        log.error("Payment error: {} (code: {})", ex.getMessage(), ex.getErrorCode());
+
+        return ResponseEntity.ok(Map.of(
+                "error", ex.getErrorCode(),
+                "error_note", ex.getMessage()
+        ));
     }
 
 

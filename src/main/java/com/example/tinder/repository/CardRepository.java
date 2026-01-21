@@ -12,12 +12,14 @@ import java.util.Optional;
 public interface CardRepository extends JpaRepository<Card, Long> {
 
     @Query("""
-        SELECT c FROM Card c
-                WHERE c.user.id = :userId
-        """)
+            SELECT c FROM Card c
+                    WHERE c.user.id = :userId
+            """)
     Optional<Card> findByUserId(@Param("userId") Long userId);
 
     Optional<Card> findByNumber(String number);
+
+    boolean existsByUserId(Long userId);
 
 
 }
