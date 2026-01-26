@@ -40,7 +40,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return oauth2User;
     }
 
-
     protected void processUser(String email, String fullname, String profilePic) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
