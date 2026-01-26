@@ -1,6 +1,7 @@
 package com.example.tinder.service.firebase;
 
 import com.example.tinder.dto.auth.FirebaseUserInfoResponse;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -21,6 +23,8 @@ public class FirebaseAuthClient {
             idToken = cleanAndValidateToken(idToken);
 
             if (com.google.firebase.FirebaseApp.getApps().isEmpty()) {
+                List<FirebaseApp> apps = FirebaseApp.getApps();
+                log.info("Firebasedan kelgan log:  {}\n", apps.toString());
                 throw new IllegalStateException("Firebase not initialized. Check FirebaseConfig.");
             }
 
