@@ -28,7 +28,7 @@ public class RevenueReportServiceImpl implements RevenueReportService {
     private final PlatformRevenueRepository revenueRepository;
     
     @Override
-    public ApiResponse<?> getRevenueReport(String period, LocalDate startDate, LocalDate endDate) {
+    public  ApiResponse<?> getRevenueReport(String period, LocalDate startDate, LocalDate endDate) {
         log.info("Generating revenue report: period={}, startDate={}, endDate={}", period, startDate, endDate);
         
         // Date range aniqlash

@@ -38,6 +38,11 @@ public class FirebaseAuthService {
     @Transactional
     public ApiResponse<?> loginWithGoogle(String idToken) {
 
+        // ✅ Token validatsiya
+        if (idToken == null || idToken.isBlank()) {
+            return ApiResponse.error("INVALID_REQUEST");
+        }
+
         FirebaseUserInfoResponse firebaseUser = firebaseAuthClient.getUserInfo(idToken);
 
         String firebaseUid = firebaseUser.getUid();
@@ -68,6 +73,8 @@ public class FirebaseAuthService {
             String username = generateUniqueUsername(email);
             LocalDateTime createdAt = LocalDateTime.now();
 
+            LocalDate defaultBirthDate = LocalDate.of(2004, 5, 31);
+
             User newUser = User.builder()
                     .firebaseUid(firebaseUid)
                     .email(email)
@@ -90,7 +97,7 @@ public class FirebaseAuthService {
                     .freeTonight(false)
                     .latitude("41.1776056")
                     .longitude("69.3562786")
-                    .birthDate(Date.valueOf("2004-05-31 05:00:00.000000"))
+                    .birthDate(Date.valueOf(defaultBirthDate))
                     .build();
             newUser.setCreatedAt(createdAt);
             newUser.setUpdatedAt(createdAt);
