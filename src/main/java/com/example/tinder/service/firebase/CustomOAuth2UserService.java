@@ -53,6 +53,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 existingUser.setProvider(AuthProvider.EMAIL_AND_GOOGLE);
                 userRepository.save(existingUser);
             }
+
         } else {
             log.info("🆕 Creating new user: {}", email);
 
