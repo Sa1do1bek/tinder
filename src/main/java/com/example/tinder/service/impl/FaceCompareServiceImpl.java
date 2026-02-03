@@ -15,7 +15,7 @@ public class FaceCompareServiceImpl implements FaceCompareService {
     private final RestTemplate restTemplate;
 
     private static final String AI_COMPARE_URL =
-            "https://4f75f8791d2b.ngrok-free.app/compare";
+            "https://tinder-ai.tenzorsoft.uz/compare";
 
     @Override
     public double compareFaces(String imageUrl1, String imageUrl2) {
