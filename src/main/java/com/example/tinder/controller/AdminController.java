@@ -30,6 +30,7 @@ public class AdminController {
         return adminService.toggleUserActive(userId);
     }
 
+
     @DeleteMapping("/picture/{userId}/{imageId}")
     public ApiResponse<?> deletePicture(
             @PathVariable Long userId,
