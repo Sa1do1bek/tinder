@@ -1,9 +1,12 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
+import com.example.tinder.repository.ProfilePictureRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.AdminService;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
+    private final ProfilePictureRepository profilePictureRepository;
 
     @Override
     public ApiResponse<Page<User>> getAllUsers(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<User> users = userRepository.findAll(pageRequest);
 
-        return ApiResponse.success(users);
+        return ApiResponse.success(users, SuccessType.USER_FOUND_SUCCESSFULLY);
     }
 
     @Override
@@ -36,6 +40,29 @@ public class AdminServiceImpl implements AdminService {
 
         User savedUser = userRepository.save(user);
 
-        return ApiResponse.success(savedUser);
+        return ApiResponse.success(savedUser, SuccessType.SUCCESS);
+    }
+
+    @Override
+    public ApiResponse<?> deletePicture(Long userId, Long imageId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        ProfilePicture picture = profilePictureRepository.findByIdAndVisibilityTrue(imageId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PROFILE_PICTURE_NOT_FOUND));
+
+        if (!picture.getUser().getId().equals(userId)) {
+            throw RestException.restThrow(ErrorType.CANNOT_DELETE_OTHER_USERS_PICTURE);
+        }
+
+        if (picture.getCloudPath().equals(user.getProfilePic())) {
+            user.setProfilePic(null);
+            userRepository.save(user);
+        }
+
+        picture.setVisibility(false);
+
+        profilePictureRepository.save(picture);
+        return ApiResponse.success(SuccessType.PICTURE_DELETED_SUCCESSFULLY);
     }
 }

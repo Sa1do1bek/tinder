@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin")
@@ -30,12 +31,16 @@ public class AdminController {
         return adminService.toggleUserActive(userId);
     }
 
+    @GetMapping("/users/{userId}/pictures")
+    public ApiResponse<?> getUserPictures(@PathVariable Long userId) {
+        return profilePictureService.getUserPictures(userId);
+    }
 
     @DeleteMapping("/picture/{userId}/{imageId}")
     public ApiResponse<?> deletePicture(
             @PathVariable Long userId,
             @PathVariable Long imageId
     ) {
-        return profilePictureService.deletePicture(userId, imageId);
+        return adminService.deletePicture(userId, imageId);
     }
 }

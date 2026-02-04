@@ -80,7 +80,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
 
         if (!user.isActive()) throw RestException.restThrow(ErrorType.USER_INACTIVE);
 
-        List<ProfilePicture> pictures = profilePictureRepository.findAllByUserId(userId);
+        List<ProfilePicture> pictures = profilePictureRepository.findAllByUserIdAndVisibilityTrue(userId);
         List<ProfilePictureDto> dtoList = pictures.stream()
                 .map(p -> ProfilePictureDto.builder()
                         .id(p.getId())
@@ -96,7 +96,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
-        ProfilePicture picture = profilePictureRepository.findById(pictureId)
+        ProfilePicture picture = profilePictureRepository.findByIdAndVisibilityTrue(pictureId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.PROFILE_PICTURE_NOT_FOUND));
 
         if (!picture.getUser().getId().equals(userId)) {
@@ -127,7 +127,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
-        ProfilePicture profilePicture = profilePictureRepository.findById(pictureId)
+        ProfilePicture profilePicture = profilePictureRepository.findByIdAndVisibilityTrue(pictureId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.PICTURE_NOT_FOUND));
 
         if (!profilePicture.getUser().getId().equals(userId)) {
