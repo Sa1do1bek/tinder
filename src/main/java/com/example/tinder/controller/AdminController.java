@@ -41,6 +41,6 @@ public class AdminController {
             @PathVariable Long userId,
             @PathVariable Long imageId
     ) {
-        return adminService.deletePicture(userId, imageId);
+        return profilePictureService.deletePicture(userId, imageId);
     }
 }

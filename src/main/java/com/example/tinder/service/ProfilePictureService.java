@@ -13,7 +13,7 @@ public interface ProfilePictureService {
 
     ApiResponse<?> getUserPictures(Long userId);
 
-    ApiResponse<?> deletePicture(Long id, Long userId);
+    ApiResponse<?> deletePicture(Long userId, Long imageId);
 
     ApiResponse<?> setAsMainPicture(Long userId, Long pictureId);
 
