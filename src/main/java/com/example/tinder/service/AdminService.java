@@ -10,5 +10,4 @@ public interface AdminService {
 
     ApiResponse<User> toggleUserActive(Long userId);
 
-    ApiResponse<?> deletePicture(Long userId, Long imageId);
 }

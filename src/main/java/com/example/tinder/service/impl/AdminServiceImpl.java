@@ -42,27 +42,4 @@ public class AdminServiceImpl implements AdminService {
 
         return ApiResponse.success(savedUser, SuccessType.SUCCESS);
     }
-
-    @Override
-    public ApiResponse<?> deletePicture(Long userId, Long imageId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
-
-        ProfilePicture picture = profilePictureRepository.findByIdAndVisibilityTrue(imageId)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.PROFILE_PICTURE_NOT_FOUND));
-
-        if (!picture.getUser().getId().equals(userId)) {
-            throw RestException.restThrow(ErrorType.CANNOT_DELETE_OTHER_USERS_PICTURE);
-        }
-
-        if (picture.getCloudPath().equals(user.getProfilePic())) {
-            user.setProfilePic(null);
-            userRepository.save(user);
-        }
-
-        picture.setVisibility(false);
-
-        profilePictureRepository.save(picture);
-        return ApiResponse.success(SuccessType.PICTURE_DELETED_SUCCESSFULLY);
-    }
 }
