@@ -11,10 +11,7 @@ import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.MediaMessageMapper;
 import com.example.tinder.mapper.MessageMapper;
-import com.example.tinder.repository.ConversationRepository;
-import com.example.tinder.repository.MediaMessageRepository;
-import com.example.tinder.repository.MessageRepository;
-import com.example.tinder.repository.UserRepository;
+import com.example.tinder.repository.*;
 import com.example.tinder.service.MessageService;
 import com.example.tinder.service.NotificationService;
 import com.example.tinder.service.S3Service;
@@ -45,6 +42,7 @@ public class MessageServiceImpl implements MessageService {
     private final S3Service s3Service;
     private final MediaMessageRepository mediaMessageRepository;
     private final MediaMessageMapper mediaMessageMapper;
+    private final FCMRepository fcmRepository;
 
     @Override
     @Transactional
@@ -79,12 +77,12 @@ public class MessageServiceImpl implements MessageService {
 
         boolean isOnline = eventListener.isUserOnline(receiver.getUsername());
         if (!isOnline) {
-            notificationService.sendNotification(
+            fcmRepository.findByUserIdAndVisibilityTrue(receiver.getId()).ifPresent(swipedFCM -> notificationService.sendNotification(
                     receiver.getId(),
                     sender.getFullname() + "dan yangi xabar",
                     messageDto.getMessage(),
                     NotificationPathType.NEWS_MESSAGE
-            );
+            ));
         }
         return ApiResponse.success(messageDto, SuccessType.MESSAGE_SENT_SUCCESSFULLY);
     }

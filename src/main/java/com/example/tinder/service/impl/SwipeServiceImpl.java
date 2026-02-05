@@ -1,6 +1,7 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.entity.FCM;
 import com.example.tinder.entity.Match;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
@@ -10,10 +11,7 @@ import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.ConversationMapper;
-import com.example.tinder.repository.ConversationRepository;
-import com.example.tinder.repository.MatchRepository;
-import com.example.tinder.repository.SwipeRepository;
-import com.example.tinder.repository.UserRepository;
+import com.example.tinder.repository.*;
 import com.example.tinder.service.NotificationService;
 import com.example.tinder.service.SwipeService;
 import jakarta.transaction.Transactional;
@@ -36,6 +34,7 @@ public class SwipeServiceImpl implements SwipeService {
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
     private final ConversationRepository conversationRepository;
+    private final FCMRepository fcmRepository;
 
     @Override
     public ApiResponse<?> swipe(Long swiperId, Long swipedId, SwipeStatus status) {
@@ -99,20 +98,20 @@ public class SwipeServiceImpl implements SwipeService {
                 matchNotification.put("fromFullName", swiperOpt.get().getFullname());
                 matchNotification.put("message", "You have a new match! You can now start chatting.");
 
-                notificationService.sendNotification(
+                fcmRepository.findByUserIdAndVisibilityTrue(swipedId).ifPresent(swipedFCM -> notificationService.sendNotification(
                         swiped.getId(),
                         "TINDER!",
-                        swiper.getFullname() + " sizga " + status.name() + " bosdi." +"\n" +
+                        swiper.getFullname() + " sizga " + status.name() + " bosdi." + "\n" +
                                 " Chat yaratildi! siz suhbat qilishingiz mumkin.",
                         NotificationPathType.NEWS_MESSAGE
-                );
+                ));
 
-                notificationService.sendNotification(
+                fcmRepository.findByUserIdAndVisibilityTrue(swiperId).ifPresent(swipedFCM -> notificationService.sendNotification(
                         swiper.getId(),
                         swiped.getFullname() + " bilan chat yaratildi!",
                         "Siz suhbat qilishingiz mumkin.",
                         NotificationPathType.NEWS_MESSAGE
-                );
+                ));
 
                 messagingTemplate.convertAndSend(
                         "/topic/notification/" + swipedOpt.get().getId(),
@@ -129,12 +128,12 @@ public class SwipeServiceImpl implements SwipeService {
                 return ApiResponse.success(SuccessType.MATCH_FOUND_YOU_CAN_START_CHAT);
             }
 
-            notificationService.sendNotification(
+            fcmRepository.findByUserIdAndVisibilityTrue(swiperId).ifPresent(swipedFCM -> notificationService.sendNotification(
                     swiped.getId(),
                     "TINDER!",
                     swiper.getFullname() + " sizga " + status.name() + " bosdi.",
                     NotificationPathType.NEWS_MESSAGE
-            );
+            ));
         }
 
         return ApiResponse.success(SuccessType.SWIPE_RECORDED);
