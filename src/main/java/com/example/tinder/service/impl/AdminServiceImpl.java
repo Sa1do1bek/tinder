@@ -1,12 +1,10 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.entity.ProfilePicture;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
-import com.example.tinder.repository.ProfilePictureRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.AdminService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
-    private final ProfilePictureRepository profilePictureRepository;
 
     @Override
     public ApiResponse<Page<User>> getAllUsers(int page, int size) {
