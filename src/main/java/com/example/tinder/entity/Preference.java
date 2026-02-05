@@ -34,6 +34,5 @@ public class Preference extends BaseEntity{
     private Integer maxAge;
 
     @DecimalMin("2.0")
-    @DecimalMax("160.0")
     private Double distance;
 }
