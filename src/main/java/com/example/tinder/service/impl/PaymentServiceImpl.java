@@ -9,15 +9,19 @@ import com.example.tinder.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.ZoneId;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -42,6 +46,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${payme.secret-key}")
     private String paymeSecretKey;
 
+    private String baseUrl = "https://api-tinder.tenzorsoft.uz";
+
     // =========================
     // CLICK METHODS
     // =========================
@@ -50,50 +56,42 @@ public class PaymentServiceImpl implements PaymentService {
     public Map<String, Object> prepare(Map<String, String> params) {
         log.info("Click Prepare request: {}", params);
 
-        String serviceId = params.get("service_id");
-        if (!clickServiceId.equals(serviceId)) {
-            log.warn("Invalid service ID: {}", serviceId);
-            return error(-5, "Service ID hato");
+        // 1️⃣ SERVICE ID — STATIC
+        String serviceId = clickServiceId;
+
+        // 2️⃣ USERNI JWT ORQALI OLAMIZ
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return error(-5, "Unauthorized");
         }
 
-        if (!validateClickSign(params, clickSecretKey)) {
-            log.warn("Invalid signature for transaction: {}", params.get("click_trans_id"));
-            return error(-1, "Sign hato");
-        }
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String clickTransId = params.get("click_trans_id");
-        String merchantTransId = params.get("merchant_trans_id");
+        Long userId = user.getId(); // merchant_trans_id
+
+        // 3️⃣ AMOUNT — FRONTENDDAN
         String amountStr = params.get("amount");
 
         BigDecimal amount;
         try {
             amount = new BigDecimal(amountStr);
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                log.warn("Invalid amount: {}", amount);
                 return error(-2, "Noto'g'ri summa");
             }
-        } catch (NumberFormatException e) {
-            log.warn("Invalid amount format: {}", amountStr);
+        } catch (Exception e) {
             return error(-2, "Noto'g'ri summa formati");
         }
 
-        Long userId;
-        try {
-            userId = Long.parseLong(merchantTransId);
-        } catch (NumberFormatException e) {
-            log.warn("Invalid merchant_trans_id: {}", merchantTransId);
-            return error(-5, "Noto'g'ri user ID");
-        }
-
         if (!cardRepository.existsByUserId(userId)) {
-            log.warn("User not found: {}", userId);
-            return error(-5, "User topilmadi");
+            return error(-5, "User kartasi topilmadi");
         }
 
-        if (clickTransactionRepository.existsByClickTransId(clickTransId)) {
-            log.info("Transaction already exists: {}", clickTransId);
-            return success();
-        }
+        // 4️⃣ CLICK TRANSACTION ID — BACKEND GENERATE QILADI
+        String clickTransId = UUID.randomUUID().toString();
 
         ClickTransaction transaction = ClickTransaction.builder()
                 .clickTransId(clickTransId)
@@ -103,9 +101,47 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
 
         clickTransactionRepository.save(transaction);
-        log.info("Click transaction created: {}", clickTransId);
 
-        return success();
+        // ================== CLICK REDIRECT URL ==================
+
+        String signTime = String.valueOf(System.currentTimeMillis());
+
+        String data = clickTransId
+                + serviceId
+                + clickSecretKey
+                + userId
+                + amount
+                + "0"
+                + signTime;
+
+        String signString;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            signString = sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Sign generate error");
+        }
+
+        String redirectUrl =
+                "https://my.click.uz/services/pay"
+                        + "?service_id=" + serviceId
+                        + "&merchant_trans_id=" + userId
+                        + "&amount=" + amount
+                        + "&action=0"
+                        + "&return_url=" + baseUrl + "/api/payment/click/complete"
+                        + "&sign_time=" + signTime
+                        + "&sign_string=" + signString;
+        
+        return Map.of(
+                "error", 0,
+                "error_note", "SUCCESS",
+                "redirect_url", redirectUrl
+        );
     }
 
     @Override
