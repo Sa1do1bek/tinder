@@ -128,12 +128,12 @@ public class SwipeServiceImpl implements SwipeService {
                 return ApiResponse.success(SuccessType.MATCH_FOUND_YOU_CAN_START_CHAT);
             }
 
-            notificationService.sendNotification(
+            fcmRepository.findByUserIdAndVisibilityTrue(swiperId).ifPresent(swipedFCM -> notificationService.sendNotification(
                     swiped.getId(),
                     "TINDER!",
                     swiper.getFullname() + " sizga " + status.name() + " bosdi.",
                     NotificationPathType.NEWS_MESSAGE
-            );
+            ));
         }
 
         return ApiResponse.success(SuccessType.SWIPE_RECORDED);
