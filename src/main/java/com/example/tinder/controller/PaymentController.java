@@ -22,7 +22,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @GetMapping("/getUrlForClick")
-    public ApiResponse<String> getUrlForClick(@RequestParam BigDecimal amount){
+    public ApiResponse<String> getUrlForClick(@RequestParam BigDecimal amount) {
         return paymentService.getUrlForClick(amount);
     }
 
