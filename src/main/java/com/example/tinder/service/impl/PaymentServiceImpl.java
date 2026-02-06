@@ -1,11 +1,17 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.payment.req.ClickCompleteRequest;
+import com.example.tinder.dto.payment.req.ClickPrepareRequest;
+import com.example.tinder.dto.payment.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.res.ClickPrepareResponse;
 import com.example.tinder.entity.*;
-import com.example.tinder.enums.TransactionStatus;
-import com.example.tinder.enums.TransactionType;
+import com.example.tinder.enums.*;
+import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymentException;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.PaymentService;
+import com.example.tinder.utils.ClickUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,13 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -34,157 +36,95 @@ public class PaymentServiceImpl implements PaymentService {
     private final WalletTransactionRepository walletTransactionRepository;
     private final UserRepository userRepository;
 
-    @Value("${click.service-id}")
-    private String clickServiceId;
-
-    @Value("${click.secret-key}")
-    private String clickSecretKey;
-
     @Value("${payme.merchant-id}")
     private String paymeMerchantId;
 
     @Value("${payme.secret-key}")
     private String paymeSecretKey;
 
-    private String baseUrl = "https://api-tinder.tenzorsoft.uz";
-
     // =========================
     // CLICK METHODS
     // =========================
     @Override
     @Transactional
-    public Map<String, Object> prepare(Map<String, String> params) {
-        log.info("Click Prepare request: {}", params);
-
-        // 1️⃣ SERVICE ID — STATIC
-        String serviceId = clickServiceId;
-
-        // 2️⃣ USERNI JWT ORQALI OLAMIZ
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return error(-5, "Unauthorized");
+    public ClickPrepareResponse prepare(ClickPrepareRequest request) {
+        log.info("Click Prepare request: {}", request);
+        if (!Objects.equals(request.getAction(), ClickUtil.PREPARE_ACTION)){
+            throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
         }
 
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getUserOrThrowExc(request.getMerchantTransId()); // merchant_trans_id
 
-        Long userId = user.getId(); // merchant_trans_id
-
-        // 3️⃣ AMOUNT — FRONTENDDAN
-        String amountStr = params.get("amount");
+        //  AMOUNT
+        String amountStr = request.getAmount().toString();
 
         BigDecimal amount;
         try {
             amount = new BigDecimal(amountStr);
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                return error(-2, "Noto'g'ri summa");
+                throw new ClickException(ClickResponseCode.INVALID_AMOUNT);
             }
         } catch (Exception e) {
-            return error(-2, "Noto'g'ri summa formati");
+            throw new ClickException(ClickResponseCode.INVALID_AMOUNT);
         }
 
-        if (!cardRepository.existsByUserId(userId)) {
-            return error(-5, "User kartasi topilmadi");
+        if (!cardRepository.existsByUserId(user.getId())) {
+            throw new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND);
         }
 
-        // 4️⃣ CLICK TRANSACTION ID — BACKEND GENERATE QILADI
-        String clickTransId = UUID.randomUUID().toString();
+        ClickTransaction save = clickTransactionRepository.save(ClickTransaction.builder()
+                .id(request.getClickTransId())
+                .amount(request.getAmount())
+                .prepareTime(LocalDateTime.now())
+                .userId(user.getId())
+                .status(PaymentStatus.PREPARE)
+                .build());
 
-        ClickTransaction transaction = ClickTransaction.builder()
-                .clickTransId(clickTransId)
-                .userId(userId)
-                .amount(amount)
-                .status(TransactionStatus.PENDING)
-                .build();
+        return ClickPrepareResponse.from(request, save.getId());
 
-        clickTransactionRepository.save(transaction);
-
-        // ================== CLICK REDIRECT URL ==================
-
-        String signTime = String.valueOf(System.currentTimeMillis());
-
-        String data = clickTransId
-                + serviceId
-                + clickSecretKey
-                + userId
-                + amount
-                + "0"
-                + signTime;
-
-        String signString;
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b));
-            }
-            signString = sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Sign generate error");
-        }
-
-        String redirectUrl =
-                "https://my.click.uz/services/pay"
-                        + "?service_id=" + serviceId
-                        + "&merchant_trans_id=" + userId
-                        + "&amount=" + amount
-                        + "&action=0"
-                        + "&return_url=" + baseUrl + "/api/payment/click/complete"
-                        + "&sign_time=" + signTime
-                        + "&sign_string=" + signString;
-        
-        return Map.of(
-                "error", 0,
-                "error_note", "SUCCESS",
-                "redirect_url", redirectUrl
-        );
     }
 
     @Override
     @Transactional
-    public Map<String, Object> complete(Map<String, String> params) {
-        log.info("Click Complete request: {}", params);
+    public ClickCompleteResponse complete(ClickCompleteRequest request) {
+        log.info("Click Complete request: {}", request);
 
-        String clickTransId = params.get("click_trans_id");
-
-        ClickTransaction tx = clickTransactionRepository.findByClickTransId(clickTransId)
-                .orElseThrow(() -> {
-                    log.error("Click transaction not found: {}", clickTransId);
-                    return new PaymentException(-6, "Transaction topilmadi");
-                });
-
-        if (!validateClickSign(params, clickSecretKey)) {
-            log.warn("Invalid signature in complete: {}", clickTransId);
-            return error(-1, "Sign hato");
+        if (!Objects.equals(request.getAction(), ClickUtil.COMPLETE_ACTION)) {
+            throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
         }
 
-        if (tx.getStatus() == TransactionStatus.COMPLETED) {
-            log.info("Transaction already completed: {}", clickTransId);
-            return success();
+        ClickTransaction clickTransaction = getTransactionOrThrowExc(request.getMerchantPrepareId());
+        User user = getUserOrThrowExc(clickTransaction.getUserId());
+
+        Card card = cardRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND));
+
+        if (clickTransaction.isComplete()) {
+            throw new ClickException(ClickResponseCode.ALREADY_PAID);
         }
 
-        User user = userRepository.findById(tx.getUserId())
-                .orElseThrow(() -> new PaymentException(-5, "User topilmadi"));
+        if (clickTransaction.isCancel()) {
+            throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
+        }
 
-        Card card = cardRepository.findByUserId(tx.getUserId())
-                .orElseThrow(() -> new PaymentException(-5, "Card topilmadi"));
+        if (request.getError() != ClickResponseCode.SUCCESS.getCode()) {
+            clickTransaction.setStatus(PaymentStatus.CANCEL);
+            clickTransactionRepository.save(clickTransaction);
+            throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
+        }
 
         BigDecimal oldBalance = card.getBalance();
-        card.setBalance(card.getBalance().add(tx.getAmount()));
+        card.setBalance(card.getBalance().add(clickTransaction.getAmount()));
         cardRepository.save(card);
 
-        tx.setStatus(TransactionStatus.COMPLETED);
-        clickTransactionRepository.save(tx);
+        clickTransaction.setStatus(PaymentStatus.COMPLETE);
+        clickTransactionRepository.save(clickTransaction);
 
         walletTransactionRepository.save(
                 WalletTransaction.builder()
                         .user(user)
                         .type(TransactionType.EARN)
-                        .amount(tx.getAmount())
+                        .amount(clickTransaction.getAmount())
                         .balanceAfter(card.getBalance())
                         .description("Click orqali balans to'ldirildi")
                         .status(TransactionStatus.COMPLETED)
@@ -192,9 +132,9 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         log.info("Click transaction completed: {} | Amount: {} | Balance: {} -> {}",
-                clickTransId, tx.getAmount(), oldBalance, card.getBalance());
+                clickTransaction.getId(), clickTransaction.getAmount(), oldBalance, card.getBalance());
 
-        return success();
+        return ClickCompleteResponse.from(request);
     }
 
     // =========================
@@ -224,6 +164,22 @@ public class PaymentServiceImpl implements PaymentService {
                 yield error(-32601, "Method not found", body.get("id"));
             }
         };
+    }
+
+    @Override
+    public ApiResponse<String> getUrlForClick(BigDecimal amount) {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ClickException(ClickResponseCode.UNAUTHORIZED);
+        }
+
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ApiResponse.success(ClickUtil.generatePaymentUrl(user.getId(), amount) , SuccessType.SUCCESS);
     }
 
     private boolean isValidAuth(String authHeader) {
@@ -529,40 +485,18 @@ public class PaymentServiceImpl implements PaymentService {
         );
     }
 
-    private Map<String, Object> success() {
-        return Map.of("error", 0, "error_note", "SUCCESS");
-    }
+    private User getUserOrThrowExc(Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
 
-    private Map<String, Object> error(int code, String note) {
-        return Map.of("error", code, "error_note", note);
-    }
-
-    private boolean validateClickSign(Map<String, String> params, String secretKey) {
-        try {
-            String clickTransId = params.get("click_trans_id");
-            String serviceId = params.get("service_id");
-            String merchantTransId = params.get("merchant_trans_id");
-            String amount = params.get("amount");
-            String action = params.get("action");
-            String signTime = params.get("sign_time");
-
-            String data = clickTransId + serviceId + secretKey + merchantTransId + amount + action + signTime;
-
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(data.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b));
-            }
-
-            String calculatedSign = sb.toString();
-            String receivedSign = params.get("sign_strings");
-
-            return calculatedSign.equals(receivedSign);
-
-        } catch (Exception e) {
-            log.error("Error validating Click signature", e);
-            return false;
+        if (Objects.isNull(user)) {
+            throw new ClickException(ClickResponseCode.USER_NOT_FOUND);
         }
+
+        return user;
+    }
+
+    private ClickTransaction getTransactionOrThrowExc(Long transactionId) {
+        return clickTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND));
     }
 }

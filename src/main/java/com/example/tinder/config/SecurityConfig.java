@@ -53,7 +53,9 @@ public class SecurityConfig {
             "/chat/**",
             "/app/**",              // STOMP destination prefix
             "/topic/**",            // STOMP topic
-            "/queue/**"             // STOMP queue
+            "/queue/**" ,            // STOMP queue
+            "/api/payment/click/prepare", // Payment
+            "/api/payment/click/complete" // Payment
     };
 
     @Bean
