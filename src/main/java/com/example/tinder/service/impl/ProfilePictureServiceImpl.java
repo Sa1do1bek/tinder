@@ -107,9 +107,7 @@ public class ProfilePictureServiceImpl implements ProfilePictureService {
             user.setProfilePic(null);
             userRepository.save(user);
         }
-
         picture.setVisibility(false);
-
         profilePictureRepository.save(picture);
         return ApiResponse.success(SuccessType.PICTURE_DELETED_SUCCESSFULLY);
     }

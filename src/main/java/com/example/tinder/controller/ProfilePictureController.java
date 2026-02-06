@@ -32,7 +32,7 @@ public class ProfilePictureController {
 
     @DeleteMapping("/{id}")
     public ApiResponse<?> delete(@PathVariable Long id,@CurrentUser User user) {
-        return profilePictureService.deletePicture(id,user.getId());
+        return profilePictureService.deletePicture(user.getId(), id);
     }
 
     @PutMapping("/set-main")
