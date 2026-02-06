@@ -1,6 +1,8 @@
 package com.example.tinder.exception.handler;
 
+import com.example.tinder.dto.payment.res.ClickCompleteResponse;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymentException;
 import com.example.tinder.exception.RestException;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -33,6 +35,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Order(value = Integer.MIN_VALUE)
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ClickException.class)
+    public ClickCompleteResponse handleException(ClickException e) {
+        log.error("Error occurred: {}", e.getCode().getErrorNote());
+
+        return ClickCompleteResponse.builder()
+                .error(e.getCode().getCode())
+                .errorNote(e.getCode().getErrorNote())
+                .build();
+    }
 
     //Client side Exceptions
     @ExceptionHandler(value = {RestException.class})
