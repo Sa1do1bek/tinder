@@ -42,6 +42,7 @@ public class UserMapper {
                 .firebaseUid(user.getFirebaseUid())
                 .subscriptionType(user.getSubscriptionType())
                 .freeTonight(user.getFreeTonight())
+                .active(user.isActive())
                 .build();
     }
 

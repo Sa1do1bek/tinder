@@ -37,8 +37,7 @@ public class UserDto {
     private String firebaseUid;
     private SubscriptionType subscriptionType;
     private Boolean freeTonight;
-
-
+    private boolean active;
 
 
 }
