@@ -22,6 +22,15 @@ import java.util.Set;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    @Query(value = """
+        select u from User u
+     """,
+    countQuery =
+            """
+                SELECT COUNT(u) FROM User u
+                """)
+    Page<User> findAllCustom(Pageable pageable);
+
     @Query("""
                 SELECT u FROM User u
                 WHERE u.id = :id
