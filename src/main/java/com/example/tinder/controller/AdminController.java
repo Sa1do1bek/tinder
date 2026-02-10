@@ -2,11 +2,9 @@ package com.example.tinder.controller;
 
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.entity.User;
 import com.example.tinder.service.AdminService;
 import com.example.tinder.service.ProfilePictureService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
