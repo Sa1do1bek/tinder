@@ -1,12 +1,16 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.dto.payment.req.ClickCompleteRequest;
-import com.example.tinder.dto.payment.req.ClickPrepareRequest;
-import com.example.tinder.dto.payment.res.ClickCompleteResponse;
-import com.example.tinder.dto.payment.res.ClickPrepareResponse;
+import com.example.tinder.dto.payment.click.req.ClickCompleteRequest;
+import com.example.tinder.dto.payment.click.req.ClickPrepareRequest;
+import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
+import com.example.tinder.dto.payment.payme.req.PaymeRequest;
+import com.example.tinder.dto.payment.payme.res.PaymeSuccessResponse;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
+import com.example.tinder.utils.PaymeUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -89,4 +93,12 @@ public class PaymentController {
 
         return paymentService.complete(build);
     }
+
+    @PostMapping("/payme")
+    public PaymeSuccessResponse paymeTransaction(@RequestBody PaymeRequest request, HttpServletRequest httpServletRequest){
+        PaymeUtil.authorizeToken(httpServletRequest.getHeader("Authorization"));
+
+        return paymentService.pay(request);
+    }
+
 }

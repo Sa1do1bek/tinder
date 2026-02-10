@@ -1,6 +1,5 @@
 package com.example.tinder.entity;
 
-import com.example.tinder.enums.PaymentMethod;
 import com.example.tinder.enums.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;

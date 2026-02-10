@@ -1,13 +1,14 @@
 package com.example.tinder.service;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.dto.payment.req.ClickCompleteRequest;
-import com.example.tinder.dto.payment.req.ClickPrepareRequest;
-import com.example.tinder.dto.payment.res.ClickCompleteResponse;
-import com.example.tinder.dto.payment.res.ClickPrepareResponse;
+import com.example.tinder.dto.payment.click.req.ClickCompleteRequest;
+import com.example.tinder.dto.payment.click.req.ClickPrepareRequest;
+import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
+import com.example.tinder.dto.payment.payme.req.PaymeRequest;
+import com.example.tinder.dto.payment.payme.res.PaymeSuccessResponse;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 public interface PaymentService {
 
@@ -15,7 +16,7 @@ public interface PaymentService {
 
     ClickCompleteResponse complete(ClickCompleteRequest request);
 
-    Map<String, Object> handle(Map<String, Object> body, String authHeader);
+    PaymeSuccessResponse pay(PaymeRequest request);
 
     ApiResponse<String> getUrlForClick(BigDecimal amount);
 }

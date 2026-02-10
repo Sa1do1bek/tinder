@@ -17,7 +17,8 @@ public class WalletTransactionMapper {
                 .description(transaction.getDescription())
                 .status(transaction.getStatus())
                 .transactionDate(transaction.getCreatedAt())
-                .build();
+                .paymentMethod(transaction.getPaymentMethod() == null ? "" : transaction.getPaymentMethod().name()
+                ).build();
     }
 
 }

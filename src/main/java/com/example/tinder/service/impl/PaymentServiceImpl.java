@@ -1,17 +1,23 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.dto.payment.req.ClickCompleteRequest;
-import com.example.tinder.dto.payment.req.ClickPrepareRequest;
-import com.example.tinder.dto.payment.res.ClickCompleteResponse;
-import com.example.tinder.dto.payment.res.ClickPrepareResponse;
+import com.example.tinder.dto.payment.click.req.ClickCompleteRequest;
+import com.example.tinder.dto.payment.click.req.ClickPrepareRequest;
+import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
+import com.example.tinder.dto.payment.payme.req.PaymeParam;
+import com.example.tinder.dto.payment.payme.req.PaymeRequest;
+import com.example.tinder.dto.payment.payme.res.*;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.*;
+import com.example.tinder.enums.payment.*;
+import com.example.tinder.enums.payment.PaymeError;
 import com.example.tinder.exception.ClickException;
-import com.example.tinder.exception.PaymentException;
+import com.example.tinder.exception.PaymeException;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
+import com.example.tinder.utils.PaymeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 
 @Slf4j
@@ -32,9 +38,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final CardRepository cardRepository;
     private final ClickTransactionRepository clickTransactionRepository;
-    private final PayMeTransactionRepository payMeTransactionRepository;
+    private final PaymeTransactionRepository paymeTransactionRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     private final UserRepository userRepository;
+
+    private static final Long time_expired = 43_200_000L;
 
     @Value("${payme.merchant-id}")
     private String paymeMerchantId;
@@ -49,24 +57,15 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public ClickPrepareResponse prepare(ClickPrepareRequest request) {
         log.info("Click Prepare request: {}", request);
-        if (!Objects.equals(request.getAction(), ClickUtil.PREPARE_ACTION)){
+        log.info("merchant_trans_id (userId): {}", request.getMerchantTransId()); // BU QO'SHING
+        System.out.println("merchant_trans_id (userId): " + request.getMerchantTransId());
+        if (!Objects.equals(request.getAction(), ClickUtil.PREPARE_ACTION)) {
             throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
         }
 
-        User user = getUserOrThrowExc(request.getMerchantTransId()); // merchant_trans_id
+        User user = getUserOrThrowExcForClick(request.getMerchantTransId()); // merchant_trans_id
 
-        //  AMOUNT
-        String amountStr = request.getAmount().toString();
-
-        BigDecimal amount;
-        try {
-            amount = new BigDecimal(amountStr);
-            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ClickException(ClickResponseCode.INVALID_AMOUNT);
-            }
-        } catch (Exception e) {
-            throw new ClickException(ClickResponseCode.INVALID_AMOUNT);
-        }
+        BigDecimal amount = validateAmount(request.getAmount());
 
         if (!cardRepository.existsByUserId(user.getId())) {
             throw new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND);
@@ -74,10 +73,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         ClickTransaction save = clickTransactionRepository.save(ClickTransaction.builder()
                 .id(request.getClickTransId())
-                .amount(request.getAmount())
+                .amount(amount)
                 .prepareTime(LocalDateTime.now())
                 .userId(user.getId())
-                .status(PaymentStatus.PREPARE)
+                .status(PaymentStatusForClick.PREPARE)
                 .build());
 
         return ClickPrepareResponse.from(request, save.getId());
@@ -94,7 +93,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         ClickTransaction clickTransaction = getTransactionOrThrowExc(request.getMerchantPrepareId());
-        User user = getUserOrThrowExc(clickTransaction.getUserId());
+        User user = getUserOrThrowExcForClick(clickTransaction.getUserId());
 
         Card card = cardRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND));
@@ -108,62 +107,37 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (request.getError() != ClickResponseCode.SUCCESS.getCode()) {
-            clickTransaction.setStatus(PaymentStatus.CANCEL);
+            clickTransaction.setStatus(PaymentStatusForClick.CANCEL);
             clickTransactionRepository.save(clickTransaction);
             throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
         }
 
         BigDecimal oldBalance = card.getBalance();
-        card.setBalance(card.getBalance().add(clickTransaction.getAmount()));
-        cardRepository.save(card);
+        BigDecimal newBalance = oldBalance.add(clickTransaction.getAmount());
 
-        clickTransaction.setStatus(PaymentStatus.COMPLETE);
-        clickTransactionRepository.save(clickTransaction);
-
-        walletTransactionRepository.save(
+        WalletTransaction walletTransaction = walletTransactionRepository.save(
                 WalletTransaction.builder()
                         .user(user)
                         .type(TransactionType.EARN)
                         .amount(clickTransaction.getAmount())
-                        .balanceAfter(card.getBalance())
+                        .balanceAfter(newBalance)
                         .description("Click orqali balans to'ldirildi")
                         .status(TransactionStatus.COMPLETED)
+                        .paymentMethod(PaymentMethod.CLICK)
                         .build()
         );
 
+        clickTransaction.setWalletTransactionId(walletTransaction.getId());
+        clickTransaction.setStatus(PaymentStatusForClick.COMPLETE);
+        clickTransactionRepository.save(clickTransaction);
+
+        card.setBalance(newBalance);
+        cardRepository.save(card);
+
         log.info("Click transaction completed: {} | Amount: {} | Balance: {} -> {}",
-                clickTransaction.getId(), clickTransaction.getAmount(), oldBalance, card.getBalance());
+                clickTransaction.getId(), clickTransaction.getAmount(), oldBalance, newBalance);
 
         return ClickCompleteResponse.from(request);
-    }
-
-    // =========================
-    // PAYME METHODS
-    // =========================
-    @Override
-    @Transactional
-    public Map<String, Object> handle(Map<String, Object> body, String authHeader) {
-        log.info("PayMe request: {}", body);
-
-        if (!isValidAuth(authHeader)) {
-            log.warn("Unauthorized PayMe request");
-            return error(-32504, "Unauthorized", body.get("id"));
-        }
-
-        String method = body.get("method").toString();
-        Map<String, Object> params = (Map<String, Object>) body.get("params");
-
-        return switch (method) {
-            case "CheckPerformTransaction" -> checkPerform(params, body.get("id"));
-            case "CreateTransaction" -> createTransaction(params, body.get("id"));
-            case "PerformTransaction" -> performTransaction(params, body.get("id"));
-            case "CancelTransaction" -> cancelTransaction(params, body.get("id"));
-            case "CheckTransaction" -> checkTransaction(params, body.get("id"));
-            default -> {
-                log.warn("Unknown PayMe method: {}", method);
-                yield error(-32601, "Method not found", body.get("id"));
-            }
-        };
     }
 
     @Override
@@ -179,314 +153,216 @@ public class PaymentServiceImpl implements PaymentService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ApiResponse.success(ClickUtil.generatePaymentUrl(user.getId(), amount) , SuccessType.SUCCESS);
+        return ApiResponse.success(ClickUtil.generatePaymentUrl(user.getId(), amount), SuccessType.SUCCESS);
     }
 
-    private boolean isValidAuth(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Basic ")) {
-            return false;
-        }
-
-        try {
-            String base64 = authHeader.substring(6);
-            String decoded = new String(Base64.getDecoder().decode(base64));
-            String expected = paymeMerchantId + ":" + paymeSecretKey;
-            return decoded.equals(expected);
-        } catch (IllegalArgumentException e) {
-            log.error("Base64 decode error", e);
-            return false;
-        }
+    private ClickTransaction getTransactionOrThrowExc(Long transactionId) {
+        return clickTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND));
     }
 
-    private Map<String, Object> checkPerform(Map<String, Object> params, Object id) {
-        Long userId;
-        try {
-            userId = Long.valueOf(((Map<?, ?>) params.get("account")).get("user_id").toString());
-        } catch (Exception e) {
-            log.warn("Invalid user_id in CheckPerform", e);
-            return error(-31050, "Noto'g'ri user ID", id);
-        }
-
-        if (!cardRepository.existsByUserId(userId)) {
-            log.warn("User not found in CheckPerform: {}", userId);
-            return error(-31050, "User topilmadi", id);
-        }
-
-        log.info("CheckPerform success for user: {}", userId);
-        return result(Map.of("allow", true), id);
-    }
-
-    private Map<String, Object> createTransaction(Map<String, Object> params, Object id) {
-        String paymeTransId = params.get("id").toString();
-
-        BigDecimal amount;
-        try {
-            long amountInTiyin = Long.parseLong(params.get("amount").toString());
-            if (amountInTiyin <= 0) {
-                log.warn("Invalid amount: {}", amountInTiyin);
-                return error(-31001, "Noto'g'ri summa", id);
-            }
-            amount = BigDecimal.valueOf(amountInTiyin).divide(BigDecimal.valueOf(100));
-        } catch (NumberFormatException e) {
-            log.warn("Invalid amount format", e);
-            return error(-31001, "Noto'g'ri summa formati", id);
-        }
-
-        Long userId;
-        try {
-            Object accountObj = params.get("account");
-            if (accountObj instanceof Map<?, ?> accountMap) {
-                Object uid = accountMap.get("user_id");
-                userId = Long.valueOf(uid.toString());
-            } else {
-                throw new IllegalArgumentException("Invalid account format");
-            }
-        } catch (Exception e) {
-            log.warn("Invalid user_id in CreateTransaction", e);
-            return error(-31050, "Noto'g'ri user ID", id);
-        }
-
-        if (!cardRepository.existsByUserId(userId)) {
-            log.warn("User not found: {}", userId);
-            return error(-31050, "User topilmadi", id);
-        }
-
-        if (payMeTransactionRepository.existsByPaymeTransId(paymeTransId)) {
-            log.warn("PayMe transaction already exists: {}", paymeTransId);
-            return error(-31008, "Transaction allaqachon mavjud", id);
-        }
-
-        PayMeTransaction tx = PayMeTransaction.builder()
-                .paymeTransId(paymeTransId)
-                .userId(userId)
-                .amount(amount)
-                .status(TransactionStatus.PENDING)
-                .build();
-
-        payMeTransactionRepository.save(tx);
-        log.info("PayMe transaction created: {} | Amount: {} | User: {}", paymeTransId, amount, userId);
-
-        long createTime = tx.getCreatedAt()
-                .atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli();
-
-        return result(Map.of(
-                "transaction", paymeTransId,
-                "state", 1,
-                "create_time", createTime
-        ), id);
-    }
-
+    // =========================
+    // PAYME METHODS
+    // =========================
+    @Override
     @Transactional
-    public Map<String, Object> performTransaction(Map<String, Object> params, Object id) {
-        String paymeTransId = params.get("id").toString();
+    public PaymeSuccessResponse pay(PaymeRequest request) {
+        return new PaymeSuccessResponse(switch (request.getMethod()) {
+            case "CheckPerformTransaction" -> checkPerformTransaction(request.getParams());
+            case "CreateTransaction" -> createTransaction(request.getParams());
+            case "PerformTransaction" -> performTransaction(request.getParams());
+            case "CancelTransaction" -> cancelTransaction(request.getParams());
+            case "CheckTransaction" -> checkTransaction(request.getParams());
+            case "GetStatement" -> getStatement(request.getParams());
+            default -> throw new PaymeException(PaymeError.INVALID_METHOD);
+        });
+    }
 
-        PayMeTransaction tx = payMeTransactionRepository.findByPaymeTransId(paymeTransId)
-                .orElse(null);
-
-        if (tx == null) {
-            log.error("Transaction not found in Perform: {}", paymeTransId);
-            return error(-31003, "Transaction topilmadi", id);
+    /**
+     * CheckPerformTransaction
+     * tranzaksiyani yaratishdan oldin tekshirish
+     * ya'ni bizda shu tranzaksiya uchun order borligini va tranzaksiya summasi to'g'ri kelishini tekshirish
+     */
+    private CheckPerformTransactionResult checkPerformTransaction(PaymeParam params) {
+        User user = getUserOrThrowExcForPayme(params.getAccount().getUserId());
+        // 2. Amount null emas va 0 dan kattami?
+        if (params.getAmount() == null || params.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new PaymeException(PaymeError.INVALID_AMOUNT);
         }
 
-        if (tx.getStatus() == TransactionStatus.COMPLETED) {
-            log.info("Transaction already performed: {}", paymeTransId);
-            long performTime = tx.getUpdatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli();
-
-            return result(Map.of(
-                    "transaction", paymeTransId,
-                    "state", 2,
-                    "perform_time", performTime
-            ), id);
+        if (!cardRepository.existsByUserId(user.getId())) {
+            throw new PaymeException(PaymeError.USER_CARD_NOT_FOUND);
         }
 
-        if (tx.getStatus() == TransactionStatus.CANCELLED) {
-            log.warn("Cannot perform cancelled transaction: {}", paymeTransId);
-            return error(-31008, "Transaction bekor qilingan", id);
+        return new CheckPerformTransactionResult(true);
+    }
+
+    /**
+     * CreateTransaction - tranzaksiya yaratish bu CheckPerformTransactiondan keyin keladi
+     */
+    private CreateTransactionResult createTransaction(PaymeParam params) {
+        PaymeTransaction transaction = paymeTransactionRepository.findById(params.getId()).orElse(null);
+
+        if (Objects.nonNull(transaction)) {
+            ifTransactionExist(transaction);
+        } else {
+            // agar tranzaksiya mavjud emas bo'lsa bu holatda tranzaksiya summasi va shunaqa ma'lumotlarni tekshirish uchun
+            // CheckPerformTransaction ni chaqiramiz
+            checkPerformTransaction(params);
+
+            // ✅ Tiyndan so'mga o'tkazish
+            BigDecimal amountInSom = convertTiynToSom(params.getAmount());
+
+            transaction = paymeTransactionRepository.save(
+                    PaymeTransaction.builder()
+                            .id(params.getId())
+                            .userId(params.getAccount().getUserId())
+                            .amount(amountInSom)  // ✅ So'mda saqlash
+                            .createTime(System.currentTimeMillis())
+                            .state(PaymeTransactionState.PENDING)
+                            .build()
+            );
         }
 
-        Card card = cardRepository.findByUserId(tx.getUserId())
-                .orElseThrow(() -> new PaymentException(-31050, "Card topilmadi"));
+        return CreateTransactionResult.from(transaction);
+    }
 
-        User user = userRepository.findById(tx.getUserId())
-                .orElseThrow(() -> new PaymentException(-31050, "User topilmadi"));
+    /**
+     * PerformTransaction - tranzaksiyani amalga oshirish
+     * bu CreateTransaction dan keyin bo'ladi va to‘lov tasdiqlanadi, mablag‘ merchant hisobiga o‘tkaziladi va buyurtma holati "PAID" deb belgilanadi.
+     */
+    private PerformTransactionResult performTransaction(PaymeParam params) {
+        PaymeTransaction transaction = getTransactionOrThrowExc(params.getId());
+
+        if (!Objects.equals(transaction.getState(), PaymeTransactionState.PENDING)) {
+            if (!Objects.equals(transaction.getState(), PaymeTransactionState.PAID)) {
+                throw new PaymeException(PaymeError.CANT_DO_OPERATION);
+            }
+
+            // Agar tranzaksiya holati PAID bo'lsa bu tranzaksiyani shunchaki qaytaramiz
+            return PerformTransactionResult.from(transaction);
+        }
+        User user = getUserOrThrowExcForPayme(transaction.getUserId());
+        Card card = cardRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new PaymeException(PaymeError.USER_CARD_NOT_FOUND));
+
+        checkTimeoutOrThrowExc(transaction);
+
+        transaction.setState(PaymeTransactionState.PAID);
+        transaction.setPerformTime(System.currentTimeMillis());
+        paymeTransactionRepository.save(transaction);
 
         BigDecimal oldBalance = card.getBalance();
-        card.setBalance(card.getBalance().add(tx.getAmount()));
-        cardRepository.save(card);
+        BigDecimal newBalance = oldBalance.add(transaction.getAmount());
 
-        tx.setStatus(TransactionStatus.COMPLETED);
-        payMeTransactionRepository.save(tx);
-
-        walletTransactionRepository.save(
+        // ✅ WalletTransaction ni save qilib, ID ni olamiz
+        WalletTransaction walletTransaction = walletTransactionRepository.save(
                 WalletTransaction.builder()
                         .user(user)
                         .type(TransactionType.EARN)
-                        .amount(tx.getAmount())
-                        .balanceAfter(card.getBalance())
-                        .description("PayMe orqali balans to'ldirildi")
+                        .amount(transaction.getAmount())
+                        .balanceAfter(newBalance)
+                        .description("Payme orqali balans to'ldirildi")
                         .status(TransactionStatus.COMPLETED)
+                        .paymentMethod(PaymentMethod.PAYME)
                         .build()
         );
 
-        long performTime = tx.getUpdatedAt()
-                .atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli();
+        // ✅ WalletTransaction ID ni PaymeTransaction ga saqlaymiz
+        transaction.setWalletTransactionId(walletTransaction.getId());
+        transaction.setState(PaymeTransactionState.PAID);
+        transaction.setPerformTime(System.currentTimeMillis());
+        paymeTransactionRepository.save(transaction);
 
-        log.info("PayMe transaction performed: {} | Amount: {} | Balance: {} -> {}",
-                paymeTransId, tx.getAmount(), oldBalance, card.getBalance());
+        card.setBalance(newBalance);
+        cardRepository.save(card);
 
-        return result(Map.of(
-                "transaction", paymeTransId,
-                "state", 2,
-                "perform_time", performTime
-        ), id);
+        return PerformTransactionResult.from(transaction);
     }
 
-    // 5️⃣ CancelTransaction
-    @Transactional
-    public Map<String, Object> cancelTransaction(Map<String, Object> params, Object id) {
-        String paymeTransId = params.get("id").toString();
+    /**
+     * CancelTransaction - tranzaksiyani bekor qilish
+     */
+    private CancelTransactionResult cancelTransaction(PaymeParam params) {
+        PaymeTransaction paymeTransaction = getTransactionOrThrowExc(params.getId());
+        User user = getUserOrThrowExcForPayme(paymeTransaction.getUserId());
+        Card card = cardRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new PaymeException(PaymeError.USER_CARD_NOT_FOUND));
 
-        PayMeTransaction tx = payMeTransactionRepository.findByPaymeTransId(paymeTransId)
-                .orElse(null);
+        boolean canceled = false;
 
-        if (tx == null) {
-            log.error("Transaction not found in Cancel: {}", paymeTransId);
-            return error(-31003, "Transaction topilmadi", id);
-        }
+        if (Objects.equals(paymeTransaction.getState(), PaymeTransactionState.PENDING)) {
+            paymeTransaction.setState(PaymeTransactionState.PENDING_CANCELED);
+            canceled = true;
 
-        if (tx.getStatus() == TransactionStatus.CANCELLED) {
-            log.info("Transaction already cancelled: {}", paymeTransId);
-            long cancelTime = tx.getUpdatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli();
+        } else if (Objects.equals(paymeTransaction.getState(), PaymeTransactionState.PAID)) {
+            paymeTransaction.setState(PaymeTransactionState.PAID_CANCELED);
 
-            return result(Map.of(
-                    "transaction", paymeTransId,
-                    "state", -1,
-                    "cancel_time", cancelTime
-            ), id);
-        }
 
-        if (tx.getStatus() == TransactionStatus.COMPLETED) {
-            Card card = cardRepository.findByUserId(tx.getUserId())
-                    .orElseThrow(() -> new PaymentException(-31050, "Card topilmadi"));
+            if (paymeTransaction.getWalletTransactionId() != null) {
+                WalletTransaction walletTransaction = walletTransactionRepository
+                        .findById(paymeTransaction.getWalletTransactionId())
+                        .orElse(null);
 
-            User user = userRepository.findById(tx.getUserId())
-                    .orElseThrow(() -> new PaymentException(-31050, "User topilmadi"));
+                if (walletTransaction != null && walletTransaction.getStatus() == TransactionStatus.COMPLETED) {
+                    walletTransaction.setStatus(TransactionStatus.CANCELLED);
+                    walletTransactionRepository.save(walletTransaction);
 
-            if (card.getBalance().compareTo(tx.getAmount()) < 0) {
-                log.warn("Insufficient balance for refund: {}", paymeTransId);
-                return error(-31007, "Balansda mablag' yetarli emas", id);
+                    card.setBalance(card.getBalance().subtract(paymeTransaction.getAmount()));
+                    cardRepository.save(card);
+                }
             }
 
-            BigDecimal oldBalance = card.getBalance();
-            card.setBalance(card.getBalance().subtract(tx.getAmount()));
-            cardRepository.save(card);
-
-            walletTransactionRepository.save(
-                    WalletTransaction.builder()
-                            .user(user)
-                            .type(TransactionType.REFUND)
-                            .amount(tx.getAmount())
-                            .balanceAfter(card.getBalance())
-                            .description("PayMe transaction bekor qilindi")
-                            .status(TransactionStatus.CANCELLED)
-                            .build()
-            );
-
-            log.info("PayMe transaction refunded: {} | Amount: {} | Balance: {} -> {}",
-                    paymeTransId, tx.getAmount(), oldBalance, card.getBalance());
+            canceled = true;
         }
 
-        tx.setStatus(TransactionStatus.CANCELLED);
-        payMeTransactionRepository.save(tx);
+        if (canceled) {
+            paymeTransaction.setCancelTime(System.currentTimeMillis());
+            paymeTransaction.setReason(params.getReason());
+        }
 
-        long cancelTime = tx.getUpdatedAt()
-                .atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli();
+        paymeTransactionRepository.save(paymeTransaction);
 
-        log.info("PayMe transaction cancelled: {}", paymeTransId);
-
-        return result(Map.of(
-                "transaction", paymeTransId,
-                "state", -1,
-                "cancel_time", cancelTime
-        ), id);
+        return CancelTransactionResult.from(paymeTransaction);
     }
 
-    private Map<String, Object> checkTransaction(Map<String, Object> params, Object id) {
-        String paymeTransId = params.get("id").toString();
+    /**
+     * CheckTransaction - tranzaksiyani tekshirish
+     */
+    private CheckTransactionResult checkTransaction(PaymeParam params) {
+        PaymeTransaction transaction = getTransactionOrThrowExc(params.getId());
 
-        PayMeTransaction tx = payMeTransactionRepository.findByPaymeTransId(paymeTransId)
-                .orElse(null);
-
-        if (tx == null) {
-            return error(-31003, "Transaction topilmadi", id);
-        }
-
-        int state = switch (tx.getStatus()) {
-            case PENDING -> 1;
-            case COMPLETED -> 2;
-            case CANCELLED -> -1;
-        };
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("transaction", paymeTransId);
-        response.put("state", state);
-
-        if (tx.getCreatedAt() != null) {
-            long createTime = tx.getCreatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli();
-            response.put("create_time", createTime);
-        }
-
-        if (tx.getStatus() == TransactionStatus.COMPLETED && tx.getUpdatedAt() != null) {
-            long performTime = tx.getUpdatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli();
-            response.put("perform_time", performTime);
-        }
-
-        if (tx.getStatus() == TransactionStatus.CANCELLED && tx.getUpdatedAt() != null) {
-            long cancelTime = tx.getUpdatedAt()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli();
-            response.put("cancel_time", cancelTime);
-        }
-
-        return result(response, id);
+        return CheckTransactionResult.from(transaction);
     }
 
-    // =========================
-    // RESPONSE HELPERS
-    // =========================
-    private Map<String, Object> result(Object result, Object id) {
-        return Map.of("jsonrpc", "2.0", "result", result, "id", id);
-    }
-
-    private Map<String, Object> error(int code, String message, Object id) {
-        return Map.of(
-                "jsonrpc", "2.0",
-                "error", Map.of("code", code, "message", message),
-                "id", id
+    /**
+     * GetStatement - bu ma'lum vaqt oralig'ida tranzaksiyalarni olish
+     */
+    private GetStatementResult getStatement(PaymeParam params) {
+        // from va to larni qiyamatini birga kamaytiramiz va ko'paytiramiz
+        // chunki between'da ikkala sonlarni o'rtasidagilar olinadi lekin biz teng bo'lganlarini ham qaytarishimiz kerak
+        return new GetStatementResult(PaymeUtil.mapToGetTransactionDto(
+                paymeTransactionRepository.findAllByCreateTimeIsBetween(params.getFrom() - 1, params.getTo() + 1))
         );
     }
 
-    private User getUserOrThrowExc(Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
+    private PaymeTransaction getTransactionOrThrowExc(String id) {
+        PaymeTransaction transaction = paymeTransactionRepository.findById(id).orElse(null);
+
+        if (Objects.isNull(transaction)) {
+            throw new PaymeException(PaymeError.TRANSACTION_NOT_FOUND);
+        }
+
+        return transaction;
+    }
+
+    // =========================
+    // HELPER METHODS
+    // =========================
+
+    private User getUserOrThrowExcForClick(Long userId) {
+        System.out.println("user_id: " + userId);
+        User user = userRepository.findByIdCustom(userId).orElse(null);
 
         if (Objects.isNull(user)) {
             throw new ClickException(ClickResponseCode.USER_NOT_FOUND);
@@ -495,8 +371,49 @@ public class PaymentServiceImpl implements PaymentService {
         return user;
     }
 
-    private ClickTransaction getTransactionOrThrowExc(Long transactionId) {
-        return clickTransactionRepository.findById(transactionId)
-                .orElseThrow(() -> new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND));
+    private User getUserOrThrowExcForPayme(Long userId) {
+        User user = userRepository.findByIdCustom(userId).orElse(null);
+
+        if (Objects.isNull(user)) {
+            throw new PaymeException(PaymeError.USER_NOT_FOUND);
+        }
+
+        return user;
+    }
+
+    private void ifTransactionExist(PaymeTransaction transaction) {
+        // agar tranzaksiya holati pending bo'lmasa exception otamiz
+        if (transaction.getState() != PaymeTransactionState.PENDING) {
+            throw new PaymeException(PaymeError.CANT_DO_OPERATION);
+        }
+
+        // agar timeout bo'lsa true qaytaradi
+        checkTimeoutOrThrowExc(transaction);
+    }
+
+    private void checkTimeoutOrThrowExc(PaymeTransaction transaction) {
+        if (System.currentTimeMillis() - transaction.getCreateTime() > time_expired) {
+            cancelTransactionDueToTimeout(transaction);
+
+            throw new PaymeException(PaymeError.CANT_DO_OPERATION);
+        }
+    }
+
+    private void cancelTransactionDueToTimeout(PaymeTransaction transaction) {
+        transaction.setState(PaymeTransactionState.PENDING_CANCELED);
+        transaction.setReason(4);
+        transaction.setCancelTime(System.currentTimeMillis());
+        paymeTransactionRepository.save(transaction);
+    }
+
+    private BigDecimal convertTiynToSom(BigDecimal amountInTiyn) {
+        return amountInTiyn.divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal validateAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ClickException(ClickResponseCode.INVALID_AMOUNT);
+        }
+        return amount;
     }
 }

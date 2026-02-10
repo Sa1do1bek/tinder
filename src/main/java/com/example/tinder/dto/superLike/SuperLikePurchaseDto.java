@@ -1,6 +1,5 @@
 package com.example.tinder.dto.superLike;
 
-import com.example.tinder.enums.PaymentMethod;
 import com.example.tinder.enums.TransactionStatus;
 import lombok.*;
 

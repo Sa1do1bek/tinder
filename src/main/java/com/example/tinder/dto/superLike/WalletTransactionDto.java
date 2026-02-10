@@ -20,4 +20,5 @@ public class WalletTransactionDto {
     private String description;
     private TransactionStatus status;
     private LocalDateTime transactionDate;
+    private String paymentMethod;
 }

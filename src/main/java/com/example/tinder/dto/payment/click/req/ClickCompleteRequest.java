@@ -1,4 +1,4 @@
-package com.example.tinder.dto.payment.req;
+package com.example.tinder.dto.payment.click.req;
 
 import lombok.*;
 
@@ -10,12 +10,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ClickPrepareRequest {
+public class ClickCompleteRequest {
     private Long clickTransId;
 
     private Integer serviceId;
 
     private Long merchantTransId;
+
+    private Long merchantPrepareId;
 
     private BigDecimal amount;
 
