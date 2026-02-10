@@ -1,10 +1,12 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
+import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.AdminService;
 import lombok.RequiredArgsConstructor;
@@ -18,18 +20,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
+
+
 
     @Override
-    public ApiResponse<Page<User>> getAllUsers(int page, int size) {
+    public ApiResponse<Page<UserDto>> getAllUsers(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<User> users = userRepository.findAll(pageRequest);
+        Page<User> users = userRepository.findAllCustom(pageRequest);
 
-        return ApiResponse.success(users, SuccessType.USER_FOUND_SUCCESSFULLY);
+
+        return ApiResponse.success(users.map(userMapper::toDto), SuccessType.USER_FOUND_SUCCESSFULLY);
     }
 
     @Override
     @Transactional
-    public ApiResponse<User> toggleUserActive(Long userId) {
+    public ApiResponse<UserDto> toggleUserActive(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
@@ -37,6 +43,7 @@ public class AdminServiceImpl implements AdminService {
 
         User savedUser = userRepository.save(user);
 
-        return ApiResponse.success(savedUser, SuccessType.SUCCESS);
+
+        return ApiResponse.success(userMapper.toDto(savedUser), SuccessType.SUCCESS);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.tinder.controller;
 
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.service.AdminService;
@@ -19,7 +20,7 @@ public class AdminController {
     private final ProfilePictureService profilePictureService;
 
     @GetMapping("/users")
-    public ApiResponse<Page<User>> getAllUsers(
+    public ApiResponse<?> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -27,7 +28,7 @@ public class AdminController {
     }
 
     @PatchMapping("/users/{userId}/toggle-active")
-    public ApiResponse<User> toggleUserActive(@PathVariable Long userId) {
+    public ApiResponse<UserDto> toggleUserActive(@PathVariable Long userId) {
         return adminService.toggleUserActive(userId);
     }
 
