@@ -29,7 +29,6 @@ public class AdminServiceImpl implements AdminService {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<User> users = userRepository.findAllCustom(pageRequest);
 
-
         return ApiResponse.success(users.map(userMapper::toDto), SuccessType.USER_FOUND_SUCCESSFULLY);
     }
 
