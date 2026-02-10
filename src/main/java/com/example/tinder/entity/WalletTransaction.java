@@ -1,5 +1,6 @@
 package com.example.tinder.entity;
 
+import com.example.tinder.enums.payment.PaymentMethod;
 import com.example.tinder.enums.TransactionStatus;
 import com.example.tinder.enums.TransactionType;
 import jakarta.persistence.*;
@@ -33,7 +34,10 @@ public class WalletTransaction extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "superlike_history_id")
     private SuperLikeHistory superLikeHistory; // Qaysi super like uchun
-    
+
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
+
     private String description;
     
     @Enumerated(EnumType.STRING)

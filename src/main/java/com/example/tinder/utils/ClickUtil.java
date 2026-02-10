@@ -1,8 +1,8 @@
 package com.example.tinder.utils;
 
-import com.example.tinder.dto.payment.req.ClickCompleteRequest;
-import com.example.tinder.dto.payment.req.ClickPrepareRequest;
-import com.example.tinder.enums.ClickResponseCode;
+import com.example.tinder.dto.payment.click.req.ClickCompleteRequest;
+import com.example.tinder.dto.payment.click.req.ClickPrepareRequest;
+import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.exception.ClickException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

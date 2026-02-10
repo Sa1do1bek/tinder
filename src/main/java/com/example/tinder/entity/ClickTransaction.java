@@ -1,6 +1,6 @@
 package com.example.tinder.entity;
 
-import com.example.tinder.enums.PaymentStatus;
+import com.example.tinder.enums.payment.PaymentStatusForClick;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,13 +33,15 @@ public class ClickTransaction extends BaseEntity {
     private LocalDateTime cancelTime;
 
     @Enumerated(EnumType.STRING)
-    private PaymentStatus status;
+    private PaymentStatusForClick status;
+
+    private Long walletTransactionId;
 
     public boolean isComplete() {
-        return status == PaymentStatus.COMPLETE;
+        return status == PaymentStatusForClick.COMPLETE;
     }
 
     public boolean isCancel() {
-        return status == PaymentStatus.CANCEL;
+        return status == PaymentStatusForClick.CANCEL;
     }
 }

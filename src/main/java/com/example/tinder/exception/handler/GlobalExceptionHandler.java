@@ -1,8 +1,11 @@
 package com.example.tinder.exception.handler;
 
-import com.example.tinder.dto.payment.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.payme.res.PaymeError;
+import com.example.tinder.dto.payment.payme.res.PaymeErrorResponse;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.exception.ClickException;
+import com.example.tinder.exception.PaymeException;
 import com.example.tinder.exception.PaymentException;
 import com.example.tinder.exception.RestException;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -44,6 +47,11 @@ public class GlobalExceptionHandler {
                 .error(e.getCode().getCode())
                 .errorNote(e.getCode().getErrorNote())
                 .build();
+    }
+
+    @ExceptionHandler(PaymeException.class)
+    public PaymeErrorResponse handlePaymeException(PaymeException e) {
+        return new PaymeErrorResponse(new PaymeError(e.getError(), e.getData()));
     }
 
     //Client side Exceptions
@@ -234,7 +242,6 @@ public class GlobalExceptionHandler {
     }
 
 
-
     /**
      * Error response yaratish helper method
      */
@@ -254,6 +261,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(status).body(errorResponse);
     }
+
     @ExceptionHandler(PaymentException.class)
     public ResponseEntity<Map<String, Object>> handlePaymentException(PaymentException ex) {
         log.error("Payment error: {} (code: {})", ex.getMessage(), ex.getErrorCode());

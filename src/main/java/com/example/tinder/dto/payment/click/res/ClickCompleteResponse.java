@@ -1,7 +1,7 @@
-package com.example.tinder.dto.payment.res;
+package com.example.tinder.dto.payment.click.res;
 
-import com.example.tinder.dto.payment.req.ClickCompleteRequest;
-import com.example.tinder.enums.ClickResponseCode;
+import com.example.tinder.dto.payment.click.req.ClickCompleteRequest;
+import com.example.tinder.enums.payment.ClickResponseCode;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 

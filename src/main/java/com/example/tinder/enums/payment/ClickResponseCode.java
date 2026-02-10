@@ -1,4 +1,4 @@
-package com.example.tinder.enums;
+package com.example.tinder.enums.payment;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
