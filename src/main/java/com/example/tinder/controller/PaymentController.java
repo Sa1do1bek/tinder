@@ -43,7 +43,7 @@ public class PaymentController {
             @RequestParam("sign_string") String signString
     ) {
         log.info("Prepare request");
-
+        System.out.println("****************************************************");
         ClickPrepareRequest build = ClickPrepareRequest.builder()
                 .clickTransId(clickTransId)
                 .serviceId(serviceId)

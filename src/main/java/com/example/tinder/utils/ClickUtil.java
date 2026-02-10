@@ -44,14 +44,14 @@ public class ClickUtil {
     /**
      * user to'lov qilishi uchun url generatsiya qiladi
      */
-    public static String generatePaymentUrl(Long userId, BigDecimal amount){
+    public static String generatePaymentUrl(Long userId, BigDecimal amount) {
         return String.format(
                 "https://my.click.uz/services/pay?service_id=%s&merchant_id=%s&transaction_param=%d&amount=%s",
                 SERVICE_ID, MERCHANT_ID, userId, amount + ""
         );
     }
 
-    public static void authorizeSignString(ClickPrepareRequest request){
+    public static void authorizeSignString(ClickPrepareRequest request) {
         String signString = String.format("%s%s%s%s%s%s%s",
                 request.getClickTransId(),
                 SERVICE_ID,
@@ -64,12 +64,12 @@ public class ClickUtil {
 
         String md5 = getMd5(signString);
 
-        if (!md5.equals(request.getSignString())){
+        if (!md5.equals(request.getSignString())) {
             throw new ClickException(ClickResponseCode.SIGN_CHECK_FAILED);
         }
     }
 
-    public static void authorizeSignString(ClickCompleteRequest request){
+    public static void authorizeSignString(ClickCompleteRequest request) {
         String signString = String.format("%s%s%s%s%s%s%s%s",
                 request.getClickTransId(),
                 SERVICE_ID,
@@ -83,7 +83,7 @@ public class ClickUtil {
 
         String md5 = getMd5(signString);
 
-        if (!md5.equals(request.getSignString())){
+        if (!md5.equals(request.getSignString())) {
             throw new ClickException(ClickResponseCode.SIGN_CHECK_FAILED);
         }
     }
