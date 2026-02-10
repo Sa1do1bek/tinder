@@ -22,8 +22,6 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-
-
     @Override
     public ApiResponse<Page<UserDto>> getAllUsers(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);

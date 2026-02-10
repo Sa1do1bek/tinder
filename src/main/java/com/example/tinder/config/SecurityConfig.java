@@ -54,8 +54,8 @@ public class SecurityConfig {
             "/app/**",              // STOMP destination prefix
             "/topic/**",            // STOMP topic
             "/queue/**" ,            // STOMP queue
-            "/api/payment/click/prepare", // Payment
-            "/api/payment/click/complete" // Payment
+            "/api/payment/prepare", // Payment
+            "/api/payment/complete" // Payment
     };
 
     @Bean
@@ -67,6 +67,9 @@ public class SecurityConfig {
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/payment/prepare", "/api/payment/complete")
+                )
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITE_LIST).permitAll()
