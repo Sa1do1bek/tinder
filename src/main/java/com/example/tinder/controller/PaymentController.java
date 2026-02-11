@@ -30,7 +30,7 @@ public class PaymentController {
         return paymentService.getUrlForClick(amount);
     }
 
-    @PostMapping(value = "/prepare", consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = "/prepare")
     public ClickPrepareResponse prepare(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,
@@ -61,7 +61,7 @@ public class PaymentController {
         return paymentService.prepare(build);
     }
 
-    @PostMapping(value = "/complete", consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = "/complete")
     public ClickCompleteResponse complete(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,

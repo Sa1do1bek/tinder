@@ -65,6 +65,7 @@ public class ClickUtil {
         String md5 = getMd5(signString);
 
         if (!md5.equals(request.getSignString())) {
+            System.out.println("key notogri-------------------------");
             throw new ClickException(ClickResponseCode.SIGN_CHECK_FAILED);
         }
     }
