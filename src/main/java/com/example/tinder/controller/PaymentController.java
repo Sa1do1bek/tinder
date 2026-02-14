@@ -7,8 +7,10 @@ import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
 import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
 import com.example.tinder.dto.payment.payme.req.PaymeRequest;
 import com.example.tinder.dto.payment.payme.res.PaymeSuccessResponse;
+import com.example.tinder.entity.Log;
 import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.exception.ClickException;
+import com.example.tinder.repository.LogRepository;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
 import com.example.tinder.utils.PaymeUtil;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -27,6 +30,7 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final LogRepository logRepository;
 
     @GetMapping("/getUrlForClick")
     public ApiResponse<String> getUrlForClick(@RequestParam BigDecimal amount) {
@@ -37,6 +41,13 @@ public class PaymentController {
     public ClickPrepareResponse prepare(
             @RequestParam Map<String, String> params
     ) {
+        logRepository.save(
+                Log.builder()
+                        .text("Prepare endpoint ")
+                        .date(LocalDateTime.now())
+                        .build()
+        );
+
         Long clickTransId = parseLong(params.get("click_trans_id"));
         Long merchantTransId = parseLong(params.get("merchant_trans_id"));
 
@@ -54,8 +65,20 @@ public class PaymentController {
                     .build();
 
             ClickUtil.authorizeSignString(request);
+            logRepository.save(
+                    Log.builder()
+                            .text("Prepare Method Calling ")
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             return paymentService.prepare(request);
         } catch (ClickException e) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Exception occurred in Payment Controller prepare: " + e.getMessage())
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             return ClickPrepareResponse.builder()
                     .clickTransId(clickTransId)
                     .merchantTransId(merchantTransId)
@@ -63,6 +86,12 @@ public class PaymentController {
                     .errorNote(e.getCode().getErrorNote())
                     .build();
         } catch (Exception e) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Click prepare parsing/internal error " + e.getMessage())
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             log.error("Click prepare parsing/internal error", e);
             return ClickPrepareResponse.builder()
                     .clickTransId(clickTransId)
@@ -77,6 +106,12 @@ public class PaymentController {
     public ClickCompleteResponse complete(
             @RequestParam Map<String, String> params
     ) {
+        logRepository.save(
+                Log.builder()
+                        .text("Complete endpoint ")
+                        .date(LocalDateTime.now())
+                        .build()
+        );
         Long clickTransId = parseLong(params.get("click_trans_id"));
         Long merchantTransId = parseLong(params.get("merchant_trans_id"));
 
@@ -95,8 +130,20 @@ public class PaymentController {
                     .build();
 
             ClickUtil.authorizeSignString(request);
+            logRepository.save(
+                    Log.builder()
+                            .text("Complete method Calling in Payment Controller")
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             return paymentService.complete(request);
         } catch (ClickException e) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Exception occurred in Payment Controller complete: " + e.getMessage())
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             return ClickCompleteResponse.builder()
                     .clickTransId(clickTransId)
                     .merchantTransId(merchantTransId)
@@ -104,6 +151,12 @@ public class PaymentController {
                     .errorNote(e.getCode().getErrorNote())
                     .build();
         } catch (Exception e) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Click complete parsing/internal error " + e.getMessage())
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             log.error("Click complete parsing/internal error", e);
             return ClickCompleteResponse.builder()
                     .clickTransId(clickTransId)
