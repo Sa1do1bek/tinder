@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class PaymentController {
         return paymentService.getUrlForClick(amount);
     }
 
-    @PostMapping(value = {"/prepare", "/click/prepare"})
+    @PostMapping(value = {"/prepare", "/click/prepare"},consumes = "application/x-www-form-urlencoded")
     public ClickPrepareResponse prepare(
             @RequestParam Map<String, String> params
     ) {
@@ -102,7 +103,7 @@ public class PaymentController {
         }
     }
 
-    @PostMapping(value = {"/complete", "/click/complete"})
+    @PostMapping(value = {"/complete", "/click/complete"}, consumes = "application/x-www-form-urlencoded")
     public ClickCompleteResponse complete(
             @RequestParam Map<String, String> params
     ) {
