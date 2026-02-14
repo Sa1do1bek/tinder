@@ -55,7 +55,9 @@ public class SecurityConfig {
             "/topic/**",            // STOMP topic
             "/queue/**" ,            // STOMP queue
             "/api/payment/prepare", // Payment
-            "/api/payment/complete" // Payment
+            "/api/payment/complete", // Payment
+            "/api/payment/click/prepare", // Payment alias
+            "/api/payment/click/complete" // Payment alias
     };
 
     @Bean
