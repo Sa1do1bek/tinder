@@ -79,6 +79,7 @@ public class GlobalExceptionHandler {
         return new PaymeErrorResponse(new PaymeError(e.getError(), e.getData()));
     }
 
+
     //Client side Exceptions
     @ExceptionHandler(value = {RestException.class})
     public ResponseEntity<?> handleException(RestException ex, HttpServletRequest request) {
