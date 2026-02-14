@@ -8,24 +8,15 @@ import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
 import com.example.tinder.dto.payment.payme.req.PaymeParam;
 import com.example.tinder.dto.payment.payme.req.PaymeRequest;
 import com.example.tinder.dto.payment.payme.res.*;
-import com.example.tinder.entity.Card;
-import com.example.tinder.entity.PaymentTransaction;
-import com.example.tinder.entity.User;
-import com.example.tinder.entity.WalletTransaction;
+import com.example.tinder.entity.*;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.TransactionStatus;
 import com.example.tinder.enums.TransactionType;
-import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.enums.payment.PaymeError;
-import com.example.tinder.enums.payment.PaymeTransactionState;
-import com.example.tinder.enums.payment.PaymentMethod;
-import com.example.tinder.enums.payment.PaymentStatusForClick;
+import com.example.tinder.enums.payment.*;
 import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymeException;
-import com.example.tinder.repository.CardRepository;
-import com.example.tinder.repository.PaymentTransactionRepository;
-import com.example.tinder.repository.UserRepository;
-import com.example.tinder.repository.WalletTransactionRepository;
+import com.example.tinder.repository.*;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
 import com.example.tinder.utils.PaymeUtil;
@@ -52,6 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     private final UserRepository userRepository;
+    private final LogRepository logRepository;
 
     // =========================
     // CLICK METHODS
@@ -59,6 +51,13 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public ClickPrepareResponse prepare(ClickPrepareRequest request) {
+        logRepository.save(
+                Log.builder()
+                        .text("Click Prepare request: " + request)
+                        .date(LocalDateTime.now())
+                        .build()
+        );
+
         log.info("Click Prepare request: {}", request);
 
         validateClickActionAndService(request.getAction(), ClickUtil.PREPARE_ACTION, request.getServiceId());
@@ -67,6 +66,12 @@ public class PaymentServiceImpl implements PaymentService {
         BigDecimal amount = validateAmount(request.getAmount());
 
         if (!cardRepository.existsByUserId(user.getId())) {
+            logRepository.save(
+                    Log.builder()
+                            .text("USER_CARD_NOT_FOUND in prepare()")
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND);
         }
 
@@ -92,6 +97,13 @@ public class PaymentServiceImpl implements PaymentService {
                         .clickStatus(PaymentStatusForClick.PREPARE)
                         .build()
         );
+        logRepository.save(
+                Log.builder()
+                        .text("request saved.  TransactionId: " + saved.getId()
+                        )
+                        .date(LocalDateTime.now())
+                        .build()
+        );
 
         return ClickPrepareResponse.from(request, saved.getId());
     }
@@ -99,6 +111,13 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public ClickCompleteResponse complete(ClickCompleteRequest request) {
+        logRepository.save(
+                Log.builder()
+                        .text("Click Complete request: " + request)
+                        .date(LocalDateTime.now())
+                        .build()
+        );
+
         log.info("Click Complete request: {}", request);
 
         validateClickActionAndService(request.getAction(), ClickUtil.COMPLETE_ACTION, request.getServiceId());
@@ -111,10 +130,26 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND));
 
         if (transaction.isClickComplete()) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction Complete request: " + request
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             return ClickCompleteResponse.from(request, transaction.getWalletTransactionId());
         }
 
         if (transaction.isClickCancel()) {
+
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction Cancelled "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
+
             throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
         }
 
@@ -122,6 +157,15 @@ public class PaymentServiceImpl implements PaymentService {
             transaction.setClickStatus(PaymentStatusForClick.CANCEL);
             transaction.setClickCancelTime(LocalDateTime.now());
             paymentTransactionRepository.save(transaction);
+
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction Cancelled "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
+
             throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
         }
 
@@ -147,6 +191,16 @@ public class PaymentServiceImpl implements PaymentService {
 
         card.setBalance(newBalance);
         cardRepository.save(card);
+
+        logRepository.save(
+                Log.builder()
+                        .text("Click transaction completed:  " + transaction.getId() + "\n" +
+                                "Amount: " + transaction.getAmount() + "\n" +
+                                "Balance: " + oldBalance + "-> \n " + newBalance
+                        )
+                        .date(LocalDateTime.now())
+                        .build()
+        );
 
         log.info("Click transaction completed: {} | Amount: {} | Balance: {} -> {}",
                 transaction.getId(), transaction.getAmount(), oldBalance, newBalance);
@@ -196,6 +250,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (!cardRepository.existsByUserId(user.getId())) {
+            logRepository.save(
+                    Log.builder()
+                            .text("USER_CARD_NOT_FOUND in checkPerformTransaction()")
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new PaymeException(PaymeError.USER_CARD_NOT_FOUND);
         }
 
@@ -236,6 +296,15 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (!Objects.equals(transaction.getState(), PaymeTransactionState.PENDING)) {
             if (!Objects.equals(transaction.getState(), PaymeTransactionState.PAID)) {
+
+                logRepository.save(
+                        Log.builder()
+                                .text("CANT_DO_OPERATION in performTransaction()"
+                                )
+                                .date(LocalDateTime.now())
+                                .build()
+                );
+
                 throw new PaymeException(PaymeError.CANT_DO_OPERATION);
             }
             return PerformTransactionResult.from(transaction);
@@ -335,10 +404,24 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void validateClickActionAndService(Integer action, Integer expectedAction, Integer serviceId) {
         if (!Objects.equals(action, expectedAction)) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Action not found in validateClickActionAndService() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
         }
 
         if (!ClickUtil.isValidServiceId(serviceId)) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Bad Request in validateClickActionAndService()"
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.BAD_REQUEST);
         }
     }
@@ -348,24 +431,61 @@ public class PaymentServiceImpl implements PaymentService {
         if (!Objects.equals(existing.getUserId(), userId)
                 || !Objects.equals(existing.getMerchantTransactionId(), request.getMerchantTransId())
                 || existing.getAmount().compareTo(requestedAmount) != 0) {
+
+            logRepository.save(
+                    Log.builder()
+                            .text("BAD_REQUEST in validateExistingClickPrepare() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.BAD_REQUEST);
         }
 
         if (existing.isClickComplete()) {
+            logRepository.save(
+                    Log.builder()
+                            .text("ALREADY_PAID in validateExistingClickPrepare() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.ALREADY_PAID);
         }
 
         if (existing.isClickCancel()) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction Cancelled in validateExistingClickPrepare() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
         }
     }
 
     private void validateClickCompleteRequest(PaymentTransaction transaction, ClickCompleteRequest request) {
         if (!Objects.equals(transaction.getProviderTransactionId(), String.valueOf(request.getClickTransId()))) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction not found in validateClickCompleteRequest() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND);
         }
 
         if (!Objects.equals(transaction.getMerchantTransactionId(), request.getMerchantTransId())) {
+
+            logRepository.save(
+                    Log.builder()
+                            .text("Bad Request in validateClickCompleteRequest() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.BAD_REQUEST);
         }
 
@@ -381,6 +501,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElse(null);
 
         if (Objects.isNull(transaction)) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction not found in getClickTransactionOrThrowEx() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND);
         }
 
@@ -393,6 +520,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElse(null);
 
         if (Objects.isNull(transaction)) {
+            logRepository.save(
+                    Log.builder()
+                            .text("Transaction not found in getPaymeTransactionOrThrowExc() "
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new PaymeException(PaymeError.TRANSACTION_NOT_FOUND);
         }
 
@@ -430,6 +564,13 @@ public class PaymentServiceImpl implements PaymentService {
     private void checkTimeoutOrThrowExc(PaymentTransaction transaction) {
         if (System.currentTimeMillis() - transaction.getCreateTime() > TIME_EXPIRED) {
             cancelTransactionDueToTimeout(transaction);
+            logRepository.save(
+                    Log.builder()
+                            .text("CANT_DO_OPERATION in checkTimeoutOrThrowExc()"
+                            )
+                            .date(LocalDateTime.now())
+                            .build()
+            );
             throw new PaymeException(PaymeError.CANT_DO_OPERATION);
         }
     }
