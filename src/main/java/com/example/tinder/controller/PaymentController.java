@@ -10,7 +10,6 @@ import com.example.tinder.dto.payment.payme.res.PaymeSuccessResponse;
 import com.example.tinder.entity.Log;
 import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.exception.ClickException;
-import com.example.tinder.exception.PaymentException;
 import com.example.tinder.repository.LogRepository;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
@@ -37,7 +36,7 @@ public class PaymentController {
         return paymentService.getUrlForClick(amount);
     }
 
-    @PostMapping(value = {"/prepare"},consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = {"/prepare", "/click/prepare"}, consumes = "application/x-www-form-urlencoded")
     public ClickPrepareResponse prepare(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,
@@ -45,16 +44,20 @@ public class PaymentController {
             @RequestParam("amount") BigDecimal amount,
             @RequestParam("action") Integer action,
             @RequestParam("error") Integer error,
-            @RequestParam("error_note") String errorNote,
+            @RequestParam(value = "error_note", required = false, defaultValue = "") String errorNote,
             @RequestParam("sign_time") String signTime,
             @RequestParam("sign_string") String signString
     ) {
-        logRepository.save(
-                Log.builder()
-                        .text("Request received")
-                        .date(LocalDateTime.now())
-                        .build()
-        );
+        try {
+            logRepository.save(
+                    Log.builder()
+                            .text("Request received")
+                            .date(LocalDateTime.now())
+                            .build()
+            );
+        } catch (Exception ex) {
+            log.error("Unable to save request received log", ex);
+        }
 
 
         try {
@@ -97,7 +100,7 @@ public class PaymentController {
                     .error(e.getCode().getCode())
                     .errorNote(e.getCode().getErrorNote())
                     .build();
-        } catch (PaymentException e) {
+        } catch (Exception e) {
             logRepository.save(
                     Log.builder()
                             .text("Click prepare parsing/internal error " + e.getMessage())
@@ -123,16 +126,20 @@ public class PaymentController {
             @RequestParam("amount") BigDecimal amount,
             @RequestParam("action") Integer action,
             @RequestParam("error") Integer error,
-            @RequestParam("error_note") String errorNote,
+            @RequestParam(value = "error_note", required = false, defaultValue = "") String errorNote,
             @RequestParam("sign_time") String signTime,
             @RequestParam("sign_string") String signString
     ) {
-        logRepository.save(
-                Log.builder()
-                        .text("Complete endpoint ")
-                        .date(LocalDateTime.now())
-                        .build()
-        );
+        try {
+            logRepository.save(
+                    Log.builder()
+                            .text("Complete endpoint ")
+                            .date(LocalDateTime.now())
+                            .build()
+            );
+        } catch (Exception ex) {
+            log.error("Unable to save complete endpoint log", ex);
+        }
 
         try {
             ClickCompleteRequest request = ClickCompleteRequest.builder()
