@@ -1,6 +1,6 @@
 package com.example.tinder.dto.payment.payme.res;
 
-import com.example.tinder.entity.PaymeTransaction;
+import com.example.tinder.entity.PaymentTransaction;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
@@ -17,9 +17,9 @@ public class PerformTransactionResult {
 
     private int state;
 
-    public static PerformTransactionResult from(PaymeTransaction transaction) {
+    public static PerformTransactionResult from(PaymentTransaction transaction) {
         return PerformTransactionResult.builder()
-                .transaction(transaction.getId())
+                .transaction(transaction.getProviderTransactionId())
                 .performTime(transaction.getPerformTime())
                 .state(transaction.getState().getState())
                 .build();

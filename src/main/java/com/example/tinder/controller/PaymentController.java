@@ -30,7 +30,7 @@ public class PaymentController {
         return paymentService.getUrlForClick(amount);
     }
 
-    @PostMapping(value = "/prepare")
+    @PostMapping(value = "/prepare", consumes = "application/x-www-form-urlencoded")
     public ClickPrepareResponse prepare(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,
@@ -43,7 +43,6 @@ public class PaymentController {
             @RequestParam("sign_string") String signString
     ) {
         log.info("Prepare request");
-        System.out.println("****************************************************");
         ClickPrepareRequest build = ClickPrepareRequest.builder()
                 .clickTransId(clickTransId)
                 .serviceId(serviceId)
@@ -52,7 +51,7 @@ public class PaymentController {
                 .action(action)
                 .error(error)
                 .errorNote(errorNote)
-                .signTime(ClickUtil.parseSignTime(signTime))
+                .signTime(signTime)
                 .signString(signString)
                 .build();
 
@@ -61,7 +60,7 @@ public class PaymentController {
         return paymentService.prepare(build);
     }
 
-    @PostMapping(value = "/complete")
+    @PostMapping(value = "/complete", consumes = "application/x-www-form-urlencoded")
     public ClickCompleteResponse complete(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,
@@ -85,7 +84,7 @@ public class PaymentController {
                 .action(action)
                 .error(error)
                 .errorNote(errorNote)
-                .signTime(ClickUtil.parseSignTime(signTime))
+                .signTime(signTime)
                 .signString(signString)
                 .build();
 

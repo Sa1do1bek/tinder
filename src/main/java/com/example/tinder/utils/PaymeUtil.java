@@ -2,7 +2,7 @@ package com.example.tinder.utils;
 
 
 import com.example.tinder.dto.payment.payme.res.GetTransactionDto;
-import com.example.tinder.entity.PaymeTransaction;
+import com.example.tinder.entity.PaymentTransaction;
 import com.example.tinder.enums.payment.PaymeError;
 import com.example.tinder.exception.PaymeException;
 
@@ -24,7 +24,7 @@ public class PaymeUtil {
         return (long) Math.floor((double) amount / 100);
     }
 
-    public static List<GetTransactionDto> mapToGetTransactionDto(List<PaymeTransaction> transactionList) {
+    public static List<GetTransactionDto> mapToGetTransactionDto(List<PaymentTransaction> transactionList) {
         return transactionList.stream().map(GetTransactionDto::from).toList();
     }
 

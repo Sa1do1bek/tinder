@@ -1,7 +1,7 @@
 package com.example.tinder.dto.payment.payme.res;
 
 import com.example.tinder.dto.payment.payme.req.PaymeAccount;
-import com.example.tinder.entity.PaymeTransaction;
+import com.example.tinder.entity.PaymentTransaction;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
@@ -36,16 +36,16 @@ public class GetTransactionDto {
 
     private Integer reason;
 
-    public static GetTransactionDto from(PaymeTransaction paymeTransaction) {
+    public static GetTransactionDto from(PaymentTransaction paymeTransaction) {
         return GetTransactionDto.builder()
-                .id(paymeTransaction.getId())
+                .id(paymeTransaction.getProviderTransactionId())
                 .time(paymeTransaction.getCreateTime())
                 .amount(paymeTransaction.getAmount())
                 .createTime(paymeTransaction.getCreateTime())
                 .performTime(paymeTransaction.getPerformTime())
                 .cancelTime(paymeTransaction.getCancelTime())
                 .account(new PaymeAccount(paymeTransaction.getUserId()))
-                .transaction(paymeTransaction.getId())
+                .transaction(paymeTransaction.getProviderTransactionId())
                 .state(paymeTransaction.getState().getState())
                 .reason(paymeTransaction.getReason())
                 .build();

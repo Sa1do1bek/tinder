@@ -3,7 +3,6 @@ package com.example.tinder.dto.payment.click.req;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -27,7 +26,7 @@ public class ClickCompleteRequest {
 
     private String errorNote;
 
-    private LocalDateTime signTime;
+    private String signTime;
 
     private String signString;
 }
