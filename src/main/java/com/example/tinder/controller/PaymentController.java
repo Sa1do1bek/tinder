@@ -10,6 +10,7 @@ import com.example.tinder.dto.payment.payme.res.PaymeSuccessResponse;
 import com.example.tinder.entity.Log;
 import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.exception.ClickException;
+import com.example.tinder.exception.PaymentException;
 import com.example.tinder.repository.LogRepository;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
@@ -19,10 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payment")
@@ -38,37 +37,49 @@ public class PaymentController {
         return paymentService.getUrlForClick(amount);
     }
 
-    @PostMapping(value = {"/prepare", "/click/prepare"},consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = {"/prepare"},consumes = "application/x-www-form-urlencoded")
     public ClickPrepareResponse prepare(
-            @RequestParam Map<String, String> params
+            @RequestParam("click_trans_id") Long clickTransId,
+            @RequestParam("service_id") Integer serviceId,
+            @RequestParam("merchant_trans_id") Long merchantTransId,
+            @RequestParam("amount") BigDecimal amount,
+            @RequestParam("action") Integer action,
+            @RequestParam("error") Integer error,
+            @RequestParam("error_note") String errorNote,
+            @RequestParam("sign_time") String signTime,
+            @RequestParam("sign_string") String signString
     ) {
         logRepository.save(
                 Log.builder()
-                        .text("Prepare endpoint ")
+                        .text("Request received")
                         .date(LocalDateTime.now())
                         .build()
         );
 
-        Long clickTransId = parseLong(params.get("click_trans_id"));
-        Long merchantTransId = parseLong(params.get("merchant_trans_id"));
 
         try {
             ClickPrepareRequest request = ClickPrepareRequest.builder()
                     .clickTransId(clickTransId)
-                    .serviceId(parseInteger(params.get("service_id")))
+                    .serviceId(serviceId)
                     .merchantTransId(merchantTransId)
-                    .amount(parseBigDecimal(params.get("amount")))
-                    .action(parseInteger(params.get("action")))
-                    .error(parseInteger(params.get("error")))
-                    .errorNote(params.get("error_note"))
-                    .signTime(params.get("sign_time"))
-                    .signString(params.get("sign_string"))
+                    .amount(amount)
+                    .action(action)
+                    .error(error)
+                    .errorNote(errorNote)
+                    .signTime(signTime)
+                    .signString(signString)
                     .build();
+            logRepository.save(
+                    Log.builder()
+                            .text("Request body: " + request.toString())
+                            .date(LocalDateTime.now())
+                            .build()
+            );
 
             ClickUtil.authorizeSignString(request);
             logRepository.save(
                     Log.builder()
-                            .text("Prepare Method Calling ")
+                            .text("Request authorized successfull ")
                             .date(LocalDateTime.now())
                             .build()
             );
@@ -86,7 +97,7 @@ public class PaymentController {
                     .error(e.getCode().getCode())
                     .errorNote(e.getCode().getErrorNote())
                     .build();
-        } catch (Exception e) {
+        } catch (PaymentException e) {
             logRepository.save(
                     Log.builder()
                             .text("Click prepare parsing/internal error " + e.getMessage())
@@ -105,7 +116,16 @@ public class PaymentController {
 
     @PostMapping(value = {"/complete", "/click/complete"}, consumes = "application/x-www-form-urlencoded")
     public ClickCompleteResponse complete(
-            @RequestParam Map<String, String> params
+            @RequestParam("click_trans_id") Long clickTransId,
+            @RequestParam("service_id") Integer serviceId,
+            @RequestParam("merchant_trans_id") Long merchantTransId,
+            @RequestParam(value = "merchant_prepare_id") Long merchantPrepareId,
+            @RequestParam("amount") BigDecimal amount,
+            @RequestParam("action") Integer action,
+            @RequestParam("error") Integer error,
+            @RequestParam("error_note") String errorNote,
+            @RequestParam("sign_time") String signTime,
+            @RequestParam("sign_string") String signString
     ) {
         logRepository.save(
                 Log.builder()
@@ -113,21 +133,19 @@ public class PaymentController {
                         .date(LocalDateTime.now())
                         .build()
         );
-        Long clickTransId = parseLong(params.get("click_trans_id"));
-        Long merchantTransId = parseLong(params.get("merchant_trans_id"));
 
         try {
             ClickCompleteRequest request = ClickCompleteRequest.builder()
                     .clickTransId(clickTransId)
-                    .serviceId(parseInteger(params.get("service_id")))
+                    .serviceId(serviceId)
                     .merchantTransId(merchantTransId)
-                    .merchantPrepareId(parseLong(params.get("merchant_prepare_id")))
-                    .amount(parseBigDecimal(params.get("amount")))
-                    .action(parseInteger(params.get("action")))
-                    .error(parseInteger(params.get("error")))
-                    .errorNote(params.get("error_note"))
-                    .signTime(params.get("sign_time"))
-                    .signString(params.get("sign_string"))
+                    .merchantPrepareId(merchantPrepareId)
+                    .amount(amount)
+                    .action(action)
+                    .error(error)
+                    .errorNote(errorNote)
+                    .signTime(signTime)
+                    .signString(signString)
                     .build();
 
             ClickUtil.authorizeSignString(request);
@@ -173,27 +191,6 @@ public class PaymentController {
         PaymeUtil.authorizeToken(httpServletRequest.getHeader("Authorization"));
 
         return paymentService.pay(request);
-    }
-
-    private Long parseLong(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return Long.parseLong(value.trim());
-    }
-
-    private Integer parseInteger(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return Integer.parseInt(value.trim());
-    }
-
-    private BigDecimal parseBigDecimal(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return new BigDecimal(value.trim());
     }
 
 }
