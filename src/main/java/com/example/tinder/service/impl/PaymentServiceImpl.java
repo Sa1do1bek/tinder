@@ -8,19 +8,29 @@ import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
 import com.example.tinder.dto.payment.payme.req.PaymeParam;
 import com.example.tinder.dto.payment.payme.req.PaymeRequest;
 import com.example.tinder.dto.payment.payme.res.*;
-import com.example.tinder.entity.*;
-import com.example.tinder.enums.*;
-import com.example.tinder.enums.payment.*;
+import com.example.tinder.entity.Card;
+import com.example.tinder.entity.PaymentTransaction;
+import com.example.tinder.entity.User;
+import com.example.tinder.entity.WalletTransaction;
+import com.example.tinder.enums.SuccessType;
+import com.example.tinder.enums.TransactionStatus;
+import com.example.tinder.enums.TransactionType;
+import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.enums.payment.PaymeError;
+import com.example.tinder.enums.payment.PaymeTransactionState;
+import com.example.tinder.enums.payment.PaymentMethod;
+import com.example.tinder.enums.payment.PaymentStatusForClick;
 import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymeException;
-import com.example.tinder.repository.*;
+import com.example.tinder.repository.CardRepository;
+import com.example.tinder.repository.PaymentTransactionRepository;
+import com.example.tinder.repository.UserRepository;
+import com.example.tinder.repository.WalletTransactionRepository;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
 import com.example.tinder.utils.PaymeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,27 +39,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
+    private static final long TIME_EXPIRED = 43_200_000L;
+
     private final CardRepository cardRepository;
-    private final ClickTransactionRepository clickTransactionRepository;
-    private final PaymeTransactionRepository paymeTransactionRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     private final UserRepository userRepository;
-
-    private static final Long time_expired = 43_200_000L;
-
-    @Value("${payme.merchant-id}")
-    private String paymeMerchantId;
-
-    @Value("${payme.secret-key}")
-    private String paymeSecretKey;
-
 
     // =========================
     // CLICK METHODS
@@ -58,30 +60,40 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public ClickPrepareResponse prepare(ClickPrepareRequest request) {
         log.info("Click Prepare request: {}", request);
-        log.info("merchant_trans_id (userId): {}", request.getMerchantTransId()); // BU QO'SHING
-        System.out.println("merchant_trans_id (userId): " + request.getMerchantTransId());
-        if (!Objects.equals(request.getAction(), ClickUtil.PREPARE_ACTION)) {
-            throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
-        }
 
-        User user = getUserOrThrowExcForClick(request.getMerchantTransId()); // merchant_trans_id
+        validateClickActionAndService(request.getAction(), ClickUtil.PREPARE_ACTION, request.getServiceId());
 
+        User user = getUserOrThrowExcForClick(request.getMerchantTransId());
         BigDecimal amount = validateAmount(request.getAmount());
 
         if (!cardRepository.existsByUserId(user.getId())) {
             throw new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND);
         }
 
-        ClickTransaction save = clickTransactionRepository.save(ClickTransaction.builder()
-                .id(request.getClickTransId())
-                .amount(amount)
-                .prepareTime(LocalDateTime.now())
-                .userId(user.getId())
-                .status(PaymentStatusForClick.PREPARE)
-                .build());
+        String providerTxId = String.valueOf(request.getClickTransId());
 
-        return ClickPrepareResponse.from(request, save.getId());
+        PaymentTransaction existing = paymentTransactionRepository
+                .findByPaymentMethodAndProviderTransactionId(PaymentMethod.CLICK, providerTxId)
+                .orElse(null);
 
+        if (existing != null) {
+            validateExistingClickPrepare(existing, request, amount, user.getId());
+            return ClickPrepareResponse.from(request, existing.getId());
+        }
+
+        PaymentTransaction saved = paymentTransactionRepository.save(
+                PaymentTransaction.builder()
+                        .paymentMethod(PaymentMethod.CLICK)
+                        .providerTransactionId(providerTxId)
+                        .merchantTransactionId(request.getMerchantTransId())
+                        .userId(user.getId())
+                        .amount(amount)
+                        .prepareTime(LocalDateTime.now())
+                        .clickStatus(PaymentStatusForClick.PREPARE)
+                        .build()
+        );
+
+        return ClickPrepareResponse.from(request, saved.getId());
     }
 
     @Override
@@ -89,38 +101,38 @@ public class PaymentServiceImpl implements PaymentService {
     public ClickCompleteResponse complete(ClickCompleteRequest request) {
         log.info("Click Complete request: {}", request);
 
-        if (!Objects.equals(request.getAction(), ClickUtil.COMPLETE_ACTION)) {
-            throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
-        }
+        validateClickActionAndService(request.getAction(), ClickUtil.COMPLETE_ACTION, request.getServiceId());
 
-        ClickTransaction clickTransaction = getTransactionOrThrowExc(request.getMerchantPrepareId());
-        User user = getUserOrThrowExcForClick(clickTransaction.getUserId());
+        PaymentTransaction transaction = getClickTransactionOrThrowExc(request.getMerchantPrepareId());
+        validateClickCompleteRequest(transaction, request);
 
+        User user = getUserOrThrowExcForClick(transaction.getUserId());
         Card card = cardRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND));
 
-        if (clickTransaction.isComplete()) {
+        if (transaction.isClickComplete()) {
             throw new ClickException(ClickResponseCode.ALREADY_PAID);
         }
 
-        if (clickTransaction.isCancel()) {
+        if (transaction.isClickCancel()) {
             throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
         }
 
         if (request.getError() != ClickResponseCode.SUCCESS.getCode()) {
-            clickTransaction.setStatus(PaymentStatusForClick.CANCEL);
-            clickTransactionRepository.save(clickTransaction);
+            transaction.setClickStatus(PaymentStatusForClick.CANCEL);
+            transaction.setClickCancelTime(LocalDateTime.now());
+            paymentTransactionRepository.save(transaction);
             throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
         }
 
         BigDecimal oldBalance = card.getBalance();
-        BigDecimal newBalance = oldBalance.add(clickTransaction.getAmount());
+        BigDecimal newBalance = oldBalance.add(transaction.getAmount());
 
         WalletTransaction walletTransaction = walletTransactionRepository.save(
                 WalletTransaction.builder()
                         .user(user)
                         .type(TransactionType.EARN)
-                        .amount(clickTransaction.getAmount())
+                        .amount(transaction.getAmount())
                         .balanceAfter(newBalance)
                         .description("Click orqali balans to'ldirildi")
                         .status(TransactionStatus.COMPLETED)
@@ -128,23 +140,25 @@ public class PaymentServiceImpl implements PaymentService {
                         .build()
         );
 
-        clickTransaction.setWalletTransactionId(walletTransaction.getId());
-        clickTransaction.setStatus(PaymentStatusForClick.COMPLETE);
-        clickTransactionRepository.save(clickTransaction);
+        transaction.setWalletTransactionId(walletTransaction.getId());
+        transaction.setClickStatus(PaymentStatusForClick.COMPLETE);
+        transaction.setCompleteTime(LocalDateTime.now());
+        paymentTransactionRepository.save(transaction);
 
         card.setBalance(newBalance);
         cardRepository.save(card);
 
         log.info("Click transaction completed: {} | Amount: {} | Balance: {} -> {}",
-                clickTransaction.getId(), clickTransaction.getAmount(), oldBalance, newBalance);
+                transaction.getId(), transaction.getAmount(), oldBalance, newBalance);
 
         return ClickCompleteResponse.from(request);
     }
 
     @Override
     public ApiResponse<String> getUrlForClick(BigDecimal amount) {
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        validateAmount(amount);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ClickException(ClickResponseCode.UNAUTHORIZED);
@@ -155,11 +169,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return ApiResponse.success(ClickUtil.generatePaymentUrl(user.getId(), amount), SuccessType.SUCCESS);
-    }
-
-    private ClickTransaction getTransactionOrThrowExc(Long transactionId) {
-        return clickTransactionRepository.findById(transactionId)
-                .orElseThrow(() -> new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND));
     }
 
     // =========================
@@ -179,14 +188,9 @@ public class PaymentServiceImpl implements PaymentService {
         });
     }
 
-    /**
-     * CheckPerformTransaction
-     * tranzaksiyani yaratishdan oldin tekshirish
-     * ya'ni bizda shu tranzaksiya uchun order borligini va tranzaksiya summasi to'g'ri kelishini tekshirish
-     */
     private CheckPerformTransactionResult checkPerformTransaction(PaymeParam params) {
         User user = getUserOrThrowExcForPayme(params.getAccount().getUserId());
-        // 2. Amount null emas va 0 dan kattami?
+
         if (params.getAmount() == null || params.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new PaymeException(PaymeError.INVALID_AMOUNT);
         }
@@ -198,65 +202,54 @@ public class PaymentServiceImpl implements PaymentService {
         return new CheckPerformTransactionResult(true);
     }
 
-    /**
-     * CreateTransaction - tranzaksiya yaratish bu CheckPerformTransactiondan keyin keladi
-     */
     private CreateTransactionResult createTransaction(PaymeParam params) {
-        PaymeTransaction transaction = paymeTransactionRepository.findById(params.getId()).orElse(null);
+        PaymentTransaction transaction = paymentTransactionRepository
+                .findByPaymentMethodAndProviderTransactionId(PaymentMethod.PAYME, params.getId())
+                .orElse(null);
 
         if (Objects.nonNull(transaction)) {
             ifTransactionExist(transaction);
-        } else {
-            // agar tranzaksiya mavjud emas bo'lsa bu holatda tranzaksiya summasi va shunaqa ma'lumotlarni tekshirish uchun
-            // CheckPerformTransaction ni chaqiramiz
-            checkPerformTransaction(params);
-
-            // ✅ Tiyndan so'mga o'tkazish
-            BigDecimal amountInSom = convertTiynToSom(params.getAmount());
-
-            transaction = paymeTransactionRepository.save(
-                    PaymeTransaction.builder()
-                            .id(params.getId())
-                            .userId(params.getAccount().getUserId())
-                            .amount(amountInSom)  // ✅ So'mda saqlash
-                            .createTime(System.currentTimeMillis())
-                            .state(PaymeTransactionState.PENDING)
-                            .build()
-            );
+            return CreateTransactionResult.from(transaction);
         }
 
-        return CreateTransactionResult.from(transaction);
+        checkPerformTransaction(params);
+
+        BigDecimal amountInSom = convertTiynToSom(params.getAmount());
+
+        PaymentTransaction saved = paymentTransactionRepository.save(
+                PaymentTransaction.builder()
+                        .paymentMethod(PaymentMethod.PAYME)
+                        .providerTransactionId(params.getId())
+                        .merchantTransactionId(params.getAccount().getUserId())
+                        .userId(params.getAccount().getUserId())
+                        .amount(amountInSom)
+                        .createTime(System.currentTimeMillis())
+                        .state(PaymeTransactionState.PENDING)
+                        .build()
+        );
+
+        return CreateTransactionResult.from(saved);
     }
 
-    /**
-     * PerformTransaction - tranzaksiyani amalga oshirish
-     * bu CreateTransaction dan keyin bo'ladi va to‘lov tasdiqlanadi, mablag‘ merchant hisobiga o‘tkaziladi va buyurtma holati "PAID" deb belgilanadi.
-     */
     private PerformTransactionResult performTransaction(PaymeParam params) {
-        PaymeTransaction transaction = getTransactionOrThrowExc(params.getId());
+        PaymentTransaction transaction = getPaymeTransactionOrThrowExc(params.getId());
 
         if (!Objects.equals(transaction.getState(), PaymeTransactionState.PENDING)) {
             if (!Objects.equals(transaction.getState(), PaymeTransactionState.PAID)) {
                 throw new PaymeException(PaymeError.CANT_DO_OPERATION);
             }
-
-            // Agar tranzaksiya holati PAID bo'lsa bu tranzaksiyani shunchaki qaytaramiz
             return PerformTransactionResult.from(transaction);
         }
+
         User user = getUserOrThrowExcForPayme(transaction.getUserId());
         Card card = cardRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new PaymeException(PaymeError.USER_CARD_NOT_FOUND));
 
         checkTimeoutOrThrowExc(transaction);
 
-        transaction.setState(PaymeTransactionState.PAID);
-        transaction.setPerformTime(System.currentTimeMillis());
-        paymeTransactionRepository.save(transaction);
-
         BigDecimal oldBalance = card.getBalance();
         BigDecimal newBalance = oldBalance.add(transaction.getAmount());
 
-        // ✅ WalletTransaction ni save qilib, ID ni olamiz
         WalletTransaction walletTransaction = walletTransactionRepository.save(
                 WalletTransaction.builder()
                         .user(user)
@@ -269,11 +262,10 @@ public class PaymentServiceImpl implements PaymentService {
                         .build()
         );
 
-        // ✅ WalletTransaction ID ni PaymeTransaction ga saqlaymiz
         transaction.setWalletTransactionId(walletTransaction.getId());
         transaction.setState(PaymeTransactionState.PAID);
         transaction.setPerformTime(System.currentTimeMillis());
-        paymeTransactionRepository.save(transaction);
+        paymentTransactionRepository.save(transaction);
 
         card.setBalance(newBalance);
         cardRepository.save(card);
@@ -281,35 +273,30 @@ public class PaymentServiceImpl implements PaymentService {
         return PerformTransactionResult.from(transaction);
     }
 
-    /**
-     * CancelTransaction - tranzaksiyani bekor qilish
-     */
     private CancelTransactionResult cancelTransaction(PaymeParam params) {
-        PaymeTransaction paymeTransaction = getTransactionOrThrowExc(params.getId());
-        User user = getUserOrThrowExcForPayme(paymeTransaction.getUserId());
+        PaymentTransaction transaction = getPaymeTransactionOrThrowExc(params.getId());
+        User user = getUserOrThrowExcForPayme(transaction.getUserId());
         Card card = cardRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new PaymeException(PaymeError.USER_CARD_NOT_FOUND));
 
         boolean canceled = false;
 
-        if (Objects.equals(paymeTransaction.getState(), PaymeTransactionState.PENDING)) {
-            paymeTransaction.setState(PaymeTransactionState.PENDING_CANCELED);
+        if (Objects.equals(transaction.getState(), PaymeTransactionState.PENDING)) {
+            transaction.setState(PaymeTransactionState.PENDING_CANCELED);
             canceled = true;
+        } else if (Objects.equals(transaction.getState(), PaymeTransactionState.PAID)) {
+            transaction.setState(PaymeTransactionState.PAID_CANCELED);
 
-        } else if (Objects.equals(paymeTransaction.getState(), PaymeTransactionState.PAID)) {
-            paymeTransaction.setState(PaymeTransactionState.PAID_CANCELED);
-
-
-            if (paymeTransaction.getWalletTransactionId() != null) {
+            if (transaction.getWalletTransactionId() != null) {
                 WalletTransaction walletTransaction = walletTransactionRepository
-                        .findById(paymeTransaction.getWalletTransactionId())
+                        .findById(transaction.getWalletTransactionId())
                         .orElse(null);
 
                 if (walletTransaction != null && walletTransaction.getStatus() == TransactionStatus.COMPLETED) {
                     walletTransaction.setStatus(TransactionStatus.CANCELLED);
                     walletTransactionRepository.save(walletTransaction);
 
-                    card.setBalance(card.getBalance().subtract(paymeTransaction.getAmount()));
+                    card.setBalance(card.getBalance().subtract(transaction.getAmount()));
                     cardRepository.save(card);
                 }
             }
@@ -318,37 +305,92 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (canceled) {
-            paymeTransaction.setCancelTime(System.currentTimeMillis());
-            paymeTransaction.setReason(params.getReason());
+            transaction.setCancelTime(System.currentTimeMillis());
+            transaction.setReason(params.getReason());
         }
 
-        paymeTransactionRepository.save(paymeTransaction);
+        paymentTransactionRepository.save(transaction);
 
-        return CancelTransactionResult.from(paymeTransaction);
+        return CancelTransactionResult.from(transaction);
     }
 
-    /**
-     * CheckTransaction - tranzaksiyani tekshirish
-     */
     private CheckTransactionResult checkTransaction(PaymeParam params) {
-        PaymeTransaction transaction = getTransactionOrThrowExc(params.getId());
-
+        PaymentTransaction transaction = getPaymeTransactionOrThrowExc(params.getId());
         return CheckTransactionResult.from(transaction);
     }
 
-    /**
-     * GetStatement - bu ma'lum vaqt oralig'ida tranzaksiyalarni olish
-     */
     private GetStatementResult getStatement(PaymeParam params) {
-        // from va to larni qiyamatini birga kamaytiramiz va ko'paytiramiz
-        // chunki between'da ikkala sonlarni o'rtasidagilar olinadi lekin biz teng bo'lganlarini ham qaytarishimiz kerak
         return new GetStatementResult(PaymeUtil.mapToGetTransactionDto(
-                paymeTransactionRepository.findAllByCreateTimeIsBetween(params.getFrom() - 1, params.getTo() + 1))
-        );
+                paymentTransactionRepository.findAllByPaymentMethodAndCreateTimeIsBetween(
+                        PaymentMethod.PAYME,
+                        params.getFrom() - 1,
+                        params.getTo() + 1
+                )
+        ));
     }
 
-    private PaymeTransaction getTransactionOrThrowExc(String id) {
-        PaymeTransaction transaction = paymeTransactionRepository.findById(id).orElse(null);
+    // =========================
+    // HELPER METHODS
+    // =========================
+
+    private void validateClickActionAndService(Integer action, Integer expectedAction, Integer serviceId) {
+        if (!Objects.equals(action, expectedAction)) {
+            throw new ClickException(ClickResponseCode.ACTION_NOT_FOUND);
+        }
+
+        if (!ClickUtil.isValidServiceId(serviceId)) {
+            throw new ClickException(ClickResponseCode.BAD_REQUEST);
+        }
+    }
+
+    private void validateExistingClickPrepare(PaymentTransaction existing, ClickPrepareRequest request,
+                                              BigDecimal requestedAmount, Long userId) {
+        if (!Objects.equals(existing.getUserId(), userId)
+                || !Objects.equals(existing.getMerchantTransactionId(), request.getMerchantTransId())
+                || existing.getAmount().compareTo(requestedAmount) != 0) {
+            throw new ClickException(ClickResponseCode.BAD_REQUEST);
+        }
+
+        if (existing.isClickComplete()) {
+            throw new ClickException(ClickResponseCode.ALREADY_PAID);
+        }
+
+        if (existing.isClickCancel()) {
+            throw new ClickException(ClickResponseCode.TRANSACTION_CANCELLED);
+        }
+    }
+
+    private void validateClickCompleteRequest(PaymentTransaction transaction, ClickCompleteRequest request) {
+        if (!Objects.equals(transaction.getProviderTransactionId(), String.valueOf(request.getClickTransId()))) {
+            throw new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND);
+        }
+
+        if (!Objects.equals(transaction.getMerchantTransactionId(), request.getMerchantTransId())) {
+            throw new ClickException(ClickResponseCode.BAD_REQUEST);
+        }
+
+        BigDecimal amount = validateAmount(request.getAmount());
+        if (transaction.getAmount().compareTo(amount) != 0) {
+            throw new ClickException(ClickResponseCode.INVALID_AMOUNT);
+        }
+    }
+
+    private PaymentTransaction getClickTransactionOrThrowExc(Long transactionId) {
+        PaymentTransaction transaction = paymentTransactionRepository
+                .findByIdAndPaymentMethod(transactionId, PaymentMethod.CLICK)
+                .orElse(null);
+
+        if (Objects.isNull(transaction)) {
+            throw new ClickException(ClickResponseCode.TRANSACTION_NOT_FOUND);
+        }
+
+        return transaction;
+    }
+
+    private PaymentTransaction getPaymeTransactionOrThrowExc(String id) {
+        PaymentTransaction transaction = paymentTransactionRepository
+                .findByPaymentMethodAndProviderTransactionId(PaymentMethod.PAYME, id)
+                .orElse(null);
 
         if (Objects.isNull(transaction)) {
             throw new PaymeException(PaymeError.TRANSACTION_NOT_FOUND);
@@ -357,12 +399,7 @@ public class PaymentServiceImpl implements PaymentService {
         return transaction;
     }
 
-    // =========================
-    // HELPER METHODS
-    // =========================
-
     private User getUserOrThrowExcForClick(Long userId) {
-        System.out.println("user_id: " + userId);
         User user = userRepository.findByIdCustom(userId).orElse(null);
 
         if (Objects.isNull(user)) {
@@ -382,29 +419,26 @@ public class PaymentServiceImpl implements PaymentService {
         return user;
     }
 
-    private void ifTransactionExist(PaymeTransaction transaction) {
-        // agar tranzaksiya holati pending bo'lmasa exception otamiz
+    private void ifTransactionExist(PaymentTransaction transaction) {
         if (transaction.getState() != PaymeTransactionState.PENDING) {
             throw new PaymeException(PaymeError.CANT_DO_OPERATION);
         }
 
-        // agar timeout bo'lsa true qaytaradi
         checkTimeoutOrThrowExc(transaction);
     }
 
-    private void checkTimeoutOrThrowExc(PaymeTransaction transaction) {
-        if (System.currentTimeMillis() - transaction.getCreateTime() > time_expired) {
+    private void checkTimeoutOrThrowExc(PaymentTransaction transaction) {
+        if (System.currentTimeMillis() - transaction.getCreateTime() > TIME_EXPIRED) {
             cancelTransactionDueToTimeout(transaction);
-
             throw new PaymeException(PaymeError.CANT_DO_OPERATION);
         }
     }
 
-    private void cancelTransactionDueToTimeout(PaymeTransaction transaction) {
+    private void cancelTransactionDueToTimeout(PaymentTransaction transaction) {
         transaction.setState(PaymeTransactionState.PENDING_CANCELED);
         transaction.setReason(4);
         transaction.setCancelTime(System.currentTimeMillis());
-        paymeTransactionRepository.save(transaction);
+        paymentTransactionRepository.save(transaction);
     }
 
     private BigDecimal convertTiynToSom(BigDecimal amountInTiyn) {

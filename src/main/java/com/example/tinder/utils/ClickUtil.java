@@ -12,8 +12,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Component
 public class ClickUtil {
@@ -51,6 +49,10 @@ public class ClickUtil {
         );
     }
 
+    public static boolean isValidServiceId(Integer serviceId) {
+        return serviceId != null && SERVICE_ID.equals(serviceId.toString());
+    }
+
     public static void authorizeSignString(ClickPrepareRequest request) {
         String signString = String.format("%s%s%s%s%s%s%s",
                 request.getClickTransId(),
@@ -64,8 +66,7 @@ public class ClickUtil {
 
         String md5 = getMd5(signString);
 
-        if (!md5.equals(request.getSignString())) {
-            System.out.println("key notogri-------------------------");
+        if (!md5.equalsIgnoreCase(request.getSignString())) {
             throw new ClickException(ClickResponseCode.SIGN_CHECK_FAILED);
         }
     }
@@ -84,7 +85,7 @@ public class ClickUtil {
 
         String md5 = getMd5(signString);
 
-        if (!md5.equals(request.getSignString())) {
+        if (!md5.equalsIgnoreCase(request.getSignString())) {
             throw new ClickException(ClickResponseCode.SIGN_CHECK_FAILED);
         }
     }
@@ -105,9 +106,5 @@ public class ClickUtil {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static LocalDateTime parseSignTime(String signTime) {
-        return LocalDateTime.parse(signTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }

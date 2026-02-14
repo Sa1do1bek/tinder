@@ -392,7 +392,7 @@ public class AuthServiceImpl implements AuthService {
         if (byEmail.isPresent()) {
             user = byEmail.get();
         } else {
-            throw RestException.restThrow(ErrorType.INVALID_AUTHENTICATION_CHARACTERS);
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
 
         try {
