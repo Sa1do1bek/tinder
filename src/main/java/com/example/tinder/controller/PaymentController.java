@@ -7,6 +7,8 @@ import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
 import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
 import com.example.tinder.dto.payment.payme.req.PaymeRequest;
 import com.example.tinder.dto.payment.payme.res.PaymeSuccessResponse;
+import com.example.tinder.enums.payment.ClickResponseCode;
+import com.example.tinder.exception.ClickException;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
 import com.example.tinder.utils.PaymeUtil;
@@ -16,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payment")
@@ -30,67 +33,85 @@ public class PaymentController {
         return paymentService.getUrlForClick(amount);
     }
 
-    @PostMapping(value = "/prepare", consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = {"/prepare", "/click/prepare"})
     public ClickPrepareResponse prepare(
-            @RequestParam("click_trans_id") Long clickTransId,
-            @RequestParam("service_id") Integer serviceId,
-            @RequestParam("merchant_trans_id") Long merchantTransId,
-            @RequestParam("amount") BigDecimal amount,
-            @RequestParam("action") Integer action,
-            @RequestParam("error") Integer error,
-            @RequestParam("error_note") String errorNote,
-            @RequestParam("sign_time") String signTime,
-            @RequestParam("sign_string") String signString
+            @RequestParam Map<String, String> params
     ) {
-        log.info("Prepare request");
-        ClickPrepareRequest build = ClickPrepareRequest.builder()
-                .clickTransId(clickTransId)
-                .serviceId(serviceId)
-                .merchantTransId(merchantTransId)
-                .amount(amount)
-                .action(action)
-                .error(error)
-                .errorNote(errorNote)
-                .signTime(signTime)
-                .signString(signString)
-                .build();
+        Long clickTransId = parseLong(params.get("click_trans_id"));
+        Long merchantTransId = parseLong(params.get("merchant_trans_id"));
 
-        ClickUtil.authorizeSignString(build);
+        try {
+            ClickPrepareRequest request = ClickPrepareRequest.builder()
+                    .clickTransId(clickTransId)
+                    .serviceId(parseInteger(params.get("service_id")))
+                    .merchantTransId(merchantTransId)
+                    .amount(parseBigDecimal(params.get("amount")))
+                    .action(parseInteger(params.get("action")))
+                    .error(parseInteger(params.get("error")))
+                    .errorNote(params.get("error_note"))
+                    .signTime(params.get("sign_time"))
+                    .signString(params.get("sign_string"))
+                    .build();
 
-        return paymentService.prepare(build);
+            ClickUtil.authorizeSignString(request);
+            return paymentService.prepare(request);
+        } catch (ClickException e) {
+            return ClickPrepareResponse.builder()
+                    .clickTransId(clickTransId)
+                    .merchantTransId(merchantTransId)
+                    .error(e.getCode().getCode())
+                    .errorNote(e.getCode().getErrorNote())
+                    .build();
+        } catch (Exception e) {
+            log.error("Click prepare parsing/internal error", e);
+            return ClickPrepareResponse.builder()
+                    .clickTransId(clickTransId)
+                    .merchantTransId(merchantTransId)
+                    .error(ClickResponseCode.BAD_REQUEST.getCode())
+                    .errorNote(ClickResponseCode.BAD_REQUEST.getErrorNote())
+                    .build();
+        }
     }
 
-    @PostMapping(value = "/complete", consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = {"/complete", "/click/complete"})
     public ClickCompleteResponse complete(
-            @RequestParam("click_trans_id") Long clickTransId,
-            @RequestParam("service_id") Integer serviceId,
-            @RequestParam("merchant_trans_id") Long merchantTransId,
-            @RequestParam(value = "merchant_prepare_id") Long merchantPrepareId,
-            @RequestParam("amount") BigDecimal amount,
-            @RequestParam("action") Integer action,
-            @RequestParam("error") Integer error,
-            @RequestParam("error_note") String errorNote,
-            @RequestParam("sign_time") String signTime,
-            @RequestParam("sign_string") String signString
+            @RequestParam Map<String, String> params
     ) {
-        log.info("Complete request");
+        Long clickTransId = parseLong(params.get("click_trans_id"));
+        Long merchantTransId = parseLong(params.get("merchant_trans_id"));
 
-        ClickCompleteRequest build = ClickCompleteRequest.builder()
-                .clickTransId(clickTransId)
-                .serviceId(serviceId)
-                .merchantTransId(merchantTransId)
-                .merchantPrepareId(merchantPrepareId)
-                .amount(amount)
-                .action(action)
-                .error(error)
-                .errorNote(errorNote)
-                .signTime(signTime)
-                .signString(signString)
-                .build();
+        try {
+            ClickCompleteRequest request = ClickCompleteRequest.builder()
+                    .clickTransId(clickTransId)
+                    .serviceId(parseInteger(params.get("service_id")))
+                    .merchantTransId(merchantTransId)
+                    .merchantPrepareId(parseLong(params.get("merchant_prepare_id")))
+                    .amount(parseBigDecimal(params.get("amount")))
+                    .action(parseInteger(params.get("action")))
+                    .error(parseInteger(params.get("error")))
+                    .errorNote(params.get("error_note"))
+                    .signTime(params.get("sign_time"))
+                    .signString(params.get("sign_string"))
+                    .build();
 
-        ClickUtil.authorizeSignString(build);
-
-        return paymentService.complete(build);
+            ClickUtil.authorizeSignString(request);
+            return paymentService.complete(request);
+        } catch (ClickException e) {
+            return ClickCompleteResponse.builder()
+                    .clickTransId(clickTransId)
+                    .merchantTransId(merchantTransId)
+                    .error(e.getCode().getCode())
+                    .errorNote(e.getCode().getErrorNote())
+                    .build();
+        } catch (Exception e) {
+            log.error("Click complete parsing/internal error", e);
+            return ClickCompleteResponse.builder()
+                    .clickTransId(clickTransId)
+                    .merchantTransId(merchantTransId)
+                    .error(ClickResponseCode.BAD_REQUEST.getCode())
+                    .errorNote(ClickResponseCode.BAD_REQUEST.getErrorNote())
+                    .build();
+        }
     }
 
     @PostMapping("/payme")
@@ -98,6 +119,27 @@ public class PaymentController {
         PaymeUtil.authorizeToken(httpServletRequest.getHeader("Authorization"));
 
         return paymentService.pay(request);
+    }
+
+    private Long parseLong(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return Long.parseLong(value.trim());
+    }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return Integer.parseInt(value.trim());
+    }
+
+    private BigDecimal parseBigDecimal(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return new BigDecimal(value.trim());
     }
 
 }

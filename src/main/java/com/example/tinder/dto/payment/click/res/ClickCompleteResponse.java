@@ -18,17 +18,18 @@ public class ClickCompleteResponse {
     private Long merchantTransId;
 
     @JsonProperty("merchant_confirm_id")
-    private Integer merchantConfirmId;
+    private Long merchantConfirmId;
 
     private Integer error;
 
     @JsonProperty("error_note")
     private String errorNote;
 
-    public static ClickCompleteResponse from(ClickCompleteRequest request) {
+    public static ClickCompleteResponse from(ClickCompleteRequest request, Long merchantConfirmId) {
         return ClickCompleteResponse.builder()
                 .clickTransId(request.getClickTransId())
                 .merchantTransId(request.getMerchantTransId())
+                .merchantConfirmId(merchantConfirmId)
                 .error(ClickResponseCode.SUCCESS.getCode())
                 .errorNote(ClickResponseCode.SUCCESS.getErrorNote())
                 .build();

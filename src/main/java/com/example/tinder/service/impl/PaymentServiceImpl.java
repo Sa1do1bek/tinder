@@ -111,7 +111,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ClickException(ClickResponseCode.USER_CARD_NOT_FOUND));
 
         if (transaction.isClickComplete()) {
-            throw new ClickException(ClickResponseCode.ALREADY_PAID);
+            return ClickCompleteResponse.from(request, transaction.getWalletTransactionId());
         }
 
         if (transaction.isClickCancel()) {
@@ -151,7 +151,7 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Click transaction completed: {} | Amount: {} | Balance: {} -> {}",
                 transaction.getId(), transaction.getAmount(), oldBalance, newBalance);
 
-        return ClickCompleteResponse.from(request);
+        return ClickCompleteResponse.from(request, walletTransaction.getId());
     }
 
     @Override

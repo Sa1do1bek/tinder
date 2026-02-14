@@ -1,8 +1,10 @@
 package com.example.tinder.exception.handler;
 
 import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
+import com.example.tinder.dto.payment.click.res.ClickPrepareResponse;
 import com.example.tinder.dto.payment.payme.res.PaymeError;
 import com.example.tinder.dto.payment.payme.res.PaymeErrorResponse;
+import com.example.tinder.enums.payment.ClickResponseCode;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymeException;
@@ -40,13 +42,36 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClickException.class)
-    public ClickCompleteResponse handleException(ClickException e) {
+    public ResponseEntity<?> handleException(ClickException e, HttpServletRequest request) {
         log.error("Error occurred: {}", e.getCode().getErrorNote());
 
-        return ClickCompleteResponse.builder()
-                .error(e.getCode().getCode())
-                .errorNote(e.getCode().getErrorNote())
-                .build();
+        String path = request.getRequestURI();
+
+        if (path.endsWith("/api/payment/prepare") || path.endsWith("/api/payment/click/prepare")) {
+            return ResponseEntity.ok(
+                    ClickPrepareResponse.builder()
+                            .error(e.getCode().getCode())
+                            .errorNote(e.getCode().getErrorNote())
+                            .build()
+            );
+        }
+
+        if (path.endsWith("/api/payment/complete") || path.endsWith("/api/payment/click/complete")) {
+            return ResponseEntity.ok(
+                    ClickCompleteResponse.builder()
+                            .error(e.getCode().getCode())
+                            .errorNote(e.getCode().getErrorNote())
+                            .build()
+            );
+        }
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(
+                        e.getCode().getErrorNote(),
+                        ClickResponseCode.BAD_REQUEST.getCode(),
+                        path
+                ));
     }
 
     @ExceptionHandler(PaymeException.class)
