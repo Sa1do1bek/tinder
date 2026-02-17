@@ -49,7 +49,7 @@ public class PaymentController {
             @RequestParam("sign_string") String signString
     ) {
         try {
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Request received")
                             .date(LocalDateTime.now())
@@ -72,7 +72,7 @@ public class PaymentController {
                     .signTime(signTime)
                     .signString(signString)
                     .build();
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Request body: " + request.toString())
                             .date(LocalDateTime.now())
@@ -80,7 +80,7 @@ public class PaymentController {
             );
 
             ClickUtil.authorizeSignString(request);
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Request authorized successfull ")
                             .date(LocalDateTime.now())
@@ -88,7 +88,7 @@ public class PaymentController {
             );
             return paymentService.prepare(request);
         } catch (ClickException e) {
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Exception occurred in Payment Controller prepare: " + e.getMessage())
                             .date(LocalDateTime.now())
@@ -101,7 +101,7 @@ public class PaymentController {
                     .errorNote(e.getCode().getErrorNote())
                     .build();
         } catch (Exception e) {
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Click prepare parsing/internal error " + e.getMessage())
                             .date(LocalDateTime.now())
@@ -131,7 +131,7 @@ public class PaymentController {
             @RequestParam("sign_string") String signString
     ) {
         try {
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Complete endpoint ")
                             .date(LocalDateTime.now())
@@ -156,7 +156,7 @@ public class PaymentController {
                     .build();
 
             ClickUtil.authorizeSignString(request);
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Complete method Calling in Payment Controller")
                             .date(LocalDateTime.now())
@@ -164,7 +164,7 @@ public class PaymentController {
             );
             return paymentService.complete(request);
         } catch (ClickException e) {
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Exception occurred in Payment Controller complete: " + e.getMessage())
                             .date(LocalDateTime.now())
@@ -177,7 +177,7 @@ public class PaymentController {
                     .errorNote(e.getCode().getErrorNote())
                     .build();
         } catch (Exception e) {
-            logRepository.save(
+            saveLog(
                     Log.builder()
                             .text("Click complete parsing/internal error " + e.getMessage())
                             .date(LocalDateTime.now())
@@ -198,6 +198,27 @@ public class PaymentController {
         PaymeUtil.authorizeToken(httpServletRequest.getHeader("Authorization"));
 
         return paymentService.pay(request);
+    }
+
+
+    private void saveLog(Log logEntry) {
+        try {
+            logRepository.save(logEntry);
+        } catch (Exception firstEx) {
+            try {
+                if (logEntry.getId() == null) {
+                    long fallbackId = Math.abs(System.currentTimeMillis() * 1000L + java.util.concurrent.ThreadLocalRandom.current().nextInt(1000));
+                    logEntry.setId(fallbackId);
+                    logRepository.save(logEntry);
+                    return;
+                }
+            } catch (Exception secondEx) {
+                log.error("PaymentController log write failed: {}", secondEx.getMessage());
+                return;
+            }
+
+            log.error("PaymentController log write failed: {}", firstEx.getMessage());
+        }
     }
 
 }
