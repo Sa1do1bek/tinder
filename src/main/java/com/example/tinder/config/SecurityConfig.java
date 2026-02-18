@@ -54,7 +54,7 @@ public class SecurityConfig {
             "/app/**",              // STOMP destination prefix
             "/topic/**",            // STOMP topic
             "/queue/**" ,            // STOMP queue
-            "/api/payment/prepare", // Payment
+            "/api/payment/perpare", // Payment
             "/api/payment/complete", // Payment
             "/api/payment/click/prepare", // Payment alias
             "/api/payment/click/complete" // Payment alias
