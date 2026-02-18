@@ -14,6 +14,8 @@ public class ClickPrepareRequest {
 
     private Integer serviceId;
 
+    private Long clickPaydocId;
+
     private Long merchantTransId;
 
     private BigDecimal amount;

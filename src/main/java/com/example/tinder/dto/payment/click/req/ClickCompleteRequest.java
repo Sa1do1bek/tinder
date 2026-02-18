@@ -14,6 +14,8 @@ public class ClickCompleteRequest {
 
     private Integer serviceId;
 
+    private Long clickPaydocId;
+
     private Long merchantTransId;
 
     private Long merchantPrepareId;

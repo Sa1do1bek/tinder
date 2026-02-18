@@ -40,6 +40,7 @@ public class PaymentController {
     public ClickPrepareResponse prepare(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,
+            @RequestParam(value = "click_paydoc_id", required = false) Long clickPaydocId,
             @RequestParam("merchant_trans_id") Long merchantTransId,
             @RequestParam("amount") BigDecimal amount,
             @RequestParam("action") Integer action,
@@ -64,6 +65,7 @@ public class PaymentController {
             ClickPrepareRequest request = ClickPrepareRequest.builder()
                     .clickTransId(clickTransId)
                     .serviceId(serviceId)
+                    .clickPaydocId(clickPaydocId)
                     .merchantTransId(merchantTransId)
                     .amount(amount)
                     .action(action)
@@ -121,6 +123,7 @@ public class PaymentController {
     public ClickCompleteResponse complete(
             @RequestParam("click_trans_id") Long clickTransId,
             @RequestParam("service_id") Integer serviceId,
+            @RequestParam(value = "click_paydoc_id", required = false) Long clickPaydocId,
             @RequestParam("merchant_trans_id") Long merchantTransId,
             @RequestParam(value = "merchant_prepare_id") Long merchantPrepareId,
             @RequestParam("amount") BigDecimal amount,
@@ -145,6 +148,7 @@ public class PaymentController {
             ClickCompleteRequest request = ClickCompleteRequest.builder()
                     .clickTransId(clickTransId)
                     .serviceId(serviceId)
+                    .clickPaydocId(clickPaydocId)
                     .merchantTransId(merchantTransId)
                     .merchantPrepareId(merchantPrepareId)
                     .amount(amount)
