@@ -82,6 +82,10 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElse(null);
 
         if (existing != null) {
+            if (existing.getClickPaydocId() == null && request.getClickPaydocId() != null) {
+                existing.setClickPaydocId(request.getClickPaydocId());
+                paymentTransactionRepository.save(existing);
+            }
             validateExistingClickPrepare(existing, request, amount, user.getId());
             return ClickPrepareResponse.from(request, existing.getId());
         }
@@ -91,6 +95,7 @@ public class PaymentServiceImpl implements PaymentService {
                         .paymentMethod(PaymentMethod.CLICK)
                         .providerTransactionId(providerTxId)
                         .merchantTransactionId(request.getMerchantTransId())
+                        .clickPaydocId(request.getClickPaydocId())
                         .userId(user.getId())
                         .amount(amount)
                         .prepareTime(LocalDateTime.now())
@@ -138,6 +143,11 @@ public class PaymentServiceImpl implements PaymentService {
                             .build()
             );
             return ClickCompleteResponse.from(request, transaction.getWalletTransactionId());
+        }
+
+        if (transaction.getClickPaydocId() == null && request.getClickPaydocId() != null) {
+            transaction.setClickPaydocId(request.getClickPaydocId());
+            paymentTransactionRepository.save(transaction);
         }
 
         if (transaction.isClickCancel()) {
@@ -486,6 +496,12 @@ public class PaymentServiceImpl implements PaymentService {
                             .date(LocalDateTime.now())
                             .build()
             );
+            throw new ClickException(ClickResponseCode.BAD_REQUEST);
+        }
+
+        if (request.getClickPaydocId() != null
+                && transaction.getClickPaydocId() != null
+                && !Objects.equals(transaction.getClickPaydocId(), request.getClickPaydocId())) {
             throw new ClickException(ClickResponseCode.BAD_REQUEST);
         }
 

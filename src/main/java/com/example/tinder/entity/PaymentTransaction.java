@@ -40,6 +40,9 @@ public class PaymentTransaction extends BaseEntity {
     @Column(name = "merchant_transaction_id")
     private Long merchantTransactionId;
 
+    @Column(name = "click_paydoc_id")
+    private Long clickPaydocId;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
