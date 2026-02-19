@@ -114,9 +114,9 @@ public class Utils {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom("akbarmasharipov57@gmail.com");
+            helper.setFrom("luviuz.com@gmail.com");
             helper.setTo(mail);
-            helper.setSubject("🔐 Tinder APP – Tasdiqlash kodi");
+            helper.setSubject("🔐 LuVi APP – Tasdiqlash kodi");
 
             String htmlContent = """
                         <html>
