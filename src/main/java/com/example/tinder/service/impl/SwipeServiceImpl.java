@@ -1,10 +1,7 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
-import com.example.tinder.entity.FCM;
-import com.example.tinder.entity.Match;
-import com.example.tinder.entity.Swipe;
-import com.example.tinder.entity.User;
+import com.example.tinder.entity.*;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.NotificationPathType;
 import com.example.tinder.enums.SuccessType;
@@ -12,6 +9,7 @@ import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.ConversationMapper;
 import com.example.tinder.repository.*;
+import com.example.tinder.service.ConversationService;
 import com.example.tinder.service.NotificationService;
 import com.example.tinder.service.SwipeService;
 import jakarta.transaction.Transactional;
@@ -90,7 +88,11 @@ public class SwipeServiceImpl implements SwipeService {
                             .build();
                     matchRepository.save(match);
                 }
-                findConversationBetween(swiperId, swipedId);
+                Conversation conversationBetween = findConversationBetween(swiperId, swipedId);
+                if (conversationBetween != null) {
+                    return ApiResponse.success(SuccessType.SWIPE_RECORDED);
+                }
+                createConversation(swiperId, swipedId);
 
                 Map<String, Object> matchNotification = new HashMap<>();
                 matchNotification.put("type", "MATCH");
@@ -135,13 +137,12 @@ public class SwipeServiceImpl implements SwipeService {
                     NotificationPathType.NEWS_MESSAGE
             ));
         }
-
         return ApiResponse.success(SuccessType.SWIPE_RECORDED);
     }
 
 
-    private void findConversationBetween(Long user1Id, Long user2Id) {
-        conversationRepository.findBetweenUsers(user1Id, user2Id);
+    private Conversation  findConversationBetween(Long user1Id, Long user2Id) {
+        return conversationRepository.findBetweenUsers(user1Id, user2Id).orElse(null);
     }
 
 
@@ -170,4 +171,34 @@ public class SwipeServiceImpl implements SwipeService {
         swipeRepository.deleteExpiredRejects();
     }
 
+
+    public void createConversation(Long user1Id, Long user2Id) {
+
+        Optional<Conversation> optional = Optional.ofNullable(findConversationBetween(user1Id, user2Id));
+        if (optional.isPresent() && optional.get().getVisibility()){
+            optional.get().setIsMatchedForUser1(true);
+            optional.get().setIsMatchedForUser2(true);
+            conversationRepository.save(optional.get());
+            throw RestException.restThrow(ErrorType.CONVERSATION_ALREADY_EXISTS);
+        }
+
+        User user1 = userRepository.findById(user1Id)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+        User user2 = userRepository.findById(user2Id)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
+
+        Conversation conversation = Conversation.builder()
+                .user1(user1)
+                .user2(user2)
+                .deletedForUser1(false)
+                .deletedForUser2(false)
+                .isMatchedForUser1(true)
+                .isMatchedForUser2(true)
+                .messages(new ArrayList<>())
+                .unreadForUser1(0)
+                .unreadForUser2(0)
+                .build();
+
+        conversationRepository.save(conversation);
+    }
 }
