@@ -100,7 +100,7 @@ public class SwipeServiceImpl implements SwipeService {
 
                 fcmRepository.findByUserIdAndVisibilityTrue(swipedId).ifPresent(swipedFCM -> notificationService.sendNotification(
                         swiped.getId(),
-                        "TINDER!",
+                        "LuVi!",
                         swiper.getFullname() + " sizga " + status.name() + " bosdi." + "\n" +
                                 " Chat yaratildi! siz suhbat qilishingiz mumkin.",
                         NotificationPathType.NEWS_MESSAGE
@@ -130,7 +130,7 @@ public class SwipeServiceImpl implements SwipeService {
 
             fcmRepository.findByUserIdAndVisibilityTrue(swiperId).ifPresent(swipedFCM -> notificationService.sendNotification(
                     swiped.getId(),
-                    "TINDER!",
+                    "LuVi!",
                     swiper.getFullname() + " sizga " + status.name() + " bosdi.",
                     NotificationPathType.NEWS_MESSAGE
             ));
