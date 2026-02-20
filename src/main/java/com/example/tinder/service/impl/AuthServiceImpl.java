@@ -202,6 +202,7 @@ public class AuthServiceImpl implements AuthService {
                     .latitude("41.1776056")
                     .longitude("69.3562786")
                     .isVerified(true)
+                    .showProfile(true)
                     .bio(null)
                     .build();
         }
@@ -304,6 +305,7 @@ public class AuthServiceImpl implements AuthService {
                     .latitude("41.1776056")
                     .longitude("69.3562786")
                     .isVerified(true)
+                    .showProfile(true)
                     .freeTonight(false)
                     .bio(null)
                     .build();
