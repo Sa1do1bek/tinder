@@ -280,6 +280,7 @@ public class AuthServiceImpl implements AuthService {
             user.setLatitude("41.1776056");
             user.setLongitude("69.3562786");
             user.setProvider(AuthProvider.PHONE);
+            user.setSubscriptionType(SubscriptionType.FREE);
             user.setUpdatedAt(LocalDateTime.now());
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());

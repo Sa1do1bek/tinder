@@ -3,10 +3,7 @@ package com.example.tinder.service.firebase;
 import com.example.tinder.dto.auth.FirebaseUserInfoResponse;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
-import com.example.tinder.enums.AuthProvider;
-import com.example.tinder.enums.Gender;
-import com.example.tinder.enums.UserRole;
-import com.example.tinder.enums.UserStatus;
+import com.example.tinder.enums.*;
 import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.utils.JwtUtil;
@@ -90,6 +87,7 @@ public class FirebaseAuthService {
                     .role(UserRole.USER)
                     .status(UserStatus.ACTIVE)
                     .gender(Gender.EVERYONE)
+                    .subscriptionType(SubscriptionType.FREE)
                     .active(true)
                     .isApproved(false)
                     .isOnline(false)
