@@ -111,6 +111,7 @@ public class SecurityConfig {
                 "https://api.tinder.tenzorsoft.uz",
                 "https://api-tinder.tenzorsoft.uz",
                 "https://front-tinder.tenzorsoft.uz",
+                "https://luvi.uz",
                 "ws://localhost:8080",
                 "ws://localhost:8081",
                 "ws://api-tinder.tenzorsoft.uz",
