@@ -54,7 +54,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         KeyboardRow row = new KeyboardRow();
         KeyboardButton webAppButton = new KeyboardButton("Open Web App");
         webAppButton.setWebApp(org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo.builder()
-                .url("https://front-tinder.tenzorsoft.uz") // frontendchi deploy qiladigan URL
+                .url("https://luvi.uz") // frontendchi deploy qiladigan URL
                 .build());
         row.add(webAppButton);
 
