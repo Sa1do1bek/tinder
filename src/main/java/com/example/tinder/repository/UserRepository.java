@@ -568,4 +568,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE us.SubscriptionType = :type
     """)
     List<Object[]> countAndTotalSumBySubscriptionType(@Param("type") SubscriptionType type);
+    /*
+    dashboard uchun user malumotlarini olish
+     */
+
+    @Query(value = """
+                SELECT 
+                    TO_CHAR(u.created_at, :format) as period,
+                    COUNT(*) as count
+                FROM users u
+                WHERE u.created_at BETWEEN :start AND :end
+                AND u.visibility = true
+                GROUP BY period
+                ORDER BY period
+            """, nativeQuery = true)
+    List<Object[]> getUserStats(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("format") String format
+    );
 }
