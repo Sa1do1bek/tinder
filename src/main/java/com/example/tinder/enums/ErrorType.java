@@ -92,7 +92,16 @@ public enum ErrorType {
     INVALID_VERIFICATION_CODE_OR_PHONE("invalid.verification.code.or.phone", HttpStatus.BAD_REQUEST ),
     USER_PHONE_INVALID("user.phone.invalid", HttpStatus.BAD_REQUEST ),
     MINIMUM_WITHDRAW_NOT_MET("minimum.withdrawn.not.met", HttpStatus.BAD_REQUEST ),
-    PHOTOS_ARE_DOES_NOT_SIMILAR("photos.are.does.not.similar", HttpStatus.BAD_REQUEST ),;
+    PHOTOS_ARE_DOES_NOT_SIMILAR("photos.are.does.not.similar", HttpStatus.BAD_REQUEST ),
+    REPORT_NOT_FOUND("report.not.found", HttpStatus.NOT_FOUND),
+    REPORT_ALREADY_EXISTS("already.Reported", HttpStatus.ALREADY_REPORTED),
+    REPORT_ALREADY_UPDATED("cannot.update.already.updated.report.status", HttpStatus.ALREADY_REPORTED),
+    REPORT_ADMIN_ALREADY_ASSIGNED("admin.already.signed.to.this.report", HttpStatus.ALREADY_REPORTED),
+    USER_NOT_AUTHENTICATED("user.not.authenticated", HttpStatus.UNAUTHORIZED),
+    REPORT_STATUS_CAN_NOT_BE_UPDATE_TO_PENDING("report.status.can.not.be.update.to.pending", HttpStatus.BAD_REQUEST),
+    REPORTS_NOT_FOUND_BY_REPORTED_ID("reports.not.found.by.reported.id", HttpStatus.NOT_FOUND),
+    OTHER_WITH_NO_DESCRIPTION("other.with.no.description", HttpStatus.BAD_REQUEST),
+    USER_BLOCK_FAILED("user.block.failed",HttpStatus.BAD_REQUEST);
     //***************************
 
 
