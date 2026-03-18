@@ -42,9 +42,6 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/auths/forgetPasswordByPhone",
             "/auths/forgetPasswordByEmail",
-            "https://192.168.1.32",
-            "http://192.168.1.33",
-            "https://192.168.1.32/8081",
             "/v3/api-docs/**",
             "/users/checkUsername/**",
             "/swagger-ui.html",
@@ -109,9 +106,6 @@ public class SecurityConfig {
 
         // Allowed origins
         configuration.setAllowedOrigins(List.of(
-                "https://192.168.1.32",
-                "https://192.168.1.32/8082",
-                "http://192.168.1.33",
                 "http://localhost:63342",
                 "http://localhost:3000",
                 "http://localhost:8080",

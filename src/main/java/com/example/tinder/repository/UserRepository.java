@@ -1,5 +1,6 @@
 package com.example.tinder.repository;
 
+import com.example.tinder.dto.UserStatsProjection;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.SubscriptionType;
@@ -582,7 +583,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 GROUP BY period
                 ORDER BY period
             """, nativeQuery = true)
-    List<Object[]> getUserStats(
+    List<UserStatsProjection> getUserStats(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             @Param("format") String format

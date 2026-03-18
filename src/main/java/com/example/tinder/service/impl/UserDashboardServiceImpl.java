@@ -1,6 +1,7 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.UserStatsDTO;
+import com.example.tinder.dto.UserStatsProjection;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.UserStatsType;
@@ -34,14 +35,17 @@ public class UserDashboardServiceImpl implements UserDashboardService {
             case DAY -> "YYYY-MM-DD";
         };
 
-        List<Object[]> result = userRepository.getUserStats(
+        List<UserStatsProjection> result = userRepository.getUserStats(
                 start.atStartOfDay(),
                 end.atTime(23, 59, 59),
                 format
         );
 
         List<UserStatsDTO> stats = result.stream()
-                .map(r -> new UserStatsDTO((String) r[0], ((Number) r[1]).longValue()))
+                .map(r -> new UserStatsDTO(
+                        r.getPeriod(),
+                        r.getCount()
+                ))
                 .toList();
         return ApiResponse.success(stats);
     }
