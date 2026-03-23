@@ -1,12 +1,12 @@
 package com.example.tinder.service;
 
 import com.example.tinder.dto.base.ApiResponse;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@Component
+@Service
 public interface UserDashboardService {
     ApiResponse<List<?>> getUserRegistrationStats(
             LocalDate start,
