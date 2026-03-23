@@ -101,8 +101,10 @@ public enum ErrorType {
     REPORT_STATUS_CAN_NOT_BE_UPDATE_TO_PENDING("report.status.can.not.be.update.to.pending", HttpStatus.BAD_REQUEST),
     REPORTS_NOT_FOUND_BY_REPORTED_ID("reports.not.found.by.reported.id", HttpStatus.NOT_FOUND),
     OTHER_WITH_NO_DESCRIPTION("other.with.no.description", HttpStatus.BAD_REQUEST),
-    USER_BLOCK_FAILED("user.block.failed",HttpStatus.BAD_REQUEST);
-    //***************************
+    USER_BLOCK_FAILED("user.block.failed",HttpStatus.BAD_REQUEST),
+    START_DATE_CAN_NOT_BE_AFTER_END_DATE("start.date.can.not.be.after.end.date",HttpStatus.BAD_REQUEST),
+    INVALID_DATE("invalid.data", HttpStatus.BAD_REQUEST );
+
 
 
 
