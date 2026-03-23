@@ -4,7 +4,6 @@ import com.example.tinder.dto.UserStatsDTO;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
-import com.example.tinder.enums.UserStatsType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.UserStatsRepository;
 import com.example.tinder.service.UserDashboardService;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 
@@ -22,13 +22,16 @@ public class UserDashboardServiceImpl implements UserDashboardService {
     private final UserStatsRepository userStatsRepository;
 
     @Override
-    public ApiResponse<List<UserStatsDTO>> getUserRegistrationStats(UserStatsType type,
-                                                                    LocalDate start,
+    public ApiResponse<List<?>> getUserRegistrationStats(LocalDate start,
                                                                     LocalDate end) {
         checkData(start, end);
-        String format = type.getFormat();
 
-        List<UserStatsDTO> stats = userStatsRepository.getUserStats(start, end, format)
+        String formattedDate = getFormattedDate(start, end);
+
+        List<UserStatsDTO> stats = userStatsRepository.getUserStats(
+                        start.atStartOfDay(),
+                        end.plusDays(1).atStartOfDay(),
+                        formattedDate)
                 .stream()
                 .map(p -> new UserStatsDTO(p.getPeriod(), p.getCount()))
                 .toList();
@@ -42,8 +45,16 @@ public class UserDashboardServiceImpl implements UserDashboardService {
         }
 
         if (start.isAfter(end)) {
-            throw RestException.restThrow(ErrorType.REPORT_STATUS_CAN_NOT_BE_UPDATE_TO_PENDING);
+            throw RestException.restThrow(ErrorType.START_DATE_CAN_NOT_BE_AFTER_END_DATE);
         }
+    }
+
+    private String getFormattedDate(LocalDate start, LocalDate end) {
+        long days = ChronoUnit.DAYS.between(start, end);
+
+        if (days <= 31) return "YYYY-MM-DD";
+        if (days <= 365) return "YYYY-MM";
+        return "YYYY";
     }
 
 }
