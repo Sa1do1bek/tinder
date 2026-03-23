@@ -91,17 +91,39 @@ public interface UserRepository extends JpaRepository<User, Long> {
                AND u.id NOT IN (
                    SELECT s.swiped.id FROM Swipe s
                    WHERE s.swiper.id = :userId
-               )""",
+               )
+               AND u.id NOT IN (
+                   SELECT b.blocked.id
+                   FROM Block b
+                   WHERE b.blocker.id = :userId
+                         )
+               AND u.id NOT IN (
+                   SELECT b2.blocker.id
+                   FROM Block b2
+                   WHERE b2.blocked.id = :userId
+                         )
+               AND u.id NOT IN (
+                   SELECT r.reported.id
+                   FROM Report r
+                   WHERE r.reporter.id = :userId)""",
             countQuery =
                     """
                             SELECT COUNT(u) FROM User u
                                 WHERE u.status =:status
                                 AND u.id<> :userId
-                                AND u.id NOT
-                                IN(SELECT s2.swiped.id FROM Swipe s2
+                                AND u.id NOT IN(SELECT s2.swiped.id FROM Swipe s2
                                     WHERE s2.swiper.id=:userId
                                    )
-                            """)
+                                AND u.id NOT IN (SELECT b.blocked.id FROM Block b
+                                    WHERE b.blocker.id = :userId
+                                   )
+                                AND u.id NOT IN (SELECT b2.blocker.id FROM Block b2
+                                    WHERE b2.blocked.id = :userId
+                                   )
+                                AND u.id NOT IN (SELECT r.reported.id FROM Report r
+                                    WHERE r.reporter.id = :userId
+                                   )
+               """)
     Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
@@ -568,4 +590,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE us.SubscriptionType = :type
     """)
     List<Object[]> countAndTotalSumBySubscriptionType(@Param("type") SubscriptionType type);
+
+    /*
+    dashboard uchun user malumotlarini olish
+     */
+    @Query(value = """
+                SELECT 
+                    TO_CHAR(u.created_at, :format) as period,
+                    COUNT(*) as count
+                FROM users u
+                WHERE u.created_at BETWEEN :start AND :end
+                AND u.visibility = true
+                GROUP BY period
+                ORDER BY period
+            """, nativeQuery = true)
+    List<Object[]> getUserStats(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("format") String format
+    );
 }
