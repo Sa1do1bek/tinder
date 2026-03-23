@@ -23,12 +23,12 @@ import java.util.Set;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = """
-        select u from User u
-     """,
-    countQuery =
-            """
-                SELECT COUNT(u) FROM User u
-                """)
+               select u from User u
+            """,
+            countQuery =
+                    """
+                            SELECT COUNT(u) FROM User u
+                            """)
     Page<User> findAllCustom(Pageable pageable);
 
     @Query("""
@@ -51,12 +51,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(@Param("email") String email);
 
     @Query("""
-       SELECT u FROM User u
-       WHERE u.phoneNumber = :phoneNumber
-         AND u.visibility = true
-         AND u.active = true
-         AND u.status = 'ACTIVE'
-       """)
+            SELECT u FROM User u
+            WHERE u.phoneNumber = :phoneNumber
+              AND u.visibility = true
+              AND u.active = true
+              AND u.status = 'ACTIVE'
+            """)
     Optional<User> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
 
 
@@ -108,22 +108,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
                    WHERE r.reporter.id = :userId)""",
             countQuery =
                     """
-                            SELECT COUNT(u) FROM User u
-                                WHERE u.status =:status
-                                AND u.id<> :userId
-                                AND u.id NOT IN(SELECT s2.swiped.id FROM Swipe s2
-                                    WHERE s2.swiper.id=:userId
-                                   )
-                                AND u.id NOT IN (SELECT b.blocked.id FROM Block b
-                                    WHERE b.blocker.id = :userId
-                                   )
-                                AND u.id NOT IN (SELECT b2.blocker.id FROM Block b2
-                                    WHERE b2.blocked.id = :userId
-                                   )
-                                AND u.id NOT IN (SELECT r.reported.id FROM Report r
-                                    WHERE r.reporter.id = :userId
-                                   )
-               """)
+                                         SELECT COUNT(u) FROM User u
+                                             WHERE u.status =:status
+                                             AND u.id<> :userId
+                                             AND u.id NOT IN(SELECT s2.swiped.id FROM Swipe s2
+                                                 WHERE s2.swiper.id=:userId
+                                                )
+                                             AND u.id NOT IN (SELECT b.blocked.id FROM Block b
+                                                 WHERE b.blocker.id = :userId
+                                                )
+                                             AND u.id NOT IN (SELECT b2.blocker.id FROM Block b2
+                                                 WHERE b2.blocked.id = :userId
+                                                )
+                                             AND u.id NOT IN (SELECT r.reported.id FROM Report r
+                                                 WHERE r.reporter.id = :userId
+                                                )
+                            """)
     Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
@@ -171,8 +171,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
                         AND visibility = true
                         )
-            
-            
+                        
+                        
             AND (6371 * acos(
                 least(1.0, greatest(-1.0,
                     cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
@@ -246,7 +246,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                     WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
                                     AND visibility = true
                                     )
-                    
+                                        
                     """,
             nativeQuery = true)
     Page<User> findDiscoveryUsersWithoutLocation(
@@ -258,51 +258,51 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     @Query(value = """
-    SELECT DISTINCT u.*
-    FROM users u
-    JOIN users_location ul ON u.id = ul.user_id
-    JOIN users_user_interests uui ON u.id = uui.user_id
-    WHERE u.id != :currentUserId
-    AND u.active = true
-    AND u.id NOT IN (
-            SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
-            UNION
-            SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
-        )
-    AND u.id NOT IN (
-                        SELECT user1_id  FROM conversation
-                        WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
-                        AND visibility = true
-                        )
-    AND uui.user_interests_id = :interestId
-    AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
-    AND (u.birth_date IS NOT NULL AND EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
-    AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
-    AND (6371 * acos(
-        least(1.0, greatest(-1.0,
-            cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
-            cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
-            sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
-        ))
-    )) <= :maxDistance
-    """,
+            SELECT DISTINCT u.*
+            FROM users u
+            JOIN users_location ul ON u.id = ul.user_id
+            JOIN users_user_interests uui ON u.id = uui.user_id
+            WHERE u.id != :currentUserId
+            AND u.active = true
+            AND u.id NOT IN (
+                    SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
+                    UNION
+                    SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+                )
+            AND u.id NOT IN (
+                                SELECT user1_id  FROM conversation
+                                WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                                AND visibility = true
+                                )
+            AND uui.user_interests_id = :interestId
+            AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
+            AND (u.birth_date IS NOT NULL AND EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
+            AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
+            AND (6371 * acos(
+                least(1.0, greatest(-1.0,
+                    cos(radians(:lat)) * cos(radians(CAST(ul.latitude AS double precision))) *
+                    cos(radians(CAST(ul.longitude AS double precision)) - radians(:lon)) +
+                    sin(radians(:lat)) * sin(radians(CAST(ul.latitude AS double precision)))
+                ))
+            )) <= :maxDistance
+            """,
             countQuery = """
-        SELECT count(DISTINCT u.id) FROM users u 
-        JOIN users_user_interests uui ON u.id = uui.user_id 
-        WHERE u.id != :currentUserId 
-        AND u.active = true
-        AND u.id NOT IN (
-                SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
-                UNION
-                SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
-            )
-        AND u.id NOT IN (
-                         SELECT user1_id  FROM conversation
-                         WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
-                         AND visibility = true
-                        )        
-        AND uui.user_interests_id = :interestId
-    """,
+                        SELECT count(DISTINCT u.id) FROM users u 
+                        JOIN users_user_interests uui ON u.id = uui.user_id 
+                        WHERE u.id != :currentUserId 
+                        AND u.active = true
+                        AND u.id NOT IN (
+                                SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
+                                UNION
+                                SELECT blocker_id FROM user_block WHERE blocked_id = :currentUserId
+                            )
+                        AND u.id NOT IN (
+                                         SELECT user1_id  FROM conversation
+                                         WHERE  (user1_id = :currentUserId OR user2_id = :currentUserId)
+                                         AND visibility = true
+                                        )        
+                        AND uui.user_interests_id = :interestId
+                    """,
             nativeQuery = true)
     Page<User> findUsersBySpecificInterest(
             @Param("currentUserId") Long currentUserId,
@@ -590,23 +590,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE us.SubscriptionType = :type
     """)
     List<Object[]> countAndTotalSumBySubscriptionType(@Param("type") SubscriptionType type);
-
-    /*
-    dashboard uchun user malumotlarini olish
-     */
-    @Query(value = """
-                SELECT 
-                    TO_CHAR(u.created_at, :format) as period,
-                    COUNT(*) as count
-                FROM users u
-                WHERE u.created_at BETWEEN :start AND :end
-                AND u.visibility = true
-                GROUP BY period
-                ORDER BY period
-            """, nativeQuery = true)
-    List<Object[]> getUserStats(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end,
-            @Param("format") String format
-    );
 }
