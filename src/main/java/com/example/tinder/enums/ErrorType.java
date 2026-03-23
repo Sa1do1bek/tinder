@@ -104,7 +104,7 @@ public enum ErrorType {
     USER_BLOCK_FAILED("user.block.failed",HttpStatus.BAD_REQUEST),
     START_DATE_CAN_NOT_BE_AFTER_END_DATE("start.date.can.not.be.after.end.date",HttpStatus.BAD_REQUEST),
     INVALID_DATE("invalid.data", HttpStatus.BAD_REQUEST );
-
+    //***************************
 
 
 
