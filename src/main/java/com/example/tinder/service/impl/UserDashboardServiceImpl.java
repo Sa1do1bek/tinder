@@ -24,9 +24,7 @@ public class UserDashboardServiceImpl implements UserDashboardService {
     public ApiResponse<List<UserStatsDTO>> getUserRegistrationStats(UserStatsType type,
                                                                     LocalDate start,
                                                                     LocalDate end) {
-        if (start.isAfter(end) || end == null) {
-            throw RestException.restThrow(ErrorType.INVALID_DATE);
-        }
+        checkData(start, end);
 
         String format = type.getFormat();
 
@@ -41,4 +39,15 @@ public class UserDashboardServiceImpl implements UserDashboardService {
                         ((Number) r[1]).longValue())).toList();
         return ApiResponse.success(stats, SuccessType.USER_STATS_SUCCESSFULLY_GET);
     }
+
+    private void checkData(LocalDate start, LocalDate end) {
+        if (start == null || end == null) {
+            throw RestException.restThrow(ErrorType.INVALID_DATE);
+        }
+
+        if (start.isAfter(end)) {
+            throw RestException.restThrow(ErrorType.REPORT_STATUS_CAN_NOT_BE_UPDATE_TO_PENDING);
+        }
+    }
+
 }
