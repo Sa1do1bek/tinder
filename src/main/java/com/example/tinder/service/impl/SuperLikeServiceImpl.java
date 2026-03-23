@@ -96,7 +96,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 "Super Like sotib olindi: " + pkg.getQuantity() + " ta");
 
         // Platform revenue hisobga olish
-        platformRevenueService.recordPlatformRevenue(purchase, pkg);
+        platformRevenueService.recordPlatformRevenue(purchase, pkg, userId);
 
         return ApiResponse.success(superLikePurchaseMapper.toDto(purchase), SuccessType.SUPER_LIKES_PURCHASED_SUCCESSFULLY);
     }
