@@ -6,7 +6,7 @@ import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
-import com.example.tinder.repository.ProfileViewRepository;
+import com.example.tinder.repository.SwipeRepository;
 import com.example.tinder.service.ProfileViewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ProfileViewServiceImpl implements ProfileViewService {
-    private final ProfileViewRepository repository;
+    private final SwipeRepository repository;
 
     // profile ko'rishlar soni ni olish
     @Override

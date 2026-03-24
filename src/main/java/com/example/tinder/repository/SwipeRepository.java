@@ -1,5 +1,6 @@
 package com.example.tinder.repository;
 
+import com.example.tinder.dto.ProfileViewStatsProjection;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.SwipeStatus;
@@ -12,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,4 +95,32 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
     """)
   Optional<SwipeStatus> findSwipeTypeByUsers(@Param("swiperId") Long swiperId,
                                              @Param("swipedId") Long swipedId);
+
+  /*
+  profileView ni hisoblash
+   */
+    @Query("""
+        SELECT COUNT(s)
+        FROM Swipe s
+        WHERE s.swiped.id = :userId
+    """)
+    Long countViewsByUserId(@io.lettuce.core.dynamic.annotation.Param("userId") Long userId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            TO_CHAR(s.created_at, :format) AS period,
+            COUNT(DISTINCT s.swiper_id) AS count
+        FROM swipe s
+        WHERE s.swiped_id = :userId
+        AND s.created_at >= :start 
+        AND s.created_at < :end
+        GROUP BY period
+        ORDER BY period
+    """)
+    List<ProfileViewStatsProjection> getProfileViewStats(
+            @io.lettuce.core.dynamic.annotation.Param("userId") Long userId,
+            @io.lettuce.core.dynamic.annotation.Param("start") LocalDateTime start,
+            @io.lettuce.core.dynamic.annotation.Param("end") LocalDateTime end,
+            @io.lettuce.core.dynamic.annotation.Param("format") String format
+    );
 }
