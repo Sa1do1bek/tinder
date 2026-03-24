@@ -97,7 +97,12 @@ public enum SuccessType {
     VERIFICATION_SUCCESSFULLY("verification.successful"),
     PROFILE_VIEW_SUCCESSFULLY_GET("profile.view.successfully.get"),
     PROFILE_VIEW_STATS_SUCCESSFULLY_GET("profile.view.stats.successfully.get"),
-    ;
+    SUCCESSFULLY_GET_ALL_REPORTS("successful.get.all.reports."),
+    REPORT_SUCCESSFULLY_GET("report.successful.get"),
+    REPORT_STATUS_SUCCESSFULLY_UPDATED("report.status.updated"),
+    SUCCESSFULLY_GET_REPORTS_BY_REPORTED_ID("successful.get.reports.by.reported.id"),
+    USER_SUCCESSFULLY_REPORTED("user.successful.reported"),
+    USER_STATS_SUCCESSFULLY_GET("stats.user.successful.get");
     //--**--********************
 
 
