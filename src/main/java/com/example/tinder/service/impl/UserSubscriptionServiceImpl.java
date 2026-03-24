@@ -9,7 +9,6 @@ import com.example.tinder.mapper.UserSubscriptionMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.UserSubscriptionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -73,7 +72,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
 
 
-    @Scheduled(cron = "0 0 0 1 * *")
+    @Override
     public void checkSubscriptions() {
         LocalDateTime now = LocalDateTime.now();
 
