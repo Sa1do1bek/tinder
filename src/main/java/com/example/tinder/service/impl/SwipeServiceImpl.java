@@ -164,14 +164,6 @@ public class SwipeServiceImpl implements SwipeService {
     }
 
 
-
-    @Scheduled(fixedRate = 1000*60*2)
-    @Transactional
-    public void cleanupExpiredSwipes() {
-        swipeRepository.deleteExpiredRejects();
-    }
-
-
     public void createConversation(Long user1Id, Long user2Id) {
 
         Optional<Conversation> optional = Optional.ofNullable(findConversationBetween(user1Id, user2Id));

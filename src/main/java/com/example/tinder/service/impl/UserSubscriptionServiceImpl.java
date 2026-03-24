@@ -73,7 +73,7 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
 
 
-    @Scheduled(cron = "0 0 0 1 * *")
+    @Override
     public void checkSubscriptions() {
         LocalDateTime now = LocalDateTime.now();
 

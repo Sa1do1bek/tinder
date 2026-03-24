@@ -8,4 +8,6 @@ import org.springframework.stereotype.Service;
 public interface UserSubscriptionService {
     ApiResponse<?> create(User user, Long subscriptionPlanId);
 
+    void checkSubscriptions();
+
 }
