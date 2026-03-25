@@ -15,7 +15,11 @@ import lombok.Setter;
     name = "user_block",
     uniqueConstraints = @UniqueConstraint(
         columnNames = {"blocker_id", "blocked_id"}
-    )
+    ),
+    indexes = {
+        @Index(name = "idx_block_blocker_blocked", columnList = "blocker_id, blocked_id"),
+        @Index(name = "idx_block_blocked_blocker", columnList = "blocked_id, blocker_id")
+    }
 )
 public class Block extends BaseEntity {
 

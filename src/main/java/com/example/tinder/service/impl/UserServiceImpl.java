@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> getAllActiveUser(Pageable pageable, Long currentUserId) {
-        Page<User> page = this.userRepository.getAllUnswipedActiveUsers(currentUserId, pageable);
+        Page<User> page = this.userRepository.getAllUnSwipedActiveUsers(currentUserId, pageable);
         if (page != null && !page.isEmpty()) {
             List<UserDto> list = this.userMapper.dtoList(page.getContent());
 
