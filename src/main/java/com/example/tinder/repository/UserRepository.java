@@ -87,7 +87,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT u FROM User u
              WHERE u.status = 'ACTIVE'
-               AND u.role <> com.example.tinder.enums.Role.ADMIN
+               AND u.role <> com.example.tinder.enums.UserRole.ADMIN
                AND u.id <> :userId
                AND NOT EXISTS (
                    SELECT 1 FROM Swipe s
@@ -112,7 +112,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     """
                                          SELECT COUNT(u) FROM User u
                                              WHERE u.status = 'ACTIVE'
-                                             AND u.role <> com.example.tinder.enums.Role.ADMIN
+                                             AND u.role <> com.example.tinder.enums.UserRole.ADMIN
                                              AND u.id<> :userId
                                              AND NOT EXISTS (SELECT 1 FROM Swipe s2
                                                  WHERE s2.swiper.id=:userId
@@ -131,7 +131,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                                  AND r.reported.id = u.id
                                                 )
                             """)
-    Page<User> getAllUnSwipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
+    Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
 
