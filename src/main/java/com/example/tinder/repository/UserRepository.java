@@ -87,41 +87,48 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT u FROM User u
              WHERE u.status = 'ACTIVE'
+               AND u.role <> com.example.tinder.enums.Role.ADMIN
                AND u.id <> :userId
-               AND u.id NOT IN (
-                   SELECT s.swiped.id FROM Swipe s
+               AND NOT EXISTS (
+                   SELECT 1 FROM Swipe s
                    WHERE s.swiper.id = :userId
+                   AND s.swiped.id = u.id
                )
-               AND u.id NOT IN (
-                   SELECT b.blocked.id
-                   FROM Block b
+               AND NOT EXISTS(
+                   SELECT 1 FROM Block b 
                    WHERE b.blocker.id = :userId
+                   AND b.blocked.id = u.id
                          )
-               AND u.id NOT IN (
-                   SELECT b2.blocker.id
-                   FROM Block b2
+               AND NOT EXISTS (
+                   SELECT 1 FROM Block b2
                    WHERE b2.blocked.id = :userId
+                   AND b2.blocker.id = u.id
                          )
-               AND u.id NOT IN (
-                   SELECT r.reported.id
-                   FROM Report r
-                   WHERE r.reporter.id = :userId)""",
+               AND NOT EXISTS (
+                   SELECT 1 FROM Report r
+                   WHERE r.reporter.id = :userId
+                   AND r.reported.id = u.id)""",
             countQuery =
                     """
                                          SELECT COUNT(u) FROM User u
-                                             WHERE u.status =:status
+                                             WHERE u.status = 'ACTIVE'
+                                             AND u.role <> com.example.tinder.enums.Role.ADMIN
                                              AND u.id<> :userId
-                                             AND u.id NOT IN(SELECT s2.swiped.id FROM Swipe s2
+                                             AND NOT EXISTS (SELECT 1 FROM Swipe s2
                                                  WHERE s2.swiper.id=:userId
+                                                 AND s2.swiped.id = u.id
                                                 )
-                                             AND u.id NOT IN (SELECT b.blocked.id FROM Block b
+                                             AND NOT EXISTS (SELECT 1 FROM Block b
                                                  WHERE b.blocker.id = :userId
+                                                 AND b.blocked.id = u.id
                                                 )
-                                             AND u.id NOT IN (SELECT b2.blocker.id FROM Block b2
+                                             AND NOT EXISTS (SELECT 1 FROM Block b2
                                                  WHERE b2.blocked.id = :userId
+                                                 AND b2.blocker.id = u.id
                                                 )
-                                             AND u.id NOT IN (SELECT r.reported.id FROM Report r
+                                             AND NOT EXISTS (SELECT 1 FROM Report r
                                                  WHERE r.reporter.id = :userId
+                                                 AND r.reported.id = u.id
                                                 )
                             """)
     Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
