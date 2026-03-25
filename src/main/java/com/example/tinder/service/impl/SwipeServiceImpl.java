@@ -7,16 +7,13 @@ import com.example.tinder.enums.NotificationPathType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.SwipeStatus;
 import com.example.tinder.exception.RestException;
-import com.example.tinder.mapper.ConversationMapper;
 import com.example.tinder.repository.*;
-import com.example.tinder.service.ConversationService;
 import com.example.tinder.service.NotificationService;
 import com.example.tinder.service.SwipeService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -161,14 +158,6 @@ public class SwipeServiceImpl implements SwipeService {
         }
 
         return ApiResponse.success(result, SuccessType.SWIPES_FETCHED);
-    }
-
-
-
-    @Scheduled(fixedRate = 1000*60*2)
-    @Transactional
-    public void cleanupExpiredSwipes() {
-        swipeRepository.deleteExpiredRejects();
     }
 
 

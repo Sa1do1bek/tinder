@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,13 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         // 1️⃣ Authorization umuman yo‘q → o‘tkaz
-        if (authHeader == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 2️⃣ Bearer bilan boshlanmasa → o‘tkaz
-        if (!authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -82,9 +77,8 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            // ❗ QANDAY XATO BO‘LSA HAM — BLOKLAMAYMIZ
             filterChain.doFilter(request, response);
-            return;
+            throw new BadCredentialsException("Invalid or expired JWT");
         }
 
         filterChain.doFilter(request, response);

@@ -5,19 +5,23 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.SubscriptionType;
-import com.example.tinder.enums.SuccessType;
+import com.example.tinder.service.ProfileViewService;
 import com.example.tinder.service.UserService;
 import com.example.tinder.utils.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
+    private final ProfileViewService profileViewService;
 
     @GetMapping("/getUserById")
     public ApiResponse<?> getUserById(@RequestParam("id") Long id) {
@@ -40,13 +44,13 @@ public class UserController {
 
     @PutMapping("/updateShowProfile")
     public ApiResponse<?> updateShowProfile(@CurrentUser User user,
-                                      @RequestParam("status") boolean status) {
+                                            @RequestParam("status") boolean status) {
         return this.userService.showProfileUpdate(user, status);
     }
 
     @PutMapping("/updateFreeTonight")
     public ApiResponse<?> updateFreeTonight(@CurrentUser User user,
-                                      @RequestParam("status") boolean status) {
+                                            @RequestParam("status") boolean status) {
         return this.userService.freeTonightUpdate(user, status);
     }
 
@@ -138,4 +142,14 @@ public class UserController {
         return userService.countAndTotalSumBySubscriptionType(type);
     }
 
+    @GetMapping("/views")
+    public ApiResponse<?> getProfileViews(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+    ) {
+        return profileViewService.getProfileViewCount(start, end);
+    }
 }

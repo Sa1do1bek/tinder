@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Service
 public interface PlatformRevenueService {
 
-    void recordPlatformRevenue(SuperLikePurchase purchase, SuperLikePackage pkg);
+    void recordPlatformRevenue(SuperLikePurchase purchase, SuperLikePackage pkg, Long userId);
 
     void recordPlatformExpense(WalletTransaction transaction, BigDecimal withdrawAmount);
 }
