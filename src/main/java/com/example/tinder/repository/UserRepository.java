@@ -87,7 +87,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT u FROM User u
              WHERE u.status = 'ACTIVE'
-               AND u.role <> com.example.tinder.enums.Role.ADMIN
+               AND u.role <> com.example.tinder.enums.UserRole.ADMIN
                AND u.id <> :userId
                AND NOT EXISTS (
                    SELECT 1 FROM Swipe s
@@ -112,7 +112,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     """
                                          SELECT COUNT(u) FROM User u
                                              WHERE u.status = 'ACTIVE'
-                                             AND u.role <> com.example.tinder.enums.Role.ADMIN
+                                             AND u.role <> com.example.tinder.enums.UserRole.ADMIN
                                              AND u.id<> :userId
                                              AND NOT EXISTS (SELECT 1 FROM Swipe s2
                                                  WHERE s2.swiper.id=:userId
