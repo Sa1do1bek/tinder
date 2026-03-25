@@ -44,13 +44,13 @@ public class UserController {
 
     @PutMapping("/updateShowProfile")
     public ApiResponse<?> updateShowProfile(@CurrentUser User user,
-                                      @RequestParam("status") boolean status) {
+                                            @RequestParam("status") boolean status) {
         return this.userService.showProfileUpdate(user, status);
     }
 
     @PutMapping("/updateFreeTonight")
     public ApiResponse<?> updateFreeTonight(@CurrentUser User user,
-                                      @RequestParam("status") boolean status) {
+                                            @RequestParam("status") boolean status) {
         return this.userService.freeTonightUpdate(user, status);
     }
 
@@ -143,13 +143,13 @@ public class UserController {
     }
 
     @GetMapping("/views")
-    public ApiResponse<?> getProfileViews() {return profileViewService.getProfileViewCount();}
+    public ApiResponse<?> getProfileViews(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
 
-    @GetMapping("/views/stats")
-    public ApiResponse<?> getProfileViewStats(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
-        return profileViewService.getProfileViewStats(start, end);
+        return profileViewService.getProfileViewCount(start, end);
     }
 }

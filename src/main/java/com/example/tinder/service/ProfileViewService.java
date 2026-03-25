@@ -6,6 +6,5 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 @Service
 public interface ProfileViewService {
-    ApiResponse<?> getProfileViewCount();
-    ApiResponse<?> getProfileViewStats(LocalDate start, LocalDate end);
+    ApiResponse<?> getProfileViewCount(LocalDate start, LocalDate end);
 }

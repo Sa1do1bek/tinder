@@ -19,7 +19,8 @@ import org.springframework.context.annotation.Configuration;
         ),
         servers = {
                 @Server(url = "https://api-tinder.tenzorsoft.uz", description = "Prod Server"),
-                @Server(url = "http://localhost:8081", description = "Local Server")
+                @Server(url = "http://localhost:8081", description = "Local Server"),
+                @Server(url = "http://192.168.7.137:8081", description = "Asus")
         },
         security = @SecurityRequirement(name = "bearerAuth")
 )

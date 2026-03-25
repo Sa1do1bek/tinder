@@ -1,6 +1,5 @@
 package com.example.tinder.repository;
 
-import com.example.tinder.dto.ProfileViewStatsProjection;
 import com.example.tinder.entity.Swipe;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.SwipeStatus;
@@ -20,107 +19,91 @@ import java.util.Optional;
 @Repository
 public interface SwipeRepository extends JpaRepository<Swipe, Long> {
 
-  boolean existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(Long swipedId, Long swiperId, SwipeStatus swipe);
+    boolean existsBySwiperIdAndSwipedIdAndSwipeAndVisibilityTrue(Long swipedId, Long swiperId, SwipeStatus swipe);
 
-  List<Swipe> findAllBySwiper_Id(Long userId);
+    List<Swipe> findAllBySwiper_Id(Long userId);
 
-  Optional<Swipe> findBySwiperIdAndSwipedId(Long swiperId, Long swipedId);
+    Optional<Swipe> findBySwiperIdAndSwipedId(Long swiperId, Long swipedId);
 
-  @Query("""
-        SELECT s.swiped FROM Swipe s
-        WHERE s.swiper.id = :userId AND s.swipe = com.example.tinder.enums.SwipeStatus.REJECT
-        AND s.visibility = true
-    """)
-  Page<User> findAllRejectedUsers(@Param("userId") Long userId, Pageable pageable);
-
-  /**
-   * LIKE va SUPERLIKE larni aralash olib kelish
-   */
-  @Query("""
-        SELECT s.swiped FROM Swipe s
-        WHERE s.swiper.id = :userId
-        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
-             OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
-        AND s.visibility = true
-        ORDER BY s.createdAt DESC
-    """)
-  Page<User> findAllLikeUsers(@Param("userId") Long userId, Pageable pageable);
-
-  @Modifying
-  @Transactional
-  @Query(value = """
-        DELETE FROM swipe
-        WHERE swipe = 'REJECT'
-        AND created_at <= NOW() - INTERVAL '5 minutes'
-        """, nativeQuery = true)
-  void deleteExpiredRejects();
-
-  /**
-   * Menga LIKE yoki SUPERLIKE bosgan userlarni topish
-   */
-  @Query("""
-        SELECT s.swiper FROM Swipe s
-        WHERE s.swiped.id = :userId
-        AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
-             OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
-        AND s.visibility = true
-        ORDER BY s.createdAt DESC
-    """)
-  Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
-
-
-
-
-
-  @Transactional
-  @Modifying
-  @Query("""
-        UPDATE Swipe s
-        SET s.visibility = false
-        WHERE
-          (s.swiper.id = :u1 AND s.swiped.id = :u2)
-          OR
-          (s.swiper.id = :u2 AND s.swiped.id = :u1)
-    """)
-  void hideSwipes(Long u1, Long u2);
-
-  /**
-   * Bitta user uchun swipe type ni topish
-   */
-  @Query("""
-        SELECT s.swipe FROM Swipe s
-        WHERE s.swiper.id = :swiperId
-        AND s.swiped.id = :swipedId
-        AND s.visibility = true
-    """)
-  Optional<SwipeStatus> findSwipeTypeByUsers(@Param("swiperId") Long swiperId,
-                                             @Param("swipedId") Long swipedId);
-
-  /*
-  profileView ni hisoblash
-   */
     @Query("""
-        SELECT COUNT(s)
-        FROM Swipe s
-        WHERE s.swiped.id = :userId
-    """)
-    Long countViewsByUserId(@io.lettuce.core.dynamic.annotation.Param("userId") Long userId);
+                SELECT s.swiped FROM Swipe s
+                WHERE s.swiper.id = :userId AND s.swipe = com.example.tinder.enums.SwipeStatus.REJECT
+                AND s.visibility = true
+            """)
+    Page<User> findAllRejectedUsers(@Param("userId") Long userId, Pageable pageable);
 
-    @Query(nativeQuery = true, value = """
-        SELECT 
-            TO_CHAR(s.created_at, :format) AS period,
-            COUNT(DISTINCT s.swiper_id) AS count
-        FROM swipe s
-        WHERE s.swiped_id = :userId
-        AND s.created_at >= :start 
-        AND s.created_at < :end
-        GROUP BY period
-        ORDER BY period
-    """)
-    List<ProfileViewStatsProjection> getProfileViewStats(
-            @io.lettuce.core.dynamic.annotation.Param("userId") Long userId,
-            @io.lettuce.core.dynamic.annotation.Param("start") LocalDateTime start,
-            @io.lettuce.core.dynamic.annotation.Param("end") LocalDateTime end,
-            @io.lettuce.core.dynamic.annotation.Param("format") String format
+    /**
+     * LIKE va SUPERLIKE larni aralash olib kelish
+     */
+    @Query("""
+                SELECT s.swiped FROM Swipe s
+                WHERE s.swiper.id = :userId
+                AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
+                     OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
+                AND s.visibility = true
+                ORDER BY s.createdAt DESC
+            """)
+    Page<User> findAllLikeUsers(@Param("userId") Long userId, Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM swipe
+            WHERE swipe = 'REJECT'
+            AND created_at <= NOW() - INTERVAL '5 minutes'
+            """, nativeQuery = true)
+    void deleteExpiredRejects();
+
+    /**
+     * Menga LIKE yoki SUPERLIKE bosgan userlarni topish
+     */
+    @Query("""
+                SELECT s.swiper FROM Swipe s
+                WHERE s.swiped.id = :userId
+                AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
+                     OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
+                AND s.visibility = true
+                ORDER BY s.createdAt DESC
+            """)
+    Page<User> findAllUsersWhoLikeMe(@Param("userId") Long userId, Pageable pageable);
+
+
+    @Transactional
+    @Modifying
+    @Query("""
+                UPDATE Swipe s
+                SET s.visibility = false
+                WHERE
+                  (s.swiper.id = :u1 AND s.swiped.id = :u2)
+                  OR
+                  (s.swiper.id = :u2 AND s.swiped.id = :u1)
+            """)
+    void hideSwipes(Long u1, Long u2);
+
+    /**
+     * Bitta user uchun swipe type ni topish
+     */
+    @Query("""
+                SELECT s.swipe FROM Swipe s
+                WHERE s.swiper.id = :swiperId
+                AND s.swiped.id = :swipedId
+                AND s.visibility = true
+            """)
+    Optional<SwipeStatus> findSwipeTypeByUsers(@Param("swiperId") Long swiperId,
+                                               @Param("swipedId") Long swipedId);
+
+    /*
+    profileView ni hisoblash
+     */
+    @Query("""
+                SELECT COUNT(DISTINCT s.swiper.id)
+                FROM Swipe s
+                WHERE s.swiped.id = :userId
+                AND s.createdAt BETWEEN :start AND :end
+            """)
+    Long countProfileViews(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
     );
 }
