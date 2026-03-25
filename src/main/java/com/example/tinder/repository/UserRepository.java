@@ -131,7 +131,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                                  AND r.reported.id = u.id
                                                 )
                             """)
-    Page<User> getAllUnSwipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
+    Page<User> getAllUnswipedActiveUsers(@Param("userId") Long userId, Pageable pageable);
 
     Optional<User> findByUsernameAndActive(String username, boolean active);
 
