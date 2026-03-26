@@ -1,14 +1,17 @@
 package com.example.tinder.service.impl;
 
+import com.example.tinder.dto.AllUserStatsProjection;
 import com.example.tinder.dto.UserStatsDTO;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.enums.ErrorType;
+import com.example.tinder.enums.SubscriptionType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.UserStatsRepository;
 import com.example.tinder.service.UserDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -21,9 +24,10 @@ public class UserDashboardServiceImpl implements UserDashboardService {
 
     private final UserStatsRepository userStatsRepository;
 
+    @Transactional(readOnly = true)
     @Override
     public ApiResponse<List<?>> getUserRegistrationStats(LocalDate start,
-                                                                    LocalDate end) {
+                                                         LocalDate end) {
         checkData(start, end);
 
         String formattedDate = getFormattedDate(start, end);
@@ -31,12 +35,30 @@ public class UserDashboardServiceImpl implements UserDashboardService {
         List<UserStatsDTO> stats = userStatsRepository.getUserStats(
                         start.atStartOfDay(),
                         end.plusDays(1).atStartOfDay(),
-                        formattedDate)
+                        formattedDate,
+                        SubscriptionType.GOLD.name())
                 .stream()
-                .map(p -> new UserStatsDTO(p.getPeriod(), p.getCount()))
+                .map(p -> new UserStatsDTO(
+                        p.getPeriod(),
+                        p.getTotalUsers(),
+                        p.getGoldUsers(),
+                        p.getApprovedUsers()))
                 .toList();
 
         return ApiResponse.success(stats, SuccessType.USER_STATS_SUCCESSFULLY_GET);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public ApiResponse<?> getAllUserCount() {
+
+        AllUserStatsProjection uStats = userStatsRepository.getAllUserStatsNative(SubscriptionType.GOLD.name());
+
+        return ApiResponse.success(new UserStatsDTO("UserStatistics from the time the SERVER was running until now!",
+                        uStats.getTotalUsers(),
+                        uStats.getGoldUsers(),
+                        uStats.getApprovedUsers()),
+                SuccessType.USER_STATS_SUCCESSFULLY_GET);
     }
 
     private void checkData(LocalDate start, LocalDate end) {
