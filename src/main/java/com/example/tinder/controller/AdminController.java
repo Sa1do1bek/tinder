@@ -8,14 +8,10 @@ import com.example.tinder.dto.ban.BanUserResponse;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.report.ReportDto;
 import com.example.tinder.enums.ReportStatus;
-import com.example.tinder.service.AdminService;
-import com.example.tinder.service.ProfilePictureService;
-import com.example.tinder.service.ReportService;
-import com.example.tinder.service.impl.BanServiceImpl;
+import com.example.tinder.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import com.example.tinder.service.UserDashboardService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +31,7 @@ public class AdminController {
     private final ReportService reportService;
     private final ProfilePictureService profilePictureService;
     private final UserDashboardService userDashboardService;
-    private final BanServiceImpl banServiceImpl;
+    private final BanService banService;
 
     @GetMapping("/users")
     public ApiResponse<?> getAllUsers(
@@ -101,14 +97,14 @@ public class AdminController {
 //    -------------------------------------
     @PostMapping("/users/{userId}/ban")
     @ResponseStatus(HttpStatus.OK)
-    public BanUserResponse banUser(@PathVariable Long userId, @RequestBody BanUserRequest banUserRequest) {
-        return banServiceImpl.banUser(userId, banUserRequest);
+    public ApiResponse<?> banUser(@PathVariable Long userId, @RequestBody BanUserRequest banUserRequest) {
+        return banService.banUser(userId, banUserRequest);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/users/{userId}/ban")
-    public BanUserResponse unBan(@PathVariable Long userId) {
-        return banServiceImpl.unBan(userId);
+    public ApiResponse<?> unBan(@PathVariable Long userId) {
+        return banService.unBan(userId);
     }
 
     @GetMapping("/reported-users/{userId}/reports")

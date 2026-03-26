@@ -12,6 +12,7 @@ import com.example.tinder.enums.ReportReason;
 import com.example.tinder.enums.ReportStatus;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
+import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.ReportRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ReportService;
@@ -37,6 +38,7 @@ public class ReportServiceImpl implements ReportService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final BlockServiceImpl blockService;
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     @Override
@@ -155,7 +157,6 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public ApiResponse<List<ReportDto>> getReportsByReportedUser(Long reportedUserId) {
 
-
         userRepository.findById(reportedUserId)
                 .orElseThrow(() -> new RestException(ErrorType.USER_NOT_FOUND));
 
@@ -168,8 +169,8 @@ public class ReportServiceImpl implements ReportService {
                         report.getReportReason(),
                         report.getCreatedAt(),
                         report.getReportStatus(),
-                        report.getReported(),
-                        report.getReporter()
+                        userMapper.toDto(report.getReported()),
+                        userMapper.toDto(report.getReporter())
                 ))
                 .collect(Collectors.toList());
 
