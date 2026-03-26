@@ -81,10 +81,22 @@ public class AdminController {
         return reportService.updateReport(reportId, status, updateDto.getComment());
     }
 
-    @GetMapping("/getAllUsersStats") // dashboard ga userlarni oy bo'yicha olish nechta registartsiya qilingan.
+
+    /**
+     * dashboard ga "userlarni oy bo'yicha olish" nechta registartsiya qilingan.
+     */
+    @GetMapping("/get/all/users-stats")
     public ApiResponse<List<?>> getUserStats(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
                                              @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         return userDashboardService.getUserRegistrationStats(start, end);
 
+    }
+
+    /**
+     * Dashboardga "hamma userlarni, premium userlar va verify bo'lgan" userlarni sonini olib keladi
+     */
+    @GetMapping("/get/all/user-count")
+    public ApiResponse<?> getAllUserCount() {
+        return userDashboardService.getAllUserCount();
     }
 }
