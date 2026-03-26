@@ -36,13 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         // 1️⃣ Authorization umuman yo‘q → o‘tkaz
-        if (authHeader == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 2️⃣ Bearer bilan boshlanmasa → o‘tkaz
-        if (!authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -82,9 +76,7 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            // ❗ QANDAY XATO BO‘LSA HAM — BLOKLAMAYMIZ
-            filterChain.doFilter(request, response);
-            return;
+            System.out.println("JWT ERROR: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

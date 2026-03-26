@@ -49,11 +49,11 @@ public class SuperLikeServiceImpl implements SuperLikeService {
             return ApiResponse.success(new ArrayList<>(), SuccessType.NO_SUPER_LIKE_PACKAGES_FOUND);
         }
 
-        List<SuperLikePackageDto> dtos = packages.stream()
+        List<SuperLikePackageDto> result = packages.stream()
                 .map(superLikePackageMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
 
-        return ApiResponse.success(dtos, SuccessType.SUPER_LIKE_PACKAGES_FETCHED_SUCCESSFULLY);
+        return ApiResponse.success(result, SuccessType.SUPER_LIKE_PACKAGES_FETCHED_SUCCESSFULLY);
     }
 
     @Override
@@ -96,7 +96,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 "Super Like sotib olindi: " + pkg.getQuantity() + " ta");
 
         // Platform revenue hisobga olish
-        platformRevenueService.recordPlatformRevenue(purchase, pkg);
+        platformRevenueService.recordPlatformRevenue(purchase, pkg, userId);
 
         return ApiResponse.success(superLikePurchaseMapper.toDto(purchase), SuccessType.SUPER_LIKES_PURCHASED_SUCCESSFULLY);
     }

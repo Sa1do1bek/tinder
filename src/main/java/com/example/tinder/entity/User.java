@@ -37,7 +37,8 @@ public class User extends BaseEntity implements UserDetails {
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    private UserStatus status;
+    @Column(name = "status", nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -95,9 +96,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "boolean default false")
     private Boolean freeTonight = false;
 
-
-
-
+    private LocalDateTime bannedAt;
+    private LocalDateTime banUtil;
+    private String banReason;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -19,7 +19,11 @@ import java.time.LocalDateTime;
         name = "user_report",
         uniqueConstraints = @UniqueConstraint(
                 columnNames = {"reporter_id", "reported_id"}
-        )
+        ),
+        indexes = {
+                @Index(name = "idx_report_reporter_reported", columnList = "reporter_id, reported_id"),
+                @Index(name = "idx_report_reported_reporter", columnList = "reported_id, reporter_id")
+        }
 )
 public class Report extends BaseEntity {
 

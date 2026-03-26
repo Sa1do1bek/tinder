@@ -2,7 +2,7 @@ package com.example.tinder.dto;
 
 
 import com.example.tinder.enums.ReportReason;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class CreateReportUserDto {
-    @NotBlank(message = "reported.id.can.not.be.empty.or.null")
+    @NotNull
     private Long reportedUserId;
-    @NotBlank(message = "report.reason.can.not.be.null.or.empty")
+    @NotNull
     private ReportReason reason;
     private String description;
 }

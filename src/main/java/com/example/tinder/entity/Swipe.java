@@ -10,7 +10,12 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "swipe")
+@Table(name = "swipe",
+        indexes = {
+                @Index(name = "idx_swipe_swiper_swiped", columnList = "swiper_id, swiped_id")
+        }
+)
+
 public class Swipe extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "swiper_id", nullable = false)

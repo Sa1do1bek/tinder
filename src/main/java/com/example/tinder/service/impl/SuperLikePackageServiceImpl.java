@@ -24,16 +24,29 @@ public class SuperLikePackageServiceImpl implements SuperLikePackageService {
 
     @Override
     public ApiResponse<?> createPackage(SuperLikePackageDto.SuperLikePackageCreateDto dto) {
-        if (dto.getQuantity() <= 0) throw RestException.restThrow(ErrorType.INVALID_PACKAGE_QUANTITY);
+        if (dto.getQuantity() == null || dto.getQuantity() <= 0)
+            throw RestException.restThrow(ErrorType.INVALID_PACKAGE_QUANTITY);
         if (dto.getPriceUZS() == null || dto.getPriceUZS().compareTo(BigDecimal.ZERO) <= 0)
             throw RestException.restThrow(ErrorType.INVALID_PACKAGE_PRICE);
         if (dto.getPricePerUnit() == null || dto.getPricePerUnit().compareTo(BigDecimal.ZERO) <= 0)
             throw RestException.restThrow(ErrorType.INVALID_PACKAGE_PRICE);
         if (dto.getPlatformCommission() == null || dto.getPlatformCommission().compareTo(BigDecimal.ZERO) < 0)
             throw RestException.restThrow(ErrorType.INVALID_PLATFORM_COMMISSION);
+        SuperLikePackage entity = superLikePackageMapper.fromCreateDto(dto);
 
-        SuperLikePackage save = superLikePackageRepository.save(superLikePackageMapper.fromCreateDto(dto));
-        return ApiResponse.success(superLikePackageMapper.toDto(save), SuccessType.PACKAGE_CREATED_SUCCESSFULLY);
+        //  agar bu discount (parent bor) bo‘lsa
+        if (dto.getParentPackageId() != null) {
+            SuperLikePackage parent = superLikePackageRepository.findById(dto.getParentPackageId())
+                    .orElseThrow(() -> RestException.restThrow(ErrorType.PACKAGE_NOT_FOUND));
+            entity.setParentPackage(parent);
+
+            //  eski package ni o‘chiramiz (history saqlanadi)
+            parent.setVisibility(false);
+            superLikePackageRepository.save(parent);
+        }
+        SuperLikePackage saved = superLikePackageRepository.save(entity);
+        return ApiResponse.success(superLikePackageMapper.toDto(saved),
+                SuccessType.PACKAGE_CREATED_SUCCESSFULLY);
     }
 
     @Override
