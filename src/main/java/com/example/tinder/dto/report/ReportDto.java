@@ -1,5 +1,6 @@
 package com.example.tinder.dto.report;
 
+import com.example.tinder.dto.UserDto;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ReportReason;
 import com.example.tinder.enums.ReportStatus;
@@ -12,7 +13,7 @@ public record ReportDto(
         ReportReason cause,
         LocalDateTime reportedAt,
         ReportStatus status,
-        User reportedUser,
-        User reporterUser
+        UserDto reportedUser,
+        UserDto reporterUser
 ) {
 }

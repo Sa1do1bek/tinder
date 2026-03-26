@@ -108,8 +108,8 @@ public enum ErrorType {
     INVALID_SUBSCRIPTION_MONTH("invalid.subscription.month", HttpStatus.BAD_REQUEST ),
     INVALID_SUBSCRIPTION_CODE("invalid.subscription.code", HttpStatus.BAD_REQUEST ),
     INVALID_SUBSCRIPTION_TYPE("invalid.subscription.type", HttpStatus.BAD_REQUEST ),
-    USER_BANNED_PERMANENT( "Sizning akkauntingiz umrbod bloklangan",HttpStatus.FORBIDDEN),
-    USER_BANNED_TEMP( "Sizning akkauntingiz vaqtinchalik bloklangan",HttpStatus.FORBIDDEN);
+    USER_BANNED_PERMANENT( "account.has.been.blocked.for.life",HttpStatus.FORBIDDEN),
+    USER_BANNED_TEMP( "account.has.been.temporarily.blocked",HttpStatus.FORBIDDEN);
     //***************************
 
 
