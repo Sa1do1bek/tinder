@@ -1,10 +1,10 @@
 package com.example.tinder.service.impl;
 
 
-import com.example.tinder.dto.AllReportDto;
 import com.example.tinder.dto.CreateReportUserDto;
 import com.example.tinder.dto.ReportAdminDTO;
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.report.ReportDto;
 import com.example.tinder.entity.Report;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
@@ -19,11 +19,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -37,11 +40,12 @@ public class ReportServiceImpl implements ReportService {
 
     @Transactional(readOnly = true)
     @Override
-    public ApiResponse<Page<?>> getAllReports(int page, int size) {
+    public ApiResponse<Page<ReportAdminDTO>> getAllReports(int page, int size) {
 
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<AllReportDto> reports =
-                reportRepository.findAllReport(ReportStatus.PENDING, pageable);
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ReportAdminDTO> reports =
+                reportRepository.findAllReportsForAdmin(pageable);
 
         return ApiResponse.success(reports, SuccessType.SUCCESSFULLY_GET_ALL_REPORTS);
     }
@@ -145,5 +149,30 @@ public class ReportServiceImpl implements ReportService {
         if (ReportStatus.PENDING.equals(status)) {
             throw RestException.restThrow(ErrorType.REPORT_STATUS_CAN_NOT_BE_UPDATE_TO_PENDING);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApiResponse<List<ReportDto>> getReportsByReportedUser(Long reportedUserId) {
+
+
+        userRepository.findById(reportedUserId)
+                .orElseThrow(() -> new RestException(ErrorType.USER_NOT_FOUND));
+
+        List<Report> reports = reportRepository.findByReportedIdWithBothUsers(reportedUserId);
+
+        List<ReportDto> reportDto = reports.stream()
+                .map(report -> new ReportDto(
+                        report.getId(),
+                        report.getDescription(),
+                        report.getReportReason(),
+                        report.getCreatedAt(),
+                        report.getReportStatus(),
+                        report.getReported(),
+                        report.getReporter()
+                ))
+                .collect(Collectors.toList());
+
+        return ApiResponse.success(reportDto);
     }
 }

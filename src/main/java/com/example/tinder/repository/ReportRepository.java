@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Repository
@@ -87,4 +88,29 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                          @Param("adminComment") String adminComment,
                          @Param("pendingStatus") ReportStatus pendingStatus);
 
+
+    @Query("""
+    SELECT new com.example.tinder.dto.ReportAdminDTO(
+        r.id,
+        r.reporter.username,
+        r.reported.username,
+        r.reportReason,
+        r.reportStatus,
+        r.createdAt,
+        r.reviewedBy.id,
+        r.adminComment,
+        r.reviewedAt
+    )
+    FROM Report r
+""")
+    Page<ReportAdminDTO> findAllReportsForAdmin(Pageable pageable);
+
+    @Query("""
+            SELECT r FROM Report r 
+            LEFT JOIN FETCH r.reporter 
+            LEFT JOIN FETCH r.reported 
+            WHERE r.reported.id = :reportedId 
+            ORDER BY r.createdAt DESC
+            """)
+    List<Report> findByReportedIdWithBothUsers(@Param("reportedId") Long reportedId);
 }
