@@ -1,12 +1,14 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.AdminReportUpdateDto;
+import com.example.tinder.dto.ReportAdminDTO;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.enums.ReportStatus;
 import com.example.tinder.service.AdminService;
 import com.example.tinder.service.ProfilePictureService;
 import com.example.tinder.service.ReportService;
+import com.example.tinder.service.impl.BanServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +30,7 @@ public class AdminController {
     private final ReportService reportService;
     private final ProfilePictureService profilePictureService;
     private final UserDashboardService userDashboardService;
+    private final BanServiceImpl banServiceImpl;
 
     @GetMapping("/users")
     public ApiResponse<?> getAllUsers(
@@ -60,8 +63,10 @@ public class AdminController {
      */
 
     @GetMapping("/reports")
-    public ApiResponse<Page<?>> getAllReports(@RequestParam(required = false, defaultValue = "0") int page,
-                                              @RequestParam(required = false, defaultValue = "10") int size) {
+    public ApiResponse<Page<ReportAdminDTO>> getAllReports(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
         return reportService.getAllReports(page, size);
     }
 
@@ -98,5 +103,7 @@ public class AdminController {
     @GetMapping("/get/all/user-count")
     public ApiResponse<?> getAllUserCount() {
         return userDashboardService.getAllUserCount();
+//    -------------------------------------
+
     }
 }
