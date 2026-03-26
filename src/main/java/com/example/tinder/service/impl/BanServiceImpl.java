@@ -2,11 +2,13 @@ package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.ban.BanUserRequest;
 import com.example.tinder.dto.ban.BanUserResponse;
+import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.UserStatus;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.UserRepository;
+import com.example.tinder.service.BanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +17,13 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class BanServiceImpl {
+public class BanServiceImpl implements BanService {
 
     private final UserRepository userRepository;
 
-    public BanUserResponse banUser(Long userId, BanUserRequest ban) {
+    @Override
+    @Transactional
+    public ApiResponse<BanUserResponse> banUser(Long userId, BanUserRequest ban) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User topilmadi" + userId));
 
@@ -48,11 +52,14 @@ public class BanServiceImpl {
 
         userRepository.save(user);
 
-        return toResponse(user, ban.permanent());
+        BanUserResponse banUserResponse = toResponse(user, ban.permanent());
+
+        return ApiResponse.success(banUserResponse);
     }
 
+    @Override
     @Transactional
-    public BanUserResponse unBan(Long userId) {
+    public ApiResponse<BanUserResponse> unBan(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("user topilmadi" + userId));
@@ -62,7 +69,7 @@ public class BanServiceImpl {
         user.setBanUtil(null);
         user.setBanReason(null);
         userRepository.save(user);
-        return new BanUserResponse(
+        BanUserResponse banUserResponse = new  BanUserResponse(
                 user.getId(),
                 user.getUsername(),
                 UserStatus.ACTIVE,
@@ -71,6 +78,8 @@ public class BanServiceImpl {
                 false,
                 null
         );
+
+        return ApiResponse.success(banUserResponse);
     }
 
     private BanUserResponse toResponse(User user, boolean permanent) {

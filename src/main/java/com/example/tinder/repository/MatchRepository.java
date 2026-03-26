@@ -29,4 +29,13 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
       (m.user1.id = :u2 AND m.user2.id = :u1)
 """)
     void deactivateMatch(Long u1, Long u2);
+
+
+    @Modifying
+    @Query("""
+    DELETE FROM Match m
+    WHERE (m.user1.id = :u1 AND m.user2.id = :u2)
+       OR (m.user1.id = :u2 AND m.user2.id = :u1)
+""")
+    void deleteMatch(Long u1, Long u2);
 }
