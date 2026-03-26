@@ -8,8 +8,17 @@ import java.util.List;
 
 @Service
 public interface UserDashboardService {
+
+    /**
+     * userlar "statusini dashboard ga chiqaryapmiz" "DAY,MONTH,YEAR" bo'yicha.
+     */
     ApiResponse<List<?>> getUserRegistrationStats(
             LocalDate start,
             LocalDate end);
-    //userlar statusini dashboard ga chiqaryapmiz DAY,MONTH,YEAR bo'yicha.
+
+
+    /**
+     * @return "hamma userlarni, premium userlar va verify bo'lgan" userlarni sonini DTO da.
+     */
+    ApiResponse<?> getAllUserCount();
 }
