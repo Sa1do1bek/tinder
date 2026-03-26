@@ -22,7 +22,12 @@ import java.util.List;
 @Builder
 @Entity
 @ToString
-@Table(name = "users")
+@Table(name = "users",
+        indexes = {
+                @Index(name = "idx_users_created_at", columnList = "created_at"),
+                @Index(name = "idx_user_approved", columnList = "is_approved"),
+                @Index(name = "idx_user_subscription", columnList = "subscription_type")
+        })
 public class User extends BaseEntity implements UserDetails {
     @Column(unique = true, nullable = false)
     private String username;
@@ -94,9 +99,6 @@ public class User extends BaseEntity implements UserDetails {
 
     @Column(columnDefinition = "boolean default false")
     private Boolean freeTonight = false;
-
-
-
 
 
     @Override
