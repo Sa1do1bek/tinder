@@ -56,15 +56,7 @@ public class SubscriptionPlanMapper {
                 entity.setDiscountPercent(0.0);
             }
 
-            // 🔥 OLD PLAN (recursive qilmaymiz )
-            SubscriptionPlanDto oldPlan = new SubscriptionPlanDto();
-            oldPlan.setId(dto.getParent().getId());
-            oldPlan.setCode(dto.getParent().getCode());
-            oldPlan.setPrice(dto.getParent().getPrice());
-            oldPlan.setMonths(dto.getParent().getMonths());
-            oldPlan.setType(dto.getParent().getType());
-
-            entity.setOldPlan(oldPlan);
+            entity.setOldPrice(dto.getParent().getPrice());
 
         } else {
             entity.setDiscountPercent(0.0);

@@ -19,7 +19,7 @@ public class SubscriptionPlanDto {
     private BigDecimal monthly_price;
 
     private Double discountPercent;
-    private SubscriptionPlanDto oldPlan;
+    private BigDecimal oldPrice;
 
     @Getter
     @Setter
