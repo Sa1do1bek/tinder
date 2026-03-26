@@ -13,12 +13,6 @@ import java.util.Optional;
 @Repository
 public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, Long> {
 
-    @Query(value = """
-                SELECT sp FROM SubscriptionPlan sp
-                WHERE sp.code = :code
-                AND sp.visibility = true
-            """)
-    Optional<SubscriptionPlan> findByCode(@Param("code") String code);
 
     @NotNull
     @Query(value = """

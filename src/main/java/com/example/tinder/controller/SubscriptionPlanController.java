@@ -24,11 +24,6 @@ public class SubscriptionPlanController {
         return ApiResponse.success(subscriptionPlanService.create(subscriptionPlanCreateDto));
     }
 
-    @PutMapping("/update")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public ApiResponse<?> update(@RequestBody SubscriptionPlanDto.SubscriptionPlanUpdateDto subscriptionPlanUpdateDto) {
-        return ApiResponse.success(subscriptionPlanService.update(subscriptionPlanUpdateDto));
-    }
 
     @DeleteMapping("/delete")
     @PreAuthorize("hasAnyRole('ADMIN')")

@@ -12,6 +12,7 @@ import com.example.tinder.enums.ReportReason;
 import com.example.tinder.enums.ReportStatus;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
+import com.example.tinder.mapper.UserMapper;
 import com.example.tinder.repository.ReportRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.ReportService;
@@ -37,6 +38,7 @@ public class ReportServiceImpl implements ReportService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final BlockServiceImpl blockService;
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     @Override
@@ -50,19 +52,7 @@ public class ReportServiceImpl implements ReportService {
         return ApiResponse.success(reports, SuccessType.SUCCESSFULLY_GET_ALL_REPORTS);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<?> getReports(Long reportedId, ReportStatus status, int page, int size) {
 
-        if (!reportRepository.existsByReported_Id(reportedId)) {
-            throw RestException.restThrow(ErrorType.REPORTS_NOT_FOUND_BY_REPORTED_ID);
-        }
-        PageRequest pageable = PageRequest.of(page, size);
-
-        Page<ReportAdminDTO> reports = reportRepository.findReports(reportedId, status, pageable);
-
-        return ApiResponse.success(reports, SuccessType.SUCCESSFULLY_GET_REPORTS_BY_REPORTED_ID);
-    }
 
     @Transactional
     @Override
@@ -168,8 +158,8 @@ public class ReportServiceImpl implements ReportService {
                         report.getReportReason(),
                         report.getCreatedAt(),
                         report.getReportStatus(),
-                        report.getReported(),
-                        report.getReporter()
+                        userMapper.toDto(report.getReported()),
+                        userMapper.toDto(report.getReporter())
                 ))
                 .collect(Collectors.toList());
 

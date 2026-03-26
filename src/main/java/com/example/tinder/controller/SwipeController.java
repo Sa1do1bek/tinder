@@ -30,4 +30,9 @@ public class SwipeController {
 
 
 
+    @DeleteMapping("/unlike")
+    public ApiResponse<?> unlike(@CurrentUser User user,
+                                 @RequestParam Long swipedId) {
+        return swipeService.unlike(user.getId(), swipedId);
+    }
 }

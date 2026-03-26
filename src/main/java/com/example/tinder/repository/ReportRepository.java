@@ -21,29 +21,7 @@ import java.util.List;
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
 
-    @Query("""
-            SELECT new com.example.tinder.dto.ReportAdminDTO(
-                    r.id,
-                    reporter.username,
-                    reported.username,
-                    r.reportReason,
-                    r.reportStatus,
-                    r.createdAt,
-                    reviewer.id,
-                    r.adminComment,
-                    r.reviewedAt
-                )
-                FROM Report r
-                JOIN r.reporter reporter
-                JOIN r.reported reported
-                LEFT JOIN r.reviewedBy reviewer
-                WHERE reported.id = :reportedId
-                AND (:status IS NULL OR r.reportStatus = :status)
-            """)
-    Page<ReportAdminDTO> findReports(
-            @Param("reportedId") Long reportedId,
-            @Param("status") ReportStatus status,
-            Pageable pageable);
+
 
     @Query("""
             SELECT new com.example.tinder.dto.AllReportDto(
