@@ -54,7 +54,7 @@ public class UserDashboardServiceImpl implements UserDashboardService {
 
         AllUserStatsProjection uStats = userStatsRepository.getAllUserStatsNative(SubscriptionType.GOLD.name());
 
-        return ApiResponse.success(new UserStatsDTO("UserStatistics from the time the SERVER was running until now!",
+        return ApiResponse.success(new UserStatsDTO("UserStatistics.from.the.time.the.SERVER.was.running.until.now!",
                         uStats.getTotalUsers(),
                         uStats.getGoldUsers(),
                         uStats.getApprovedUsers()),

@@ -103,7 +103,11 @@ public enum ErrorType {
     OTHER_WITH_NO_DESCRIPTION("other.with.no.description", HttpStatus.BAD_REQUEST),
     USER_BLOCK_FAILED("user.block.failed",HttpStatus.BAD_REQUEST),
     START_DATE_CAN_NOT_BE_AFTER_END_DATE("start.date.can.not.be.after.end.date",HttpStatus.BAD_REQUEST),
-    INVALID_DATE("invalid.data", HttpStatus.BAD_REQUEST );
+    INVALID_DATE("invalid.data", HttpStatus.BAD_REQUEST ),
+    INVALID_SUBSCRIPTION_PRICE("invalid.subscription.price", HttpStatus.BAD_REQUEST ),
+    INVALID_SUBSCRIPTION_MONTH("invalid.subscription.month", HttpStatus.BAD_REQUEST ),
+    INVALID_SUBSCRIPTION_CODE("invalid.subscription.code", HttpStatus.BAD_REQUEST ),
+    INVALID_SUBSCRIPTION_TYPE("invalid.subscription.type", HttpStatus.BAD_REQUEST );
     //***************************
 
 
