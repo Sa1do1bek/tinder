@@ -68,14 +68,6 @@ public class AdminController {
         return reportService.getAllReports(page, size);
     }
 
-    @GetMapping("/reports/by-reported-id")
-    public ApiResponse<?> getReportByReportedId(@RequestParam() Long reportedId,
-                                                @RequestParam(required = false, defaultValue = "0") int page,
-                                                @RequestParam(required = false, defaultValue = "10") int size,
-                                                @RequestParam(required = false) ReportStatus status) {
-        return reportService.getReports(reportedId, status, page, size);
-    }
-
 
     @PatchMapping("/report/update/status")
     public ApiResponse<?> updateReport(@RequestParam Long reportId,

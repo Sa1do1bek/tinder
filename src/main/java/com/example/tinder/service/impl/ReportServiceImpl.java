@@ -52,19 +52,7 @@ public class ReportServiceImpl implements ReportService {
         return ApiResponse.success(reports, SuccessType.SUCCESSFULLY_GET_ALL_REPORTS);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<?> getReports(Long reportedId, ReportStatus status, int page, int size) {
 
-        if (!reportRepository.existsByReported_Id(reportedId)) {
-            throw RestException.restThrow(ErrorType.REPORTS_NOT_FOUND_BY_REPORTED_ID);
-        }
-        PageRequest pageable = PageRequest.of(page, size);
-
-        Page<ReportAdminDTO> reports = reportRepository.findReports(reportedId, status, pageable);
-
-        return ApiResponse.success(reports, SuccessType.SUCCESSFULLY_GET_REPORTS_BY_REPORTED_ID);
-    }
 
     @Transactional
     @Override
