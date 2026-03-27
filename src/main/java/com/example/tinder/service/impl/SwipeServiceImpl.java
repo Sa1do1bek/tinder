@@ -190,4 +190,21 @@ public class SwipeServiceImpl implements SwipeService {
 
         conversationRepository.save(conversation);
     }
+
+
+    @Override
+    @Transactional
+    public ApiResponse<?> unlike(Long swipedId, Long currentUserId) {
+
+        Swipe swipe = swipeRepository.findBySwiperIdAndSwipedId(currentUserId, swipedId)
+                .orElseThrow(() -> RestException.restThrow(ErrorType.SWIPE_NOT_FOUND));
+
+        swipeRepository.delete(swipe);
+
+        matchRepository.deleteMatch(currentUserId, swipedId);
+
+        // Conversationga tegmaymiz
+
+        return ApiResponse.success("Unlike done");
+    }
 }

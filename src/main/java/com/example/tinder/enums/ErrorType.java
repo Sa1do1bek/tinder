@@ -21,6 +21,7 @@ public enum ErrorType {
     UNSUPPORTED_UPLOAD_FILE("unsupported.upload.file"),
     ATTACHMENT_NOT_FOUND("attachment.not.found", HttpStatus.NOT_FOUND),
     USER_NOT_FOUND("user.not.found", HttpStatus.NOT_FOUND),
+    SWIPE_NOT_FOUND("swipe.not.found", HttpStatus.NOT_FOUND),
     USER_ALREADY_EXISTS("user.already.exists", HttpStatus.BAD_REQUEST),
     INVALID_PHONE_NUMBER("invalid.phone.number", HttpStatus.BAD_REQUEST ),
     SOMETHING_ERROR("something.error", HttpStatus.BAD_REQUEST ),
