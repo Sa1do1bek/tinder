@@ -102,7 +102,9 @@ public enum SuccessType {
     REPORT_STATUS_SUCCESSFULLY_UPDATED("report.status.updated"),
     SUCCESSFULLY_GET_REPORTS_BY_REPORTED_ID("successful.get.reports.by.reported.id"),
     USER_SUCCESSFULLY_REPORTED("user.successful.reported"),
-    USER_STATS_SUCCESSFULLY_GET("stats.user.successful.get");
+    USER_STATS_SUCCESSFULLY_GET("stats.user.successful.get"),
+    BATCH_NOTIFICATION_SENT_SUCCESSFULLY("batch.notification.sent.successfully"),
+    NOTIFICATIONS_SAVED_NO_TOKENS("notifications.saved.no.tokens");
     //--**--********************
 
 

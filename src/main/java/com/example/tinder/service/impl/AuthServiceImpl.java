@@ -415,6 +415,10 @@ public class AuthServiceImpl implements AuthService {
             UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
             String userToken = jwtUtil.generateToken(userDetails.getUsername());
 
+            user.setLastSeen(LocalDateTime.now());
+            user.setLastInactiveNotificationAt(null); // user login qildi notifaction ni null qilamiz agar 5 kun kirmasa unga notification yuboramiz
+            userRepository.save(user);
+
             return ApiResponse.success(
                     LoginResponse.builder()
                             .code(1)
@@ -458,6 +462,10 @@ public class AuthServiceImpl implements AuthService {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String userToken = jwtUtil.generateToken(userDetails.getUsername());
+
+        user.setLastSeen(LocalDateTime.now());
+        user.setLastInactiveNotificationAt(null);// user login qildi notifaction ni null qilamiz agar 5 kun kirmasa unga notification yuboramiz
+        userRepository.save(user);
 
         return ApiResponse.success(
                 LoginResponse.builder()
@@ -528,6 +536,10 @@ public class AuthServiceImpl implements AuthService {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String userToken = jwtUtil.generateToken(userDetails.getUsername());
+
+        user.setLastSeen(LocalDateTime.now());
+        user.setLastInactiveNotificationAt(null);// user loginPhone bilan qildi notifaction ni null qilamiz agar 5 kun kirmasa unga notification yuboramiz
+        userRepository.save(user);
 
         return ApiResponse.success(
                 LoginResponse.builder()

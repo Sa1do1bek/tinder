@@ -12,14 +12,13 @@ import com.example.tinder.repository.FCMRepository;
 import com.example.tinder.repository.NotificationRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.NotificationService;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -38,6 +37,21 @@ public class NotificationServiceImpl implements NotificationService {
         fcmRepository.save(fcm);
 
         return ApiResponse.success(SuccessType.FCM_TOKEN_SAVED_SUCCESSFULLY);
+    }
+
+    @Override
+    public void saveNotifications(List<User> users, String title, String body, NotificationPathType type) {
+
+        List<Notification> notifications = users.stream()
+                .map(user -> Notification.builder()
+                        .user(user)
+                        .title(title)
+                        .body(body)
+                        .pathType(type)
+                        .read(false)
+                        .build())
+                .toList();
+        notificationRepository.saveAll(notifications);
     }
 
     @Override
@@ -68,7 +82,7 @@ public class NotificationServiceImpl implements NotificationService {
         Message message = Message.builder()
                 .setToken(token)
                 .setNotification(
-                                com.google.firebase.messaging.Notification.builder()
+                        com.google.firebase.messaging.Notification.builder()
                                 .setTitle(title)
                                 .setBody(body)
                                 .build()
@@ -84,6 +98,73 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         return ApiResponse.success(SuccessType.NOTIFICATION_SENT_SUCCESSFULLY);
+    }
+
+    @Override
+    public ApiResponse<?> sendBatchNotification(List<User> users, String title, String body, NotificationPathType type) {
+        if (users == null || users.isEmpty()) {
+            throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
+        }
+
+        // 1. DB ga notification yozamiz
+        List<Notification> notifications = users.stream()
+                .map(user -> Notification.builder()
+                        .user(user)
+                        .title(title)
+                        .body(body)
+                        .pathType(type)
+                        .read(false)
+                        .build())
+                .toList();
+        notificationRepository.saveAll(notifications);
+
+        // 2. userId larni olamiz
+        List<Long> userIds = users.stream()
+                .map(User::getId)
+                .toList();
+
+        // 3. bitta query bilan barcha FCM larni olamiz
+        List<FCM> fcmList = fcmRepository.findAllByUserIds(userIds);
+
+        List<String> tokens = fcmList.stream()
+                .map(FCM::getFcmToken)
+                .filter(token -> token != null && !token.isBlank())
+                .toList();
+
+        if (tokens.isEmpty()) {
+            log.warn("No valid FCM tokens");
+            return ApiResponse.success(SuccessType.NOTIFICATIONS_SAVED_NO_TOKENS);
+        }
+
+        //4. 500 tadan batch
+        for (int i = 0; i < tokens.size(); i += 500) {
+
+            List<String> batch = tokens.subList(i, Math.min(i + 500, tokens.size()));
+
+            MulticastMessage message = MulticastMessage.builder()
+                    .addAllTokens(batch)
+                    .setNotification(
+                            com.google.firebase.messaging.Notification.builder()
+                                    .setTitle(title)
+                                    .setBody(body)
+                                    .build()
+                    )
+                    .putData("click_action", "FLUTTER_NOTIFICATION_CLICK")
+                    .build();
+
+            try {
+                BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
+
+                log.info("Batch sent: success={}, failure={}",
+                        response.getSuccessCount(),
+                        response.getFailureCount());
+
+            } catch (FirebaseMessagingException e) {
+                log.error("Batch send error: {}", e.getMessage());
+            }
+        }
+
+        return ApiResponse.success(SuccessType.BATCH_NOTIFICATION_SENT_SUCCESSFULLY);
     }
 
     @Override

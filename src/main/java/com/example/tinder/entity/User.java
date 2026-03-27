@@ -73,6 +73,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "boolean default false")
     private boolean active = false;
 
+    @Column(name = "last_inactive_notification_at")
+    private LocalDateTime lastInactiveNotificationAt;//oxirgi inactive bo'lgan userga notification qachon yuborilgan
+
     @Column(columnDefinition = "boolean default false")
     private Boolean isVerified = false;
 
