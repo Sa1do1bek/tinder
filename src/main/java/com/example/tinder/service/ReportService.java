@@ -15,8 +15,6 @@ public interface ReportService {
 
     ApiResponse<Page<ReportAdminDTO>> getAllReports(int page, int size);
 
-    ApiResponse<?> getReports(Long reportedId, ReportStatus status, int page, int size);
-
     ApiResponse<?> createReport(CreateReportUserDto createReportUserDto);
 
     ApiResponse<?> updateReport(Long reportId,  ReportStatus status,String comment);

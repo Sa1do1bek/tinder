@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @Table(name = "subscription_plan")
 public class SubscriptionPlan extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String code; // GOLD_1_MONTH
 
     @Enumerated(EnumType.STRING)
@@ -26,4 +26,9 @@ public class SubscriptionPlan extends BaseEntity {
 
     @Column(precision = 15, scale = 2)
     private BigDecimal price;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private SubscriptionPlan parent;
+
 }

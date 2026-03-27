@@ -18,6 +18,9 @@ public class SubscriptionPlanDto {
     private BigDecimal price;
     private BigDecimal monthly_price;
 
+    private Double discountPercent;
+    private BigDecimal oldPrice;
+
     @Getter
     @Setter
     @NoArgsConstructor
@@ -28,17 +31,6 @@ public class SubscriptionPlanDto {
         private SubscriptionType type;
         private int months;
         private BigDecimal price;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class SubscriptionPlanUpdateDto {
-        private String code;
-        private SubscriptionType type;
-        private int months;
-        private BigDecimal price;
+        private Long subscriptionParentId;
     }
 }
