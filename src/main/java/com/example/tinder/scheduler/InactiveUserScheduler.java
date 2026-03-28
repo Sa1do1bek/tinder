@@ -26,7 +26,7 @@ public class InactiveUserScheduler {
         return values[new Random().nextInt(values.length)];
     }
 
-    @Scheduled(cron = "*/30 * * * * ?", zone = "Asia/Tashkent")
+    @Scheduled(cron = "0 0 22 * * ?", zone = "Asia/Tashkent")
     public void sendInactiveUserNotifications() {
         log.info("=== Inactive scheduler boshlandi ===");
 
