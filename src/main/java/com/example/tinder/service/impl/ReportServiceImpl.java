@@ -1,6 +1,7 @@
 package com.example.tinder.service.impl;
 
 
+import com.example.tinder.dto.AllReportDto;
 import com.example.tinder.dto.CreateReportUserDto;
 import com.example.tinder.dto.ReportAdminDTO;
 import com.example.tinder.dto.base.ApiResponse;
@@ -42,12 +43,12 @@ public class ReportServiceImpl implements ReportService {
 
     @Transactional(readOnly = true)
     @Override
-    public ApiResponse<Page<ReportAdminDTO>> getAllReports(int page, int size) {
+    public ApiResponse<Page<AllReportDto>> getAllReports(ReportStatus status,int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<ReportAdminDTO> reports =
-                reportRepository.findAllReportsForAdmin(pageable);
+        Page<AllReportDto> reports =
+                reportRepository.findAllReport(status,pageable);
 
         return ApiResponse.success(reports, SuccessType.SUCCESSFULLY_GET_ALL_REPORTS);
     }

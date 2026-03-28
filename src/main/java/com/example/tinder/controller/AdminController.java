@@ -1,6 +1,7 @@
 package com.example.tinder.controller;
 
 import com.example.tinder.dto.AdminReportUpdateDto;
+import com.example.tinder.dto.AllReportDto;
 import com.example.tinder.dto.ReportAdminDTO;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.ban.BanUserRequest;
@@ -61,11 +62,12 @@ public class AdminController {
      */
 
     @GetMapping("/reports")
-    public ApiResponse<Page<ReportAdminDTO>> getAllReports(
+    public ApiResponse<Page<AllReportDto>> getAllReports(
+            @RequestParam ReportStatus reportStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        return reportService.getAllReports(page, size);
+        return reportService.getAllReports(reportStatus,page, size);
     }
 
 
