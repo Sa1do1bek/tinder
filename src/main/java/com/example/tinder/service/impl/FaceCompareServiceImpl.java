@@ -3,6 +3,7 @@ package com.example.tinder.service.impl;
 import com.example.tinder.dto.SimilarityResponse;
 import com.example.tinder.service.FaceCompareService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -14,8 +15,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class FaceCompareServiceImpl implements FaceCompareService {
     private final RestTemplate restTemplate;
 
-    private static final String AI_COMPARE_URL =
-            "https://tinder-ai.tenzorsoft.uz/compare";
+    @Value("${open.ai.face-recognition}")
+    private String AI_COMPARE_URL;
 
     @Override
     public double compareFaces(String imageUrl1, String imageUrl2) {
