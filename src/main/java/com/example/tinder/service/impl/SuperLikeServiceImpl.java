@@ -4,8 +4,11 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.superLike.*;
 import com.example.tinder.entity.*;
 import com.example.tinder.enums.*;
+import com.example.tinder.enums.payment.PaymentMethod;
 import com.example.tinder.exception.RestException;
-import com.example.tinder.mapper.*;
+import com.example.tinder.mapper.SuperLikeHistoryMapper;
+import com.example.tinder.mapper.SuperLikePackageMapper;
+import com.example.tinder.mapper.SuperLikePurchaseMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.PlatformRevenueService;
 import com.example.tinder.service.SuperLikeService;
@@ -20,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -38,6 +40,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
     private final SwipeService swipeService;
     private final PlatformRevenueService platformRevenueService;
     private final WalletTransactionService walletTransactionService;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     private static final BigDecimal REWARD_PER_SUPERLIKE = new BigDecimal("5000.0");
 
@@ -63,7 +66,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         SuperLikePackage pkg = packageRepository.findByIdAndVisibilityTrue(request.getPackageId())
-                .orElseThrow(() ->  RestException.restThrow(ErrorType.PACKAGE_NOT_FOUND));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.PACKAGE_NOT_FOUND));
 
         Card card = cardRepository.findByUserId(userId)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.CARD_NOT_FOUND));
@@ -86,17 +89,33 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         card.setSuperLikeCount(oldCount + pkg.getQuantity());
         cardRepository.save(card);
 
+        // 1. WalletTransaction yaratish va saqlash
+        WalletTransaction walletTx = WalletTransaction.builder()
+                .user(user)
+                .type(TransactionType.PURCHASE)
+                .amount(pkg.getPriceUZS())
+                .balanceAfter(card.getBalance())           // processPayment da balans yangilangan
+                .paymentMethod(PaymentMethod.PAYME)         // yoki kerakli usul
+                .description("Super Like sotib olindi: " + pkg.getQuantity() + " ta")
+                .status(TransactionStatus.COMPLETED)
+                .build();
+
+        walletTransactionRepository.save(walletTx);   //
+
 
         // Wallet transaction yaratish
-        walletTransactionService.createTransaction(user,
-                TransactionType.PURCHASE,
-                pkg.getPriceUZS(),
-                card.getBalance(),
-                null,
-                "Super Like sotib olindi: " + pkg.getQuantity() + " ta");
+//        walletTransactionService.createTransaction(user,
+//                TransactionType.PURCHASE,
+//                pkg.getPriceUZS(),
+//                card.getBalance(),
+//                null,
+//                "Super Like sotib olindi: " + pkg.getQuantity() + " ta");
 
         // Platform revenue hisobga olish
-        platformRevenueService.recordPlatformRevenue(purchase, pkg, userId);
+        platformRevenueService.recordPlatformRevenue(purchase, pkg,walletTx );
+
+        log.info("SuperLike sotib olindi → PurchaseId: {}, WalletTxId: {}",
+                purchase.getId(), walletTx.getId());
 
         return ApiResponse.success(superLikePurchaseMapper.toDto(purchase), SuccessType.SUPER_LIKES_PURCHASED_SUCCESSFULLY);
     }
@@ -127,7 +146,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         }
 
         Card receiverCard = cardRepository.findByUserId(request.getReceiverId())
-                .orElseThrow(() ->  RestException.restThrow(ErrorType.CARD_NOT_FOUND));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.CARD_NOT_FOUND));
 
         // Super Like ni kamaytirish
         Integer oldSenderCount = senderCard.getSuperLikeCount();
@@ -241,7 +260,7 @@ public class SuperLikeServiceImpl implements SuperLikeService {
         //TODO Bu yerda to'lov gateway (Click, Payme) bilan integratsiya bo'ladi
         // Hozircha mock transaction ID qaytaramiz
 
-        if (card.getBalance().intValue() < amount.intValue()){
+        if (card.getBalance().intValue() < amount.intValue()) {
             throw RestException.restThrow(ErrorType.INSUFFICIENT_BALANCE);
         }
         card.setBalance(card.getBalance().subtract(amount));
