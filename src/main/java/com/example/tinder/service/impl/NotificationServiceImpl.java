@@ -102,11 +102,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public ApiResponse<?> sendBatchNotification(List<User> users, String title, String body, NotificationPathType type) {
+
+        log.info("sendBatchNotification boshlandi: {} ta user", users.size());
+
         if (users == null || users.isEmpty()) {
+            log.warn("User list bo'sh");
             throw RestException.restThrow(ErrorType.USER_NOT_FOUND);
         }
 
-        // 1. DB ga notification yozamiz
+        // 1. DB ga yozamiz — faqat bir marta
         List<Notification> notifications = users.stream()
                 .map(user -> Notification.builder()
                         .user(user)
@@ -117,28 +121,35 @@ public class NotificationServiceImpl implements NotificationService {
                         .build())
                 .toList();
         notificationRepository.saveAll(notifications);
+        log.info("DB ga {} ta notification yozildi", notifications.size());
 
-        // 2. userId larni olamiz
+        // 2. User ID lar
         List<Long> userIds = users.stream()
                 .map(User::getId)
                 .toList();
 
-        // 3. bitta query bilan barcha FCM larni olamiz
+        // 3. FCM tokenlarni olamiz
         List<FCM> fcmList = fcmRepository.findAllByUserIds(userIds);
+        log.info("FCM topildi: {} ta", fcmList.size());
 
         List<String> tokens = fcmList.stream()
                 .map(FCM::getFcmToken)
                 .filter(token -> token != null && !token.isBlank())
+                .distinct() // bir xil tokenlar bo'lmasin
                 .toList();
 
+        log.info("Valid token: {} ta", tokens.size());
+
         if (tokens.isEmpty()) {
-            log.warn("No valid FCM tokens");
+            log.warn("Valid FCM token yo'q — notification DB ga yozildi, push yuborilmadi");
             return ApiResponse.success(SuccessType.NOTIFICATIONS_SAVED_NO_TOKENS);
         }
 
-        //4. 500 tadan batch
-        for (int i = 0; i < tokens.size(); i += 500) {
+        // 4. 500 tadan batch qilib yuboramiz
+        int successTotal = 0;
+        int failureTotal = 0;
 
+        for (int i = 0; i < tokens.size(); i += 500) {
             List<String> batch = tokens.subList(i, Math.min(i + 500, tokens.size()));
 
             MulticastMessage message = MulticastMessage.builder()
@@ -153,17 +164,49 @@ public class NotificationServiceImpl implements NotificationService {
                     .build();
 
             try {
-                BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
+                BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+                successTotal += response.getSuccessCount();
+                failureTotal += response.getFailureCount();
 
-                log.info("Batch sent: success={}, failure={}",
+                log.info("Batch [{}-{}]: success={}, failure={}",
+                        i, Math.min(i + 500, tokens.size()),
                         response.getSuccessCount(),
                         response.getFailureCount());
 
+                // Expired tokenlarni o'chiramiz
+                List<SendResponse> responses = response.getResponses();
+                for (int j = 0; j < responses.size(); j++) {
+                    SendResponse sendResponse = responses.get(j);
+                    if (!sendResponse.isSuccessful()) {
+                        String errorCode = sendResponse.getException().getMessagingErrorCode() != null
+                                ? sendResponse.getException().getMessagingErrorCode().name()
+                                : "UNKNOWN";
+                        log.warn("Token {} xato: {}", batch.get(j), errorCode);
+
+                        // Expired yoki invalid token bo'lsa — o'chiramiz
+                        if (errorCode.equals("UNREGISTERED") || errorCode.equals("INVALID_ARGUMENT")) {
+                            int finalJ = j;
+                            fcmRepository.findByUserIdAndVisibilityTrue(
+                                    fcmList.stream()
+                                            .filter(f -> batch.get(finalJ).equals(f.getFcmToken()))
+                                            .map(f -> f.getUser().getId())
+                                            .findFirst()
+                                            .orElse(-1L)
+                            ).ifPresent(fcm -> {
+                                fcm.setVisibility(false);
+                                fcmRepository.save(fcm);
+                                log.info("Expired token o'chirildi: {}", fcm.getId());
+                            });
+                        }
+                    }
+                }
+
             } catch (FirebaseMessagingException e) {
-                log.error("Batch send error: {}", e.getMessage());
+                log.error("Firebase batch xatolik: {}", e.getMessage(), e);
             }
         }
 
+        log.info("Jami: success={}, failure={}", successTotal, failureTotal);
         return ApiResponse.success(SuccessType.BATCH_NOTIFICATION_SENT_SUCCESSFULLY);
     }
 
