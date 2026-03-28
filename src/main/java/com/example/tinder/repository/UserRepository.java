@@ -597,4 +597,27 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE us.SubscriptionType = :type
     """)
     List<Object[]> countAndTotalSumBySubscriptionType(@Param("type") SubscriptionType type);
+
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.active = true
+      AND u.status = com.example.tinder.enums.UserStatus.ACTIVE
+      AND u.lastSeen IS NOT NULL
+      AND (
+            (
+              u.lastInactiveNotificationAt IS NULL
+              AND u.lastSeen < :fiveDaysAgo
+            )
+            OR
+            (
+              u.lastInactiveNotificationAt IS NOT NULL
+              AND u.lastInactiveNotificationAt < :twoDaysAgo
+              AND u.lastSeen < :fiveDaysAgo
+            )
+          )
+""")
+    List<User> findUsersForInactiveNotification(
+            @Param("fiveDaysAgo") LocalDateTime fiveDaysAgo,
+            @Param("twoDaysAgo") LocalDateTime twoDaysAgo
+    );
 }
