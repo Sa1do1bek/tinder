@@ -1,7 +1,7 @@
 package com.example.tinder.dto.auth.byPhone;
 
+import com.example.tinder.dto.auth.BaseRegisterDto;
 import com.example.tinder.enums.Gender;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RegisterByPhoneDto {
+public class RegisterByPhoneDto implements BaseRegisterDto {
     @NotBlank(message = "phone cannot be null or empty")
     @Pattern(
             regexp = "^[0-9]{9}$",
