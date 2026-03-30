@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
 
@@ -16,7 +18,11 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             "WHERE (m.user1 = :user1 AND m.user2 = :user2) OR (m.user1 = :user2 AND m.user2 = :user1) AND m.visibility = true")
     boolean existsByUsers(@Param("user1") User user1, @Param("user2") User user2);
 
-
+    @Query("""
+        SELECT m FROM Match m 
+        WHERE m.user1.id = :userId OR m.user2.id = :userId
+    """)
+    List<Match> findUserMatches(@Param("userId") Long userId);
 
     @Transactional
     @Modifying

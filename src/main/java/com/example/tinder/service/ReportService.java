@@ -3,7 +3,6 @@ package com.example.tinder.service;
 
 import com.example.tinder.dto.AllReportDto;
 import com.example.tinder.dto.CreateReportUserDto;
-import com.example.tinder.dto.ReportAdminDTO;
 import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.report.ReportDto;
 import com.example.tinder.enums.ReportStatus;

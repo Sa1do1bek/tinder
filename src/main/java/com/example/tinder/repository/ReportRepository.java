@@ -2,7 +2,6 @@ package com.example.tinder.repository;
 
 import com.example.tinder.dto.AllReportDto;
 import com.example.tinder.dto.ReportAdminDTO;
-import com.example.tinder.dto.report.ReportDto;
 import com.example.tinder.entity.Report;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ReportStatus;
