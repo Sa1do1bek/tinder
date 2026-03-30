@@ -9,6 +9,7 @@ import com.example.tinder.dto.payment.payme.req.PaymeParam;
 import com.example.tinder.dto.payment.payme.req.PaymeRequest;
 import com.example.tinder.dto.payment.payme.res.*;
 import com.example.tinder.entity.*;
+import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.TransactionStatus;
 import com.example.tinder.enums.TransactionType;
@@ -16,6 +17,7 @@ import com.example.tinder.enums.payment.PaymeError;
 import com.example.tinder.enums.payment.*;
 import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymeException;
+import com.example.tinder.exception.RestException;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
@@ -230,7 +232,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         return ApiResponse.success(ClickUtil.generatePaymentUrl(user.getId(), amount), SuccessType.SUCCESS);
     }
