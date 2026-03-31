@@ -145,7 +145,6 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public ApiResponse<List<ReportDto>> getReportsByReportedUser(Long reportedUserId) {
 
-
         userRepository.findById(reportedUserId)
                 .orElseThrow(() -> new RestException(ErrorType.USER_NOT_FOUND));
 
@@ -161,7 +160,7 @@ public class ReportServiceImpl implements ReportService {
                         userMapper.toDto(report.getReported()),
                         userMapper.toDto(report.getReporter())
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         return ApiResponse.success(reportDto);
     }

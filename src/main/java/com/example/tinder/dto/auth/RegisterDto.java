@@ -14,7 +14,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RegisterDto {
+public class RegisterDto implements BaseRegisterDto{
     @NotBlank(message = "email cannot be null or empty")
     @Email
     private String email;

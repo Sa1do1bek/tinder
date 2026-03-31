@@ -2,6 +2,7 @@ package com.example.tinder.controller;
 
 import com.example.tinder.dto.AdminReportUpdateDto;
 import com.example.tinder.dto.AllReportDto;
+import com.example.tinder.dto.ReportAdminDTO;
 import com.example.tinder.dto.UserDto;
 import com.example.tinder.dto.ban.BanUserRequest;
 import com.example.tinder.dto.base.ApiResponse;

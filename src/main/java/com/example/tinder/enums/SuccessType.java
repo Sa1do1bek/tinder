@@ -104,7 +104,9 @@ public enum SuccessType {
     USER_SUCCESSFULLY_REPORTED("user.successful.reported"),
     USER_STATS_SUCCESSFULLY_GET("stats.user.successful.get"),
     BATCH_NOTIFICATION_SENT_SUCCESSFULLY("batch.notification.sent.successfully"),
-    NOTIFICATIONS_SAVED_NO_TOKENS("notifications.saved.no.tokens");
+    NOTIFICATIONS_SAVED_NO_TOKENS("notifications.saved.no.tokens"),
+    PAYMENT_SUCCESSFULLY_GET("payment.successful.get"),
+    WALLET_SUCCESSFULLY_GET("wallet.successful.get");
     //--**--********************
 
 

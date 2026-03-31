@@ -1,6 +1,7 @@
 package com.example.tinder.service.impl;
 
 import com.example.tinder.dto.base.ApiResponse;
+import com.example.tinder.dto.payment.PaymentTransactionProjection;
 import com.example.tinder.dto.payment.click.req.ClickCompleteRequest;
 import com.example.tinder.dto.payment.click.req.ClickPrepareRequest;
 import com.example.tinder.dto.payment.click.res.ClickCompleteResponse;
@@ -9,6 +10,7 @@ import com.example.tinder.dto.payment.payme.req.PaymeParam;
 import com.example.tinder.dto.payment.payme.req.PaymeRequest;
 import com.example.tinder.dto.payment.payme.res.*;
 import com.example.tinder.entity.*;
+import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.enums.TransactionStatus;
 import com.example.tinder.enums.TransactionType;
@@ -16,12 +18,17 @@ import com.example.tinder.enums.payment.PaymeError;
 import com.example.tinder.enums.payment.*;
 import com.example.tinder.exception.ClickException;
 import com.example.tinder.exception.PaymeException;
+import com.example.tinder.exception.RestException;
+import com.example.tinder.mapper.payment.PaymentTransactionMapper;
 import com.example.tinder.repository.*;
 import com.example.tinder.service.PaymentService;
 import com.example.tinder.utils.ClickUtil;
 import com.example.tinder.utils.PaymeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -44,6 +52,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final WalletTransactionRepository walletTransactionRepository;
     private final UserRepository userRepository;
     private final LogRepository logRepository;
+    private final PaymentTransactionMapper mapper;
 
     // =========================
     // CLICK METHODS
@@ -230,7 +239,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         return ApiResponse.success(ClickUtil.generatePaymentUrl(user.getId(), amount), SuccessType.SUCCESS);
     }
@@ -406,6 +415,18 @@ public class PaymentServiceImpl implements PaymentService {
                         params.getTo() + 1
                 )
         ));
+    }
+
+    // =========================
+    // get All Payments Methods
+    // =========================
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApiResponse<Page<?>> getAllPayment(LocalDate start, LocalDate end, PaymentMethod paymentMethod, int page, int size) {
+        Page<PaymentTransactionProjection> allProjected = validateProjection(start,end,paymentMethod,page,size);
+        return ApiResponse.success(allProjected.map(mapper::toResponse), SuccessType.PAYMENT_SUCCESSFULLY_GET);
+
     }
 
     // =========================
@@ -627,6 +648,51 @@ public class PaymentServiceImpl implements PaymentService {
 
             log.error("PaymentService log write failed: {}", firstEx.getMessage());
         }
+    }
+
+
+    private Page<PaymentTransactionProjection> getWithStartDate(LocalDate start, Pageable pageable){
+        LocalDateTime startDate = start.atStartOfDay();
+        return paymentTransactionRepository.findAllProjected(startDate,pageable);
+    }
+
+    private Page<PaymentTransactionProjection> getWithStartDateAndEndDate(LocalDate start, LocalDate end, Pageable pageable){
+        LocalDateTime startDate = start.atStartOfDay();
+        return paymentTransactionRepository.findAllProjected(startDate,end.atStartOfDay().plusDays(1),pageable);
+    }
+
+    private Page<PaymentTransactionProjection> getWithEndDate(LocalDate endDate, Pageable pageable){
+        return paymentTransactionRepository.findAllProjectedWithEndDate(endDate.atStartOfDay().plusDays(1),pageable);
+    }
+
+    private Page<PaymentTransactionProjection> getWithMethod(PaymentMethod method, Pageable pageable){
+        return paymentTransactionRepository.findAllProjected(method, pageable);
+    }
+
+    private Page<PaymentTransactionProjection> validateProjection(LocalDate start, LocalDate end, PaymentMethod paymentMethod, int page, int size){
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        Page<PaymentTransactionProjection> allProjected;
+
+        if (start != null && end != null && paymentMethod != null) {
+            allProjected = paymentTransactionRepository
+                    .findAllProjected(paymentMethod,
+                            start.atStartOfDay(),
+                            end.atStartOfDay().plusDays(1),
+                            pageRequest);
+        } else if (start == null && end == null && paymentMethod != null) {
+            allProjected = getWithMethod(paymentMethod,pageRequest);
+        } else if (start != null && end == null && paymentMethod == null){
+            allProjected = getWithStartDate(start,pageRequest);
+        } else if (start == null && end != null && paymentMethod == null) {
+            allProjected = getWithEndDate(end,pageRequest);
+        } else if (start != null && end != null) {
+            allProjected = getWithStartDateAndEndDate(start,end,pageRequest);
+        }else {
+            allProjected = paymentTransactionRepository.findAllProjected(pageRequest);
+        }
+
+        return allProjected;
     }
 
 }

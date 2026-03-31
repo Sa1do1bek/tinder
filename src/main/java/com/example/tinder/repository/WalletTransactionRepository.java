@@ -1,5 +1,6 @@
 package com.example.tinder.repository;
 
+import com.example.tinder.dto.wallet.WalletTransactionProjection;
 import com.example.tinder.entity.User;
 import com.example.tinder.entity.WalletTransaction;
 import com.example.tinder.enums.TransactionStatus;
@@ -13,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,4 +85,62 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
             @Param("status") TransactionStatus status,
             @Param("paymentMethod") PaymentMethod paymentMethod
     );
+
+    @Query("""
+            SELECT w FROM WalletTransaction w
+            WHERE w.paymentMethod = :method
+            AND  w.createdAt >= :start
+            AND w.createdAt <= :end
+            """)
+    Page<WalletTransactionProjection> findAllProjected(
+            PaymentMethod method,
+            LocalDateTime start,
+            LocalDateTime end,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT w FROM WalletTransaction w
+            WHERE w.createdAt >= :start
+            """)
+    Page<WalletTransactionProjection> findAllProjected(
+            LocalDateTime start,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT w FROM WalletTransaction w
+            WHERE w.createdAt <= :end
+            """)
+    Page<WalletTransactionProjection> findAllProjectedWithEndDate(
+            LocalDateTime end,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT w FROM WalletTransaction w
+            WHERE w.createdAt >= :start
+            AND w.createdAt <= :end
+            """)
+    Page<WalletTransactionProjection> findAllProjected(
+            LocalDateTime start,
+            LocalDateTime end,
+            Pageable pageable
+    );
+
+
+    @Query("""
+            SELECT w FROM WalletTransaction w
+            WHERE w.paymentMethod = :method
+            """)
+    Page<WalletTransactionProjection> findAllProjected(
+            PaymentMethod method,
+            Pageable pageable
+    );
+
+
+    @Query("""
+            SELECT w FROM WalletTransaction w  
+             """)
+    Page<WalletTransactionProjection> findAllProjected(Pageable pageable);
 }
