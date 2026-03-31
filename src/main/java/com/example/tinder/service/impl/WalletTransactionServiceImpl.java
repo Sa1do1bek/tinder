@@ -85,7 +85,7 @@ public class WalletTransactionServiceImpl implements WalletTransactionService {
                         w.getUser().getProfilePic(),
                         w.getUser().getEmail(),
                         w.getUser().getPhoneNumber()
-        ))), SuccessType.PAYMENT_SUCCESSFULLY_GET);
+        ))), SuccessType.WALLET_SUCCESSFULLY_GET);
 
         }
 
