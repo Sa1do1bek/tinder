@@ -70,10 +70,14 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
         notificationRepository.save(notification);
 
-        FCM fcm = fcmRepository.findByUserIdAndVisibilityTrue(recipientId)
-                .orElseThrow(() -> RestException.restThrow(ErrorType.FCM_TOKEN_NOT_FOUND));
+        Optional<FCM> fcmOptional = fcmRepository.findByUserIdAndVisibilityTrue(recipientId);
 
-        String token = fcm.getFcmToken();
+        if (fcmOptional.isEmpty()) {
+            log.info("User {} has no FCM token, notification saved to DB but not sent via push", recipient);
+            return ApiResponse.success(SuccessType.NOTIFICATION_SENT_SUCCESSFULLY);
+        }
+
+        String token = fcmOptional.get().getFcmToken();
 
         if (token == null || token.isBlank()) {
             throw RestException.restThrow(ErrorType.INVALID_FCM_TOKEN);
