@@ -160,7 +160,7 @@ public class ReportServiceImpl implements ReportService {
                         userMapper.toDto(report.getReported()),
                         userMapper.toDto(report.getReporter())
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         return ApiResponse.success(reportDto);
     }

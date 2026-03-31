@@ -24,18 +24,29 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
 
     @Query("""
-            SELECT new com.example.tinder.dto.AllReportDto(
-                reporter.id,
-                reported.id,
-                COUNT(r.id))
-                    FROM Report r
-                    JOIN r.reported reported
-                    JOIN r.reporter reporter
-                    WHERE r.reportStatus = :type
-                    GROUP BY reported.id, reported.username, reporter.id
-                    ORDER BY COUNT(r.id) DESC
-            """)
+        SELECT new com.example.tinder.dto.AllReportDto(
+            reported.id,
+            reported.username,
+            reported.email,
+            reported.profilePic,
+            reported.phoneNumber,
+            COUNT(r.id))
+        FROM Report r
+        JOIN r.reported reported
+        WHERE r.reportStatus = :type
+        GROUP BY 
+            reported.id, 
+            reported.username, 
+            reported.email,
+            reported.profilePic,
+            reported.phoneNumber
+        ORDER BY COUNT(r.id) DESC
+""")
     Page<AllReportDto> findAllReport(ReportStatus type, Pageable pageable);
+
+
+
+    Page<Report> findAllByReportedId(Long reportedUserId, Pageable pageable);
 
 
     @Query("""
