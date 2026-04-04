@@ -4,7 +4,6 @@ import com.example.tinder.dto.message.MessageDto;
 import com.example.tinder.entity.Conversation;
 import com.example.tinder.entity.Message;
 import com.example.tinder.entity.User;
-import com.example.tinder.enums.MessageType;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

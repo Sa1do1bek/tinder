@@ -145,6 +145,7 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public ApiResponse<List<ReportDto>> getReportsByReportedUser(Long reportedUserId) {
 
+
         userRepository.findById(reportedUserId)
                 .orElseThrow(() -> new RestException(ErrorType.USER_NOT_FOUND));
 

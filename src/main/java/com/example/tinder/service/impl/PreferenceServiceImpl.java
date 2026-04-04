@@ -7,7 +7,6 @@ import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.PreferenceMapper;
-import com.example.tinder.mapper.UserInterestMapper;
 import com.example.tinder.repository.PreferenceRepository;
 import com.example.tinder.service.PreferenceService;
 import lombok.RequiredArgsConstructor;

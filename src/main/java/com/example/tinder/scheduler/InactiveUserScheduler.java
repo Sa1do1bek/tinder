@@ -20,7 +20,6 @@ import java.util.Random;
 public class InactiveUserScheduler {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
-
     private NotificationMessages getRandomMessage() {
         NotificationMessages[] values = NotificationMessages.values();
         return values[new Random().nextInt(values.length)];
@@ -50,6 +49,16 @@ public class InactiveUserScheduler {
         log.info("Xabar tanlandi: {}", message.getTitle());
 
         try {
+
+            // 1. DB ga yozamiz
+            notificationService.saveNotifications(
+                    users,
+                    message.getTitle(),
+                    message.getBody(),
+                    NotificationPathType.NEWS_MESSAGE
+            );
+
+            //2. BATCH push yuboramiz
             notificationService.sendBatchNotification(
                     users,
                     message.getTitle(),
@@ -59,6 +68,7 @@ public class InactiveUserScheduler {
 
             // timestamp ni update qilamiz — faqat muvaffaqiyatli bo'lgandan keyin
             users.forEach(u -> u.setLastInactiveNotificationAt(now));
+
             userRepository.saveAll(users);
 
             log.info("=== Scheduler muvaffaqiyatli tugadi: {} ta user ===", users.size());
@@ -67,4 +77,5 @@ public class InactiveUserScheduler {
             log.error("=== Scheduler xatolik: {} ===", e.getMessage(), e);
         }
     }
+
 }

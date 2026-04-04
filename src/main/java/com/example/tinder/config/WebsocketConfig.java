@@ -1,6 +1,5 @@
 package com.example.tinder.config;
 
-import com.example.tinder.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

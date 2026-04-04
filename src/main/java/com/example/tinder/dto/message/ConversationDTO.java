@@ -1,7 +1,6 @@
 package com.example.tinder.dto.message;
 
 import com.example.tinder.dto.UserDto;
-import jakarta.persistence.Column;
 import lombok.*;
 
 
