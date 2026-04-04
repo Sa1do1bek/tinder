@@ -8,8 +8,6 @@ import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.auth.LoginDto;
 import com.example.tinder.dto.auth.RegisterDto;
 import com.example.tinder.dto.VerifyDto;
-import jakarta.validation.Valid;
-import com.example.tinder.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,6 +1,5 @@
 package com.example.tinder.dto.subsciption;
 
-import com.example.tinder.dto.UserDto;
 import com.example.tinder.enums.SubscriptionType;
 import lombok.*;
 

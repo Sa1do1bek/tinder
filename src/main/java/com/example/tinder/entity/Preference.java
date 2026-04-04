@@ -4,9 +4,6 @@ import com.example.tinder.enums.Gender;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.hibernate.validator.constraints.NotEmpty;
-
-import java.util.List;
 
 @Getter
 @Setter

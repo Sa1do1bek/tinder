@@ -36,13 +36,25 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
      * LIKE va SUPERLIKE larni aralash olib kelish
      */
     @Query("""
-                SELECT s.swiped FROM Swipe s
-                WHERE s.swiper.id = :userId
-                AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
-                     OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
-                AND s.visibility = true
-                ORDER BY s.createdAt DESC
-            """)
+    SELECT s.swiped FROM Swipe s
+    WHERE s.swiper.id = :userId
+    AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
+         OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
+    AND s.swiper.role <> com.example.tinder.enums.UserRole.ADMIN
+    AND s.swiped.role <> com.example.tinder.enums.UserRole.ADMIN
+    AND NOT EXISTS (
+        SELECT 1 FROM Block b 
+        WHERE b.blocker.id = :userId
+        AND b.blocked.id = s.swiped.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM Block b 
+        WHERE b.blocker.id = s.swiped.id
+        AND b.blocked.id = :userId
+    )
+    AND s.visibility = true
+    ORDER BY s.createdAt DESC
+""")
     Page<User> findAllLikeUsers(@Param("userId") Long userId, Pageable pageable);
 
     @Modifying
@@ -62,6 +74,18 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
                 WHERE s.swiped.id = :userId
                 AND (s.swipe = com.example.tinder.enums.SwipeStatus.LIKE
                      OR s.swipe = com.example.tinder.enums.SwipeStatus.SUPERLIKE)
+                AND s.swiper.role <> com.example.tinder.enums.UserRole.ADMIN
+                AND s.swiped.role <> com.example.tinder.enums.UserRole.ADMIN
+                AND NOT EXISTS (
+                            SELECT 1 FROM Block b
+                            WHERE b.blocker.id = :userId
+                            AND b.blocked.id = s.swiper.id
+                        )
+                AND NOT EXISTS (
+                            SELECT 1 FROM Block b\s
+                            WHERE b.blocker.id = s.swiper.id
+                            AND b.blocked.id = :userId
+                        )
                 AND s.visibility = true
                 ORDER BY s.createdAt DESC
             """)
@@ -84,13 +108,27 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
      * Bitta user uchun swipe type ni topish
      */
     @Query("""
-                SELECT s.swipe FROM Swipe s
-                WHERE s.swiper.id = :swiperId
-                AND s.swiped.id = :swipedId
-                AND s.visibility = true
-            """)
-    Optional<SwipeStatus> findSwipeTypeByUsers(@Param("swiperId") Long swiperId,
-                                               @Param("swipedId") Long swipedId);
+    SELECT s.swipe FROM Swipe s
+    WHERE s.swiper.id = :swiperId
+    AND s.swiped.id = :swipedId
+    AND s.swiper.role <> com.example.tinder.enums.UserRole.ADMIN
+    AND s.swiped.role <> com.example.tinder.enums.UserRole.ADMIN
+    AND NOT EXISTS (
+        SELECT 1 FROM Block b 
+        WHERE b.blocker.id = :swiperId 
+        AND b.blocked.id = :swipedId
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM Block b 
+        WHERE b.blocker.id = :swipedId 
+        AND b.blocked.id = :swiperId
+    )
+    AND s.visibility = true
+""")
+    Optional<SwipeStatus> findSwipeTypeByUsers(
+            @Param("swiperId") Long swiperId,
+            @Param("swipedId") Long swipedId
+    );
 
     /*
     profileView ni hisoblash

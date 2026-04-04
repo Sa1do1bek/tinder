@@ -37,7 +37,7 @@ public class SwipeServiceImpl implements SwipeService {
             throw RestException.restThrow(ErrorType.YOU_CANNOT_SWIPE_YOURSELF);
         }
 
-        Optional<User> swipedOpt = userRepository.findById(swipedId);
+        Optional<User> swipedOpt = userRepository.findByIdCustom(swipedId);
         Optional<User> swiperOpt = userRepository.findById(swiperId);
 
         if (swiperOpt.isEmpty() || swipedOpt.isEmpty()) {

@@ -6,8 +6,6 @@ import com.example.tinder.entity.User;
 import com.example.tinder.entity.UserInterest;
 import com.example.tinder.enums.Gender;
 import com.example.tinder.enums.SubscriptionType;
-import com.example.tinder.enums.SuccessType;
-import com.google.protobuf.Api;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 

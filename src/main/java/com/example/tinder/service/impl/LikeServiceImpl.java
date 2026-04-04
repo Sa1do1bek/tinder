@@ -220,7 +220,7 @@ public class LikeServiceImpl implements LikeService {
 
     // U meni swipe qilganmi
     private SwipeStatus getHisSwipeType(Long meId, Long targetUserId) {
-        return swipeRepository.findSwipeTypeByUsers(targetUserId, meId).orElse(null);
+        return swipeRepository.findSwipeTypeByUsers(meId, targetUserId).orElse(null);
     }
 
 

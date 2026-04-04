@@ -1,8 +1,5 @@
 package com.example.tinder.dto;
 
-import com.example.tinder.enums.Gender;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
 
 @Getter

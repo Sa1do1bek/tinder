@@ -24,10 +24,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = """
                select u from User u
+               where u.role <> com.example.tinder.enums.UserRole.ADMIN /*admin bo'lgan rollar userlarga ko'rinmaydi*/
             """,
             countQuery =
                     """
                             SELECT COUNT(u) FROM User u
+                            where u.role <> com.example.tinder.enums.UserRole.ADMIN /*admin bo'lgan rollar userlarga ko'rinmaydi*/
                             """)
     Page<User> findAllCustom(Pageable pageable);
 
@@ -35,6 +37,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 SELECT u FROM User u
                 WHERE u.id = :id
                 AND u.visibility = true
+                AND u.role <> com.example.tinder.enums.UserRole.ADMIN /*admin bo'lgan rollar userlarga ko'rinmaydi*/
             """)
     Optional<User> findByIdCustom(@Param("id") Long id);
 
@@ -68,12 +71,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "select * from users as u where u.status='ACTIVE'", nativeQuery = true)
     Page<User> getAllActiveUsers(Pageable pageable);
 
-    @Query("SELECT u FROM User u WHERE u.username = :username")
+    @Query("SELECT u FROM User u WHERE u.username = :username AND u.role <> com.example.tinder.enums.UserRole.ADMIN /*admin bo'lgan rollar userlarga ko'rinmaydi*/")
     Optional<User> findByUsername(String username);
 
     @Query("""
                 SELECT u FROM User u
-                WHERE (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')))
+                WHERE u.role <> com.example.tinder.enums.UserRole.ADMIN AND (:username IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')))
                 AND (:gender IS NULL OR u.gender = :gender)
             """)
     List<User> searchUsers(
@@ -87,7 +90,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT u FROM User u
              WHERE u.status = 'ACTIVE'
-               AND u.role <> com.example.tinder.enums.UserRole.ADMIN
+               AND u.role <> com.example.tinder.enums.UserRole.ADMIN /*admin bo'lgan rollar userlarga ko'rinmaydi*/
                AND u.id <> :userId
                AND NOT EXISTS (
                    SELECT 1 FROM Swipe s
@@ -112,7 +115,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     """
                                          SELECT COUNT(u) FROM User u
                                              WHERE u.status = 'ACTIVE'
-                                             AND u.role <> com.example.tinder.enums.UserRole.ADMIN
+                                             AND u.role <> com.example.tinder.enums.UserRole.ADMIN /*admin bo'lgan rollar userlarga ko'rinmaydi*/
                                              AND u.id<> :userId
                                              AND NOT EXISTS (SELECT 1 FROM Swipe s2
                                                  WHERE s2.swiper.id=:userId
@@ -165,6 +168,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             JOIN users_location ul ON u.id = ul.user_id
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.role <> 'ADMIN'
                         AND u.id NOT IN (
                             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                             UNION
@@ -195,6 +199,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                         ON u.id = ul.user_id
                                         WHERE u.id != :currentUserId
                                         AND u.active = true
+                                        AND u.role <> 'ADMIN'
+                                        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
                                         AND u.id NOT IN (
                                             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                                             UNION
@@ -227,6 +233,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             FROM users u
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.role <> 'ADMIN'
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -240,6 +247,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             countQuery = """
                     SELECT count(*) FROM users u
                     WHERE u.id != :currentUserId AND u.active = true
+                    AND u.role <> 'ADMIN'
                     AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
                     AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
                     AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -271,6 +279,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             JOIN users_user_interests uui ON u.id = uui.user_id
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.role <> 'ADMIN'
             AND u.id NOT IN (
                     SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                     UNION
@@ -298,6 +307,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         JOIN users_user_interests uui ON u.id = uui.user_id 
                         WHERE u.id != :currentUserId 
                         AND u.active = true
+                        AND u.role <> 'ADMIN'
+                        AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
                         AND u.id NOT IN (
                                 SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                                 UNION
@@ -350,6 +361,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 AND s.visibility = true
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.role <> 'ADMIN'
             AND u.id NOT IN (
                 SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                 UNION
@@ -432,6 +444,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             JOIN users_location ul ON u.id = ul.user_id
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.role <> 'ADMIN'
             AND u.free_tonight = true
                         AND u.id NOT IN (
                             SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
@@ -461,6 +474,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     ON u.id = ul.user_id
                     WHERE u.id != :currentUserId
                     AND u.active = true
+                    AND u.role <> 'ADMIN'
                     AND u.free_tonight = true
                     AND u.id NOT IN (
                         SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
@@ -495,6 +509,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE u.id != :currentUserId
             AND u.free_tonight = true
             AND u.active = true
+            AND u.role <> 'ADMIN'
             AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
             AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
             AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -502,7 +517,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """,
             countQuery = """
                     SELECT count(*) FROM users u
-                    WHERE u.id != :currentUserId AND u.active = true AND u.free_tonight = true
+                    WHERE u.id != :currentUserId AND u.active = true AND u.free_tonight = true AND u.role <> 'ADMIN'
                     AND (:preferredGender = 'EVERYONE' OR u.gender = :preferredGender)
                     AND (EXTRACT(YEAR FROM AGE(u.birth_date)) BETWEEN :minAge AND :maxAge)
                     AND u.id NOT IN (SELECT swiped_id FROM swipe WHERE swiper_id = :currentUserId)
@@ -549,6 +564,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 AND s.visibility = true
             WHERE u.id != :currentUserId
             AND u.active = true
+            AND u.role <> 'ADMIN'
             AND u.id NOT IN (
                 SELECT blocked_id FROM user_block WHERE blocker_id = :currentUserId
                 UNION

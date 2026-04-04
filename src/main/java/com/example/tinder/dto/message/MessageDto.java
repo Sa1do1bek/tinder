@@ -1,8 +1,6 @@
 package com.example.tinder.dto.message;
 
 import com.example.tinder.enums.MessageType;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
 
 import java.time.LocalDateTime;

@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<?> getUserById(Long id) {
-        User user = this.userRepository.findById(id)
+        User user = this.userRepository.findByIdCustom(id)
                 .orElseThrow(() -> RestException.restThrow(ErrorType.USER_NOT_FOUND));
 
         return ApiResponse.success(this.userMapper.toDto(user), SuccessType.USER_FOUND_SUCCESSFULLY);

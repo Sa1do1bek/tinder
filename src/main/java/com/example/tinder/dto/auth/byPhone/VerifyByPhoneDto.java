@@ -24,8 +24,6 @@ public class VerifyByPhoneDto {
 
     @NotBlank
     private String password;
-    
-    
 
     @NotBlank
     private String deviceId;

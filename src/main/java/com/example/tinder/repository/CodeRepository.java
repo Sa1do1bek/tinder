@@ -1,7 +1,6 @@
 package com.example.tinder.repository;
 
 import com.example.tinder.entity.Code;
-import com.example.tinder.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
