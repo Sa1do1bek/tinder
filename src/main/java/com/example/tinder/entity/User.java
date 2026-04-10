@@ -104,8 +104,11 @@ public class User extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "boolean default false")
     private Boolean freeTonight = false;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Meeting> meetings;
+    @OneToMany(mappedBy = "inviter", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Meeting> initiatedMeetings;
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Meeting> receivedMeetings;
 
     private LocalDateTime bannedAt;
     private LocalDateTime banUtil;
