@@ -9,72 +9,68 @@ import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.MeetingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/meeting")
 public class MeetingController {
 
     private final MeetingService meetingService;
 
     @MessageMapping("/invite")
-    public void invite(@Payload InviteDto inviteDto,
-                                 @Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
-        String username = (String) sessionAttributes.get("username");
+    public void invite(@Payload InviteDto inviteDto, Principal principal) {
 
-        if (username == null)
-            return;
+        String sender = principal.getName();
 
-        meetingService.createMeeting(username, inviteDto.receiverId());
+        log.info("Invite called: sender={}", sender);
+
+        meetingService.createMeeting(sender, inviteDto.receiverId());
     }
 
     @MessageMapping("/accept")
-    public void accept(@Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
-        String username = (String) sessionAttributes.get("username");
+    public void accept(Principal principal) {
+        String sender = principal.getName();
 
-        if (username == null)
-            return;
+        log.info("Accept called: sender={}", sender);
 
-        meetingService.acceptMeeting(username);
+        meetingService.acceptMeeting(sender);
     }
 
     @MessageMapping("/reject")
-    public void reject(@Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
-        String username = (String) sessionAttributes.get("username");
+    public void reject(Principal principal) {
+        String sender = principal.getName();
 
-        if (username == null)
-            return;
+        log.info("Reject called: sender={}", sender);
 
-        meetingService.rejectMeeting(username);
+        meetingService.rejectMeeting(sender);
     }
 
     @MessageMapping("/cancel")
-    public void cancel(@Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
-        String username = (String) sessionAttributes.get("username");
+    public void cancel(Principal principal) {
+        String sender = principal.getName();
 
-        if (username == null)
-            return;
+        log.info("Cancel called: sender={}", sender);
 
-        meetingService.cancelMeeting(username);
+        meetingService.cancelMeeting(sender);
     }
 
     @MessageMapping("/end")
-    public void end(@Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
-        String username = (String) sessionAttributes.get("username");
+    public void end(Principal principal) {
+        String sender = principal.getName();
 
-        if (username == null)
-            return;
+        log.info("End called: sender={}", sender);
 
-        meetingService.endMeeting(username);
+        meetingService.endMeeting(sender);
     }
 
 }

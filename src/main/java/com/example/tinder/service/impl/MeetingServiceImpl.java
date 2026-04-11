@@ -16,6 +16,7 @@ import com.example.tinder.repository.MeetingRepository;
 import com.example.tinder.repository.UserRepository;
 import com.example.tinder.service.MeetingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingServiceImpl implements MeetingService {
@@ -55,6 +57,9 @@ public class MeetingServiceImpl implements MeetingService {
                 meetingComponentsMapper.toUserInvitationDto(inviter), "An invitation for a meeting!");
 
         meetingRepository.save(meeting);
+
+        log.info("Subscribe invite for receiver called: username={}", username);
+
         this.sendToUser(receiver.getUsername(), responseForReceiver);
 
         return ApiResponse.success(SuccessType.INVITATION_SENT_SUCCESSFULLY);
@@ -72,6 +77,9 @@ public class MeetingServiceImpl implements MeetingService {
 
         meeting.setStartedAt(LocalDateTime.now());
         meeting.setStatus(MeetingStatus.ACCEPTED);
+
+        log.info("Subscribe accept for receiver called: username={}", meeting.getInviter().getUsername());
+        log.info("Subscribe accept for receiver called: username={}", meeting.getReceiver().getUsername());
 
         this.sendToUser(meeting.getInviter().getUsername(), response);
         this.sendToUser(meeting.getReceiver().getUsername(), response);
@@ -158,6 +166,7 @@ public class MeetingServiceImpl implements MeetingService {
     }
 
     private void sendToUser(String username, Object payload) {
+        log.info(username, payload);
         messagingTemplate.convertAndSendToUser(
                 username,
                 "/queue/feedback",

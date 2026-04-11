@@ -15,10 +15,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @ToString
-@Table(name = "users",
-        indexes = {
-                @Index(name = "idx_users_created_at", columnList = "created_at")
-        })
+@Table(name = "meetings")
 public class Meeting extends BaseEntity{
 
     @Column(nullable = false)

@@ -12,6 +12,9 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
+                        "https://semispheric-paloma-factiously.ngrok-free.dev",
+                        "http://192.168.7.223/:8081", // here
+                        "http://192.168.7.100:3000", // here
                         "http://16.170.202.6:8080",   // serverdagi frontend
                         "http://localhost:8081",       // lokalda ishlayotgan frontend
                         "http://localhost:63342",// boshqa lokal port (masalan: React/Vite)
