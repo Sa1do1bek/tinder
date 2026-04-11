@@ -529,21 +529,17 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    @Transactional // Ensures both deletes happen or none do
+    @Transactional
     public void validateVerification(PendingUser pending, String code) {
-        // 1. Check code correctness first
         if (!pending.getCode().equals(code)) {
             throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
 
-        // 2. Define expiration (Consider moving '2' to a constant or config file)
         final long EXPIRATION_MINUTES = 2;
         LocalDateTime expirationTime = pending.getCreatedAt().plusMinutes(EXPIRATION_MINUTES);
 
-        // 3. Check if current time has passed the expiration time
         if (LocalDateTime.now().isAfter(expirationTime)) {
 
-            // Clean up expired data
             pendingUserRepository.delete(pending);
             codeRepository.deleteByCode(code);
 
