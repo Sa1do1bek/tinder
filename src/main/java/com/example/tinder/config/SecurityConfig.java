@@ -113,6 +113,8 @@ public class SecurityConfig {
                 "http://localhost:63342",
                 "http://localhost:3000",
                 "http://localhost:8080",
+                "https://semispheric-paloma-factiously.ngrok-free.dev",
+                "https://footrest-faculty-palpitate.ngrok-free.dev/",
                 "http://localhost:8081",
                 "https://api.tinder.tenzorsoft.uz",
                 "https://api-tinder.tenzorsoft.uz",

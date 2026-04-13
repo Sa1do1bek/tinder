@@ -109,7 +109,12 @@ public enum SuccessType {
     WALLET_SUCCESSFULLY_GET("wallet.successful.get"),
     STORY_CREATED_SUCCESSFULLY("story.created.successfully"),
     STORY_VIEWED_SUCCESSFULLY("story.viewed.successfully"),
-    STORY_DELETED_SUCCESSFULLY("story.deleted.successfully");
+    STORY_DELETED_SUCCESSFULLY("story.deleted.successfully"),
+    INVITATION_SENT_SUCCESSFULLY("invitation.sent.successfully"),
+    MEETING_ACCEPTED("meeting.accepted"),
+    MEETING_REJECTED("meeting.rejected"),
+    MEETING_CANCELLED("meeting.cancelled"),
+    MEETING_ENDED("meeting.ended");
     //--**--********************
 
 

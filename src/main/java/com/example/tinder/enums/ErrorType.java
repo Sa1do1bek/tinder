@@ -114,10 +114,11 @@ public enum ErrorType {
     STORY_NOT_FOUND("story.not.found", HttpStatus.NOT_FOUND),
     STORY_NO_LONGER_AVAILABLE("story.no.longer.available", HttpStatus.BAD_REQUEST),
     CANNOT_DELETE_OTHER_USERS_STORY("cannot.delete.other.users.story", HttpStatus.BAD_REQUEST),
-    FILE_SIZE_EXCEEDS_LIMIT("file.size.exceeds.limit", HttpStatus.BAD_REQUEST);
-
+    FILE_SIZE_EXCEEDS_LIMIT("file.size.exceeds.limit", HttpStatus.BAD_REQUEST),
+    SAME_USER_CALL("same.user.details.to.call.a.meeting",HttpStatus.BAD_REQUEST),
+    MEETING_NOT_FOUND("meeting.not.found", HttpStatus.NOT_FOUND),
+    MEETING_STATUS_NOT_SUITABLE("meeting.status.not.suitable", HttpStatus.BAD_REQUEST);
     //***************************
-
 
 
     private final String msg;

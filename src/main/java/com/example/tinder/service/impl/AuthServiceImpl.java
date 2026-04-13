@@ -529,16 +529,16 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private void validateVerification(PendingUser pending, String code) {
+    @Transactional
+    public void validateVerification(PendingUser pending, String code) {
         if (!pending.getCode().equals(code)) {
             throw RestException.restThrow(ErrorType.ERROR_SENDING_VERIFICATION_CODE);
         }
 
-        long EXPIRATION_MINUTES = 2;
+        final long EXPIRATION_MINUTES = 2;
+        LocalDateTime expirationTime = pending.getCreatedAt().plusMinutes(EXPIRATION_MINUTES);
 
-        if (pending.getCreatedAt()
-                .plusMinutes(EXPIRATION_MINUTES)
-                .isBefore(LocalDateTime.now())) {
+        if (LocalDateTime.now().isAfter(expirationTime)) {
 
             pendingUserRepository.delete(pending);
             codeRepository.deleteByCode(code);
