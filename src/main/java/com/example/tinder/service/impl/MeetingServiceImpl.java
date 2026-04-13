@@ -1,6 +1,5 @@
 package com.example.tinder.service.impl;
 
-import com.example.tinder.dto.base.ApiResponse;
 import com.example.tinder.dto.meeting.responses.AcceptResponse;
 import com.example.tinder.dto.meeting.responses.CancellationResponse;
 import com.example.tinder.dto.meeting.responses.InvitationResponse;
@@ -9,7 +8,6 @@ import com.example.tinder.entity.Meeting;
 import com.example.tinder.entity.User;
 import com.example.tinder.enums.ErrorType;
 import com.example.tinder.enums.MeetingStatus;
-import com.example.tinder.enums.SuccessType;
 import com.example.tinder.exception.RestException;
 import com.example.tinder.mapper.MeetingComponentsMapper;
 import com.example.tinder.repository.MeetingRepository;
@@ -37,7 +35,7 @@ public class MeetingServiceImpl implements MeetingService {
 
     @Transactional
     @Override
-    public ApiResponse<?> createMeeting(String username, Long receiverId) {
+    public void createMeeting(String username, Long receiverId) {
         User inviter = userRepository.findByUsername(username)
                 .orElseThrow(() ->  RestException.restThrow(ErrorType.USER_NOT_FOUND));
         User receiver = userRepository.findById(receiverId)
@@ -61,13 +59,11 @@ public class MeetingServiceImpl implements MeetingService {
         log.info("Subscribe invite for receiver called: username={}", username);
 
         this.sendToUser(receiver.getUsername(), responseForReceiver);
-
-        return ApiResponse.success(SuccessType.INVITATION_SENT_SUCCESSFULLY);
     }
 
     @Transactional
     @Override
-    public ApiResponse<?> acceptMeeting(String accepterUsername) {
+    public void acceptMeeting(String accepterUsername) {
         Meeting meeting = this.getByReceiverUsername(accepterUsername);
 
         if (meeting.getStatus() != MeetingStatus.PENDING)
@@ -85,13 +81,11 @@ public class MeetingServiceImpl implements MeetingService {
         this.sendToUser(meeting.getReceiver().getUsername(), response);
 
         meetingRepository.save(meeting);
-
-        return ApiResponse.success("Meeting has been accepted and its roomId has been sent!");
     }
 
     @Transactional
     @Override
-    public ApiResponse<?> rejectMeeting(String rejecterUsername) {
+    public void rejectMeeting(String rejecterUsername) {
         Meeting meeting = this.getByReceiverUsername(rejecterUsername);
 
         if (meeting.getStatus() != MeetingStatus.PENDING)
@@ -103,13 +97,11 @@ public class MeetingServiceImpl implements MeetingService {
 
         this.sendToUser(meeting.getInviter().getUsername(), response);
         meetingRepository.save(meeting);
-
-        return ApiResponse.success("Meeting has been rejected!");
     }
 
     @Transactional
     @Override
-    public ApiResponse<?> cancelMeeting(String cancellerUsername) {
+    public void cancelMeeting(String cancellerUsername) {
         Meeting meeting = this.getByInviterUsername(cancellerUsername);
 
         if (meeting.getStatus() != MeetingStatus.ACCEPTED)
@@ -121,13 +113,11 @@ public class MeetingServiceImpl implements MeetingService {
 
         this.sendToUser(meeting.getReceiver().getUsername(), response);
         meetingRepository.save(meeting);
-
-        return ApiResponse.success("Meeting has been cancelled!");
     }
 
     @Transactional
     @Override
-    public ApiResponse<?> endMeeting(String enderUsername) {
+    public void endMeeting(String enderUsername) {
         Meeting meeting = this.getActiveMeetingForUser(enderUsername);
 
         if (meeting.getStatus() != MeetingStatus.ACCEPTED)
@@ -140,8 +130,6 @@ public class MeetingServiceImpl implements MeetingService {
         this.sendToUser(meeting.getInviter().getUsername(), response);
         this.sendToUser(meeting.getReceiver().getUsername(), response);
         meetingRepository.save(meeting);
-
-        return ApiResponse.success("Meeting has been ended!");
     }
 
     /** Helper Methods **/
