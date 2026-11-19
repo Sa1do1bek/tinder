@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.net.URLConnection;
@@ -19,10 +20,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
 
-    private final String bucketName = "s3-tenzorsoft";
-    private final String endpoint = "https://s3.tenzorsoft.uz";
-    private final String accessKey = "REMOVED";
-    private final String secretKey = "REMOVED";
+    @Value("${app.storage.bucket}")
+    private String bucketName;
+    @Value("${app.storage.endpoint}")
+    private String endpoint;
+    @Value("${app.storage.access-key}")
+    private String accessKey;
+    @Value("${app.storage.secret-key}")
+    private String secretKey;
     private MinioClient minioClient;
 
     @PostConstruct

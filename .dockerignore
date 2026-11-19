@@ -1,0 +1,6 @@
+.git
+.gradle
+.env*
+**/*firebase-adminsdk*.json
+*.pem
+*.key

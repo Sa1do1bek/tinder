@@ -5,6 +5,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.SecretKey;
 import java.util.Base64;
@@ -16,8 +17,15 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    private static final String KEY = "REMOVED";
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(KEY));
+    private final SecretKey secretKey;
+
+    public JwtUtil(@Value("${app.jwt.secret-base64}") String key) {
+        byte[] decoded = Base64.getDecoder().decode(key);
+        if (decoded.length < 64) {
+            throw new IllegalArgumentException("JWT signing key must contain at least 64 bytes");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(decoded);
+    }
 
     public String generateToken(String username) {
         log.debug("Generating token for username: {}", username);
@@ -48,7 +56,7 @@ public class JwtUtil {
                     .setSubject(subject)
                     .setIssuedAt(now)
                     .setExpiration(expiration)
-                    .signWith(SECRET_KEY, SignatureAlgorithm.HS512)
+                    .signWith(secretKey, SignatureAlgorithm.HS512)
                     .compact();
 
             log.debug("Token created: length={}, exp={}", token.length(), expiration);
@@ -107,7 +115,7 @@ public class JwtUtil {
 
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(SECRET_KEY)
+                    .setSigningKey(secretKey)
                     .setAllowedClockSkewSeconds(30)
                     .build()
                     .parseClaimsJws(token)
@@ -149,7 +157,4 @@ public class JwtUtil {
         }
     }
 
-    public String getSecretKeyAsString() {
-        return Base64.getEncoder().encodeToString(SECRET_KEY.getEncoded());
-    }
 }

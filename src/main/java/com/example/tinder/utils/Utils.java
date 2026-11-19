@@ -27,7 +27,6 @@ public class Utils {
     private final JavaMailSender mailSender;
     private final CodeRepository codeRepository;
     private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
 
 
     //test
@@ -75,10 +74,6 @@ public class Utils {
         if (email == null || email.isEmpty())
             return false;
         return email.contains("@");
-    }
-
-    public String getSecretKey() {
-        return jwtUtil.getSecretKeyAsString();
     }
 
     public String getCode() {

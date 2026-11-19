@@ -39,3 +39,8 @@ out/
 
 # Local service account keys
 **/*firebase-adminsdk*.json
+.env
+.env.*
+*.pem
+*.key
+src/main/resources/application-local.properties

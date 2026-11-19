@@ -38,7 +38,7 @@ public class TinderApplication implements CommandLineRunner {
             System.out.println("📱 Telegram'da /start buyrug'ini yuboring");
         } catch (TelegramApiException e) {
             System.err.println("❌ Bot ro'yxatdan o'tishda xatolik:");
-            System.err.println("🔑 Bot token tekshiring: " + telegramBot.getBotToken());
+            System.err.println("Check the Telegram bot configuration.");
             System.err.println("📝 Xatolik: " + e.getMessage());
             e.printStackTrace();
         }
